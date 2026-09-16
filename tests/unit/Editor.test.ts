@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Editor } from '../../src/editor/Editor';
 
-function createEditor(initialHtml = '<p>Texto</p>'): { root: HTMLElement; editor: Editor } {
+function createEditor(
+  initialHtml = '<p>Texto</p>',
+): { root: HTMLElement; editor: Editor } {
   const root = document.createElement('div');
   root.contentEditable = 'true';
   root.innerHTML = initialHtml;
@@ -38,7 +40,12 @@ describe('Editor', () => {
   it('desfaz uma edição manual registrada por beforeinput', () => {
     const { root, editor } = createEditor('<p>A</p>');
 
-    root.dispatchEvent(new InputEvent('beforeinput', { bubbles: true, inputType: 'insertText' }));
+    root.dispatchEvent(
+      new InputEvent('beforeinput', {
+        bubbles: true,
+        inputType: 'insertText',
+      }),
+    );
     root.innerHTML = '<p>AB</p>';
 
     expect(editor.undo()).toBe(true);
