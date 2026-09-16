@@ -27,7 +27,9 @@ describe('ClipboardService', () => {
     selection?.removeAllRanges();
     selection?.addRange(range);
 
-    const clipboard = new ClipboardService({ rangeEngine: new RangeEngine(root) });
+    const clipboard = new ClipboardService({
+      rangeEngine: new RangeEngine(root),
+    });
     expect(await clipboard.copy()).toBe(true);
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Olá');
   });
@@ -51,7 +53,9 @@ describe('ClipboardService', () => {
       value: vi.fn().mockResolvedValue('<strong>não é HTML</strong>'),
     });
 
-    const clipboard = new ClipboardService({ rangeEngine: new RangeEngine(root) });
+    const clipboard = new ClipboardService({
+      rangeEngine: new RangeEngine(root),
+    });
     expect(await clipboard.pastePlainText()).toBe(true);
     expect(root.querySelector('strong')).toBeNull();
     expect(root.textContent).toContain('<strong>não é HTML</strong>');
