@@ -41,6 +41,9 @@ export function renderApp(root: HTMLElement, dependencies: AppDependencies): voi
           <button type="button" data-command="ordered-list">1. Lista</button>
           <button type="button" data-command="upper">MAIÚSCULAS</button>
           <button type="button" data-command="lower">minúsculas</button>
+          <button type="button" data-command="copy">Copiar</button>
+          <button type="button" data-command="cut">Recortar</button>
+          <button type="button" data-command="paste">Colar</button>
           <button type="button" data-command="clear">Limpar</button>
           <button type="button" data-command="undo">Desfazer</button>
           <button type="button" data-command="redo">Refazer</button>
@@ -148,28 +151,29 @@ function setStatus(element: HTMLElement | null, status: DocumentStatus): void {
 function bindToolbar(root: HTMLElement, editor: Editor, onChange: () => void): void {
   root.querySelectorAll<HTMLButtonElement>('[data-command]').forEach((button) => {
     button.addEventListener('mousedown', (event) => event.preventDefault());
-    button.addEventListener('click', () => {
+    button.addEventListener('click', async () => {
       const command = button.dataset.command;
       if (!command) return;
 
       switch (command) {
-        case 'bold': editor.bold(); break;
-        case 'italic': editor.italic(); break;
-        case 'underline': editor.underline(); break;
-        case 'align-left': editor.align('left'); break;
-        case 'align-center': editor.align('center'); break;
-        case 'align-right': editor.align('right'); break;
-        case 'unordered-list': editor.list('ul'); break;
-        case 'ordered-list': editor.list('ol'); break;
-        case 'upper': editor.toggleCase(true); break;
-        case 'lower': editor.toggleCase(false); break;
-        case 'clear': editor.clearFormatting(); break;
-        case 'undo': editor.undo(); break;
-        case 'redo': editor.redo(); break;
+        case 'bold': editor.bold(); onChange(); break;
+        case 'italic': editor.italic(); onChange(); break;
+        case 'underline': editor.underline(); onChange(); break;
+        case 'align-left': editor.align('left'); onChange(); break;
+        case 'align-center': editor.align('center'); onChange(); break;
+        case 'align-right': editor.align('right'); onChange(); break;
+        case 'unordered-list': editor.list('ul'); onChange(); break;
+        case 'ordered-list': editor.list('ol'); onChange(); break;
+        case 'upper': editor.toggleCase(true); onChange(); break;
+        case 'lower': editor.toggleCase(false); onChange(); break;
+        case 'copy': await editor.copy(); break;
+        case 'cut': if (await editor.cut()) onChange(); break;
+        case 'paste': if (await editor.pastePlainText()) onChange(); break;
+        case 'clear': editor.clearFormatting(); onChange(); break;
+        case 'undo': if (editor.undo()) onChange(); break;
+        case 'redo': if (editor.redo()) onChange(); break;
         default: return;
       }
-
-      onChange();
     });
   });
 }
