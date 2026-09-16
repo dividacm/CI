@@ -6,10 +6,12 @@ export class HistoryManager {
   private readonly undoStack: HistorySnapshot[] = [];
   private readonly redoStack: HistorySnapshot[] = [];
 
-  constructor(private readonly maxSize = 50) {}
-
   capture(editor: HTMLElement): void {
-    this.undoStack.push({ html: editor.innerHTML });
+    this.captureSnapshot(editor.innerHTML);
+  }
+
+  captureSnapshot(html: string): void {
+    this.undoStack.push({ html });
     this.trim(this.undoStack);
     this.redoStack.length = 0;
   }
