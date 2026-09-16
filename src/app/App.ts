@@ -6,185 +6,157 @@ import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStor
 import type { OrganizationConfig } from '../types/configuration';
 import type { CommunicationDocument, DocumentStatus } from '../types/document';
 
-const ACTIVE_DOCUMENT_KEY = 'ci:active-document-id';
-
-export interface AppDependencies {
-  organization: OrganizationConfig;
-}
-
-export function renderApp(root: HTMLElement, dependencies: AppDependencies): void {
-  const { organization } = dependencies;
+export function renderApp(root: HTMLElement, organization: OrganizationConfig): void {
+  const template = organization.templates.find((item) => item.id === organization.defaultTemplateId);
+  if (!template) throw new Error(`Template não encontrado: ${organization.defaultTemplateId}`);
 
   root.innerHTML = `
-    <main class="app-shell" data-organization="${escapeHtml(organization.id)}">
+    <main class="app-shell">
       <header class="app-header">
         <div>
-          <p class="eyebrow">${escapeHtml(organization.branding.organizationName)}</p>
-          <h1>Editor de Comunicação Interna</h1>
-          <p class="status" role="status" data-save-status>Rascunho local.</p>
+          <p class="eyebrow">${escapeHtml(organization.name)}</p>
+          <h1>${escapeHtml(template.name)}</h1>
         </div>
+        <output id="save-status" class="save-status" aria-live="polite">Carregando…</output>
       </header>
-      <section class="editor-shell" aria-label="Editor">
-        <div class="editor-fields">
-          <label><span>De</span><input name="from" autocomplete="organization" /></label>
-          <label><span>Para</span><input name="to" autocomplete="off" /></label>
-          <label><span>Assunto</span><input name="subject" autocomplete="off" /></label>
+      <section class="editor-panel" aria-label="Editor de comunicação">
+        <div class="field-grid">
+          ${renderField('from', 'De', organization.fields.from.defaultValue)}
+          ${renderField('to', 'Para', organization.fields.to.defaultValue)}
+          ${renderField('subject', 'Assunto', organization.fields.subject.defaultValue)}
         </div>
-        <div class="editor-toolbar" aria-label="Formatação" role="toolbar">
-          <button type="button" data-command="bold"><strong>B</strong></button>
-          <button type="button" data-command="italic"><em>I</em></button>
-          <button type="button" data-command="underline"><u>U</u></button>
-          <button type="button" data-command="align-left">Esquerda</button>
-          <button type="button" data-command="align-center">Centro</button>
-          <button type="button" data-command="align-right">Direita</button>
-          <button type="button" data-command="unordered-list">Lista</button>
-          <button type="button" data-command="ordered-list">1. Lista</button>
-          <button type="button" data-command="upper">MAIÚSCULAS</button>
-          <button type="button" data-command="lower">minúsculas</button>
-          <button type="button" data-command="copy">Copiar</button>
-          <button type="button" data-command="cut">Recortar</button>
-          <button type="button" data-command="paste">Colar</button>
-          <button type="button" data-command="clear">Limpar</button>
-          <button type="button" data-command="undo">Desfazer</button>
-          <button type="button" data-command="redo">Refazer</button>
+        <div class="toolbar" role="toolbar" aria-label="Formatação">
+          <button type="button" data-action="bold"><strong>B</strong></button>
+          <button type="button" data-action="italic"><em>I</em></button>
+          <button type="button" data-action="underline"><u>U</u></button>
+          <button type="button" data-action="align-left">Esquerda</button>
+          <button type="button" data-action="align-center">Centro</button>
+          <button type="button" data-action="align-right">Direita</button>
+          <button type="button" data-action="list-unordered">• Lista</button>
+          <button type="button" data-action="list-ordered">1. Lista</button>
+          <button type="button" data-action="upper">MAIÚSCULAS</button>
+          <button type="button" data-action="lower">minúsculas</button>
+          <button type="button" data-action="copy">Copiar</button>
+          <button type="button" data-action="cut">Recortar</button>
+          <button type="button" data-action="paste">Colar</button>
+          <button type="button" data-action="undo">Desfazer</button>
+          <button type="button" data-action="redo">Refazer</button>
+          <button type="button" data-action="clear-formatting">Limpar formatação</button>
         </div>
-        <div class="editor-body" contenteditable="true" role="textbox" aria-multiline="true" data-editor-body></div>
+        <article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article>
       </section>
-    </main>
-  `;
+    </main>`;
 
-  const template = organization.templates.find(
-    (item) => item.id === organization.defaultTemplateId,
-  );
-  if (!template) throw new Error(`Template padrão "${organization.defaultTemplateId}" não encontrado.`);
+  const editorRoot = root.querySelector<HTMLElement>('#editor');
+  const statusRoot = root.querySelector<HTMLOutputElement>('#save-status');
+  if (!editorRoot || !statusRoot) throw new Error('Estrutura do editor não encontrada.');
 
   const storage = new LocalStorageDocumentStorage();
-  const document = loadActiveDocument(storage, organization, template.id);
-  populateFields(root, template, document);
+  const document = loadActiveDocument(organization);
+  editorRoot.innerHTML = sanitizeHtml(document.bodyHtml);
+  populateField(root, 'from', document.from);
+  populateField(root, 'to', document.to);
+  populateField(root, 'subject', document.subject);
 
-  const body = root.querySelector<HTMLElement>('[data-editor-body]');
-  if (!body) throw new Error('Área de edição não encontrada.');
-  body.innerHTML = sanitizeHtml(document.bodyHtml);
+  const setStatus = (status: DocumentStatus): void => {
+    const labels: Record<DocumentStatus, string> = {
+      saved: 'Salvo localmente.',
+      saving: 'Salvando…',
+      dirty: 'Alterações pendentes.',
+      error: 'Falha ao salvar. O conteúdo permanece nesta tela.',
+    };
+    statusRoot.textContent = labels[status];
+    statusRoot.dataset.status = status;
+  };
 
-  const status = root.querySelector<HTMLElement>('[data-save-status]');
-  const autosave = new AutosaveController({
-    storage,
-    onStatusChange: (value) => setStatus(status, value),
-  });
+  const autosave = new AutosaveController({ storage, delayMs: 300, onStatusChange: setStatus });
   autosave.attach(document);
-
-  const editor = new Editor(body);
+  setStatus('saved');
+  const editor = new Editor(editorRoot);
 
   const updateDocument = (): void => {
-    document.from = getInputValue(root, 'from');
-    document.to = getInputValue(root, 'to');
-    document.subject = getInputValue(root, 'subject');
-    document.bodyHtml = sanitizeHtml(body.innerHTML);
+    document.from = getFieldValue(root, 'from');
+    document.to = getFieldValue(root, 'to');
+    document.subject = getFieldValue(root, 'subject');
+    document.bodyHtml = sanitizeHtml(editorRoot.innerHTML);
     autosave.markDirty(document);
   };
 
-  bindToolbar(root, editor, updateDocument);
-
-  root.querySelectorAll<HTMLInputElement>('.editor-fields input').forEach((input) => {
-    input.addEventListener('input', updateDocument);
+  root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
+    field.addEventListener('input', updateDocument);
   });
-  body.addEventListener('input', updateDocument);
-}
+  editorRoot.addEventListener('input', updateDocument);
 
-function loadActiveDocument(
-  storage: LocalStorageDocumentStorage,
-  organization: OrganizationConfig,
-  templateId: string,
-): CommunicationDocument {
-  const activeId = localStorage.getItem(ACTIVE_DOCUMENT_KEY);
-  if (activeId) {
-    const existing = storage.load(activeId);
-    if (existing && existing.templateId === templateId) return existing;
-  }
-
-  const template = organization.templates.find((item) => item.id === templateId) ?? organization.templates[0];
-  if (!template) throw new Error('Nenhum template configurado.');
-
-  const document = createDocument({
-    template,
-    number: 0,
-    year: new Date().getFullYear(),
-  });
-  localStorage.setItem(ACTIVE_DOCUMENT_KEY, document.id);
-  return document;
-}
-
-function populateFields(
-  root: HTMLElement,
-  template: OrganizationConfig['templates'][number],
-  document: CommunicationDocument,
-): void {
-  const values: Record<string, string> = {
-    from: document.from,
-    to: document.to,
-    subject: document.subject,
-  };
-
-  for (const field of template.fields) {
-    const input = root.querySelector<HTMLInputElement>(`[name="${field.id}"]`);
-    if (!input) continue;
-    input.placeholder = field.placeholder ?? '';
-    input.value = values[field.id] ?? field.defaultValue ?? '';
-    input.required = field.required;
-  }
-}
-
-function getInputValue(root: HTMLElement, name: string): string {
-  return root.querySelector<HTMLInputElement>(`[name="${name}"]`)?.value ?? '';
-}
-
-function setStatus(element: HTMLElement | null, status: DocumentStatus): void {
-  if (!element) return;
-  element.textContent = {
-    saved: 'Salvo localmente.',
-    saving: 'Salvando…',
-    dirty: 'Alterações pendentes.',
-    error: 'Falha ao salvar. O conteúdo permanece nesta tela.',
-  }[status];
-}
-
-function bindToolbar(root: HTMLElement, editor: Editor, onChange: () => void): void {
-  root.querySelectorAll<HTMLButtonElement>('[data-command]').forEach((button) => {
-    button.addEventListener('mousedown', (event) => event.preventDefault());
+  root.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
     button.addEventListener('click', async () => {
-      const command = button.dataset.command;
-      if (!command) return;
-
-      switch (command) {
-        case 'bold': editor.bold(); onChange(); break;
-        case 'italic': editor.italic(); onChange(); break;
-        case 'underline': editor.underline(); onChange(); break;
-        case 'align-left': editor.align('left'); onChange(); break;
-        case 'align-center': editor.align('center'); onChange(); break;
-        case 'align-right': editor.align('right'); onChange(); break;
-        case 'unordered-list': editor.list('ul'); onChange(); break;
-        case 'ordered-list': editor.list('ol'); onChange(); break;
-        case 'upper': editor.toggleCase(true); onChange(); break;
-        case 'lower': editor.toggleCase(false); onChange(); break;
+      const action = button.dataset.action;
+      switch (action) {
+        case 'bold': editor.bold(); break;
+        case 'italic': editor.italic(); break;
+        case 'underline': editor.underline(); break;
+        case 'align-left': editor.align('left'); break;
+        case 'align-center': editor.align('center'); break;
+        case 'align-right': editor.align('right'); break;
+        case 'list-unordered': editor.list('unordered'); break;
+        case 'list-ordered': editor.list('ordered'); break;
+        case 'upper': editor.toggleCase(true); break;
+        case 'lower': editor.toggleCase(false); break;
         case 'copy': await editor.copy(); break;
-        case 'cut': if (await editor.cut()) onChange(); break;
-        case 'paste': if (await editor.pastePlainText()) onChange(); break;
-        case 'clear': editor.clearFormatting(); onChange(); break;
-        case 'undo': if (editor.undo()) onChange(); break;
-        case 'redo': if (editor.redo()) onChange(); break;
+        case 'cut': await editor.cut(); break;
+        case 'paste': await editor.pastePlainText(); break;
+        case 'undo': editor.undo(); break;
+        case 'redo': editor.redo(); break;
+        case 'clear-formatting': editor.clearFormatting(); break;
         default: return;
       }
+      updateDocument();
     });
   });
 }
 
+function renderField(name: string, label: string, value: string): string {
+  return `<label class="field"><span>${escapeHtml(label)}</span><input data-field="${escapeHtml(name)}" value="${escapeHtml(value)}" /></label>`;
+}
+
+function populateField(root: HTMLElement, name: string, value: string): void {
+  const field = root.querySelector<HTMLInputElement>(`[data-field="${name}"]`);
+  if (field) field.value = value;
+}
+
+function getFieldValue(root: HTMLElement, name: string): string {
+  return root.querySelector<HTMLInputElement>(`[data-field="${name}"]`)?.value ?? '';
+}
+
+function loadActiveDocument(organization: OrganizationConfig): CommunicationDocument {
+  const activeId = localStorage.getItem('ci:active-document');
+  if (activeId) {
+    const loaded = new LocalStorageDocumentStorage().load(activeId);
+    if (loaded) return loaded;
+  }
+  const document = createDocument({
+    organizationId: organization.id,
+    templateId: organization.defaultTemplateId,
+    year: new Date().getFullYear(),
+    number: 0,
+    defaults: {
+      from: organization.fields.from.defaultValue,
+      to: organization.fields.to.defaultValue,
+      subject: organization.fields.subject.defaultValue,
+      bodyHtml: '',
+    },
+  });
+  localStorage.setItem('ci:active-document', document.id);
+  return document;
+}
+
 function escapeHtml(value: string): string {
-  return value.replace(/[&<>\"]/g, (character) => {
+  return value.replace(/[&<>"']/g, (character) => {
     const entities: Record<string, string> = {
       '&': '&amp;',
       '<': '&lt;',
       '>': '&gt;',
       '"': '&quot;',
+      "'": '&#39;',
     };
     return entities[character] ?? character;
   });
