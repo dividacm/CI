@@ -1,7 +1,7 @@
-import { AutosaveController } from '../storage/AutosaveController';
-import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
 import { createDocument } from '../document/createDocument';
 import { Editor } from '../editor/Editor';
+import { AutosaveController } from '../storage/AutosaveController';
+import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig } from '../types/configuration';
 import type { CommunicationDocument, DocumentStatus } from '../types/document';
@@ -71,7 +71,6 @@ export function renderApp(root: HTMLElement, dependencies: AppDependencies): voi
   autosave.attach(document);
 
   const editor = new Editor(body);
-  bindToolbar(root, editor);
 
   const updateDocument = (): void => {
     document.from = getInputValue(root, 'from');
@@ -80,6 +79,8 @@ export function renderApp(root: HTMLElement, dependencies: AppDependencies): voi
     document.bodyHtml = sanitizeHtml(body.innerHTML);
     autosave.markDirty(document);
   };
+
+  bindToolbar(root, editor, updateDocument);
 
   root.querySelectorAll<HTMLInputElement>('.editor-fields input').forEach((input) => {
     input.addEventListener('input', updateDocument);
@@ -98,8 +99,11 @@ function loadActiveDocument(
     if (existing && existing.templateId === templateId) return existing;
   }
 
+  const template = organization.templates.find((item) => item.id === templateId) ?? organization.templates[0];
+  if (!template) throw new Error('Nenhum template configurado.');
+
   const document = createDocument({
-    template: organization.templates.find((item) => item.id === templateId) ?? organization.templates[0]!,
+    template,
     number: 0,
     year: new Date().getFullYear(),
   });
@@ -109,7 +113,7 @@ function loadActiveDocument(
 
 function populateFields(
   root: HTMLElement,
-  template: NonNullable<OrganizationConfig['templates'][number]>,
+  template: OrganizationConfig['templates'][number],
   document: CommunicationDocument,
 ): void {
   const values: Record<string, string> = {
@@ -141,7 +145,7 @@ function setStatus(element: HTMLElement | null, status: DocumentStatus): void {
   }[status];
 }
 
-function bindToolbar(root: HTMLElement, editor: Editor): void {
+function bindToolbar(root: HTMLElement, editor: Editor, onChange: () => void): void {
   root.querySelectorAll<HTMLButtonElement>('[data-command]').forEach((button) => {
     button.addEventListener('mousedown', (event) => event.preventDefault());
     button.addEventListener('click', () => {
@@ -162,7 +166,10 @@ function bindToolbar(root: HTMLElement, editor: Editor): void {
         case 'clear': editor.clearFormatting(); break;
         case 'undo': editor.undo(); break;
         case 'redo': editor.redo(); break;
+        default: return;
       }
+
+      onChange();
     });
   });
 }
