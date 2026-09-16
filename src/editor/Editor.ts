@@ -8,6 +8,7 @@ export class Editor {
   constructor(private readonly root: HTMLElement) {
     this.formatting = new FormattingEngine(root);
     this.history = new HistoryManager();
+    this.history.capture(root);
     this.bindHistory();
   }
 
@@ -33,7 +34,7 @@ export class Editor {
   }
 
   private bindHistory(): void {
-    this.root.addEventListener('input', () => {
+    this.root.addEventListener('beforeinput', () => {
       this.history.capture(this.root);
     });
 
