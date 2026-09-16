@@ -39,7 +39,10 @@ export class RangeEngine {
     return true;
   }
 
-  wrapSelection(tagName: string, attributes: Record<string, string> = {}): boolean {
+  wrapSelection(
+    tagName: string,
+    attributes: Record<string, string> = {},
+  ): boolean {
     const snapshot = this.getSelection();
     if (!snapshot || snapshot.collapsed) return false;
 
