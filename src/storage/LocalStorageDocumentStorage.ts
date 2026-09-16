@@ -1,5 +1,5 @@
-import type { CommunicationDocument } from '../types/document';
 import { sanitizeHtml } from '../security/sanitizer';
+import type { CommunicationDocument } from '../types/document';
 import type { DocumentStorage } from './DocumentStorage';
 
 const PREFIX = 'ci:document:';
