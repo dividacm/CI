@@ -1,5 +1,12 @@
+import { AutosaveController } from '../storage/AutosaveController';
+import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
+import { createDocument } from '../document/createDocument';
 import { Editor } from '../editor/Editor';
+import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig } from '../types/configuration';
+import type { CommunicationDocument, DocumentStatus } from '../types/document';
+
+const ACTIVE_DOCUMENT_KEY = 'ci:active-document-id';
 
 export interface AppDependencies {
   organization: OrganizationConfig;
@@ -14,7 +21,7 @@ export function renderApp(root: HTMLElement, dependencies: AppDependencies): voi
         <div>
           <p class="eyebrow">${escapeHtml(organization.branding.organizationName)}</p>
           <h1>Editor de Comunicação Interna</h1>
-          <p class="status" role="status">Editor tipado inicializado.</p>
+          <p class="status" role="status" data-save-status>Rascunho local.</p>
         </div>
       </header>
       <section class="editor-shell" aria-label="Editor">
@@ -48,19 +55,90 @@ export function renderApp(root: HTMLElement, dependencies: AppDependencies): voi
   );
   if (!template) throw new Error(`Template padrão "${organization.defaultTemplateId}" não encontrado.`);
 
+  const storage = new LocalStorageDocumentStorage();
+  const document = loadActiveDocument(storage, organization, template.id);
+  populateFields(root, template, document);
+
+  const body = root.querySelector<HTMLElement>('[data-editor-body]');
+  if (!body) throw new Error('Área de edição não encontrada.');
+  body.innerHTML = sanitizeHtml(document.bodyHtml);
+
+  const status = root.querySelector<HTMLElement>('[data-save-status]');
+  const autosave = new AutosaveController({
+    storage,
+    onStatusChange: (value) => setStatus(status, value),
+  });
+  autosave.attach(document);
+
+  const editor = new Editor(body);
+  bindToolbar(root, editor);
+
+  const updateDocument = (): void => {
+    document.from = getInputValue(root, 'from');
+    document.to = getInputValue(root, 'to');
+    document.subject = getInputValue(root, 'subject');
+    document.bodyHtml = sanitizeHtml(body.innerHTML);
+    autosave.markDirty(document);
+  };
+
+  root.querySelectorAll<HTMLInputElement>('.editor-fields input').forEach((input) => {
+    input.addEventListener('input', updateDocument);
+  });
+  body.addEventListener('input', updateDocument);
+}
+
+function loadActiveDocument(
+  storage: LocalStorageDocumentStorage,
+  organization: OrganizationConfig,
+  templateId: string,
+): CommunicationDocument {
+  const activeId = localStorage.getItem(ACTIVE_DOCUMENT_KEY);
+  if (activeId) {
+    const existing = storage.load(activeId);
+    if (existing && existing.templateId === templateId) return existing;
+  }
+
+  const document = createDocument({
+    template: organization.templates.find((item) => item.id === templateId) ?? organization.templates[0]!,
+    number: 0,
+    year: new Date().getFullYear(),
+  });
+  localStorage.setItem(ACTIVE_DOCUMENT_KEY, document.id);
+  return document;
+}
+
+function populateFields(
+  root: HTMLElement,
+  template: NonNullable<OrganizationConfig['templates'][number]>,
+  document: CommunicationDocument,
+): void {
+  const values: Record<string, string> = {
+    from: document.from,
+    to: document.to,
+    subject: document.subject,
+  };
+
   for (const field of template.fields) {
     const input = root.querySelector<HTMLInputElement>(`[name="${field.id}"]`);
     if (!input) continue;
     input.placeholder = field.placeholder ?? '';
-    input.value = field.defaultValue ?? '';
+    input.value = values[field.id] ?? field.defaultValue ?? '';
     input.required = field.required;
   }
+}
 
-  const body = root.querySelector<HTMLElement>('[data-editor-body]');
-  if (!body) throw new Error('Área de edição não encontrada.');
+function getInputValue(root: HTMLElement, name: string): string {
+  return root.querySelector<HTMLInputElement>(`[name="${name}"]`)?.value ?? '';
+}
 
-  const editor = new Editor(body);
-  bindToolbar(root, editor);
+function setStatus(element: HTMLElement | null, status: DocumentStatus): void {
+  if (!element) return;
+  element.textContent = {
+    saved: 'Salvo localmente.',
+    saving: 'Salvando…',
+    dirty: 'Alterações pendentes.',
+    error: 'Falha ao salvar. O conteúdo permanece nesta tela.',
+  }[status];
 }
 
 function bindToolbar(root: HTMLElement, editor: Editor): void {
