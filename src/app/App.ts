@@ -1,8 +1,8 @@
 import { createDocument } from '../document/createDocument';
 import { Editor } from '../editor/Editor';
+import { sanitizeHtml } from '../security/sanitizer';
 import { AutosaveController } from '../storage/AutosaveController';
 import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
-import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig } from '../types/configuration';
 import type { CommunicationDocument, DocumentStatus } from '../types/document';
 
@@ -180,7 +180,7 @@ function bindToolbar(root: HTMLElement, editor: Editor, onChange: () => void): v
 
 function escapeHtml(value: string): string {
   return value.replace(/[&<>\"]/g, (character) => {
-    const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' };
+    const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' };
     return entities[character] ?? character;
   });
 }
