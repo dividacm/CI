@@ -43,7 +43,6 @@ export class ClipboardService {
 
     selection.range.deleteContents();
     selection.range.collapse(true);
-    selection.range.commonAncestorContainer.parentElement?.focus();
     return true;
   }
 
@@ -54,8 +53,8 @@ export class ClipboardService {
         return false;
       }
 
-      this.rangeEngine.replaceSelection(text.replace(/\r\n?/g, '\n'));
-      return true;
+      const node = document.createTextNode(text.replace(/\r\n?/g, '\n'));
+      return this.rangeEngine.replaceSelection(node);
     } catch {
       return false;
     }
