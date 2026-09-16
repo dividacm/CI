@@ -5,6 +5,15 @@ interface HistorySnapshot {
 export class HistoryManager {
   private readonly undoStack: HistorySnapshot[] = [];
   private readonly redoStack: HistorySnapshot[] = [];
+  private readonly maxSize: number;
+
+  constructor(maxSize = 50) {
+    if (!Number.isInteger(maxSize) || maxSize < 1) {
+      throw new Error('O tamanho máximo do histórico deve ser um inteiro positivo.');
+    }
+
+    this.maxSize = maxSize;
+  }
 
   capture(editor: HTMLElement): void {
     this.captureSnapshot(editor.innerHTML);
