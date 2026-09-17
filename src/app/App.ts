@@ -7,7 +7,7 @@ import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStor
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument, DocumentStatus } from '../types/document';
 import { createAppActions } from './AppActions';
-import { replaceDocument, type AppState } from './AppState';
+import type { AppState } from './AppState';
 import { getAppElements, getFieldValue, renderDocument, renderPreview, renderShell, updateIssueButton, updatePdfButton } from './AppView';
 
 const ACTIVE_DOCUMENT_KEY = 'ci:active-document';
