@@ -71,10 +71,7 @@ export function renderDocumentNumber(root: HTMLOutputElement, document: Communic
 export function updateIssueButton(button: HTMLButtonElement, document: CommunicationDocument): void { const issued = document.number > 0; button.disabled = issued; button.textContent = issued ? 'Documento emitido' : 'Emitir documento'; }
 export function updatePdfButton(button: HTMLButtonElement, enabled: boolean): void { button.hidden = !enabled; }
 
-function getDocumentField(document: CommunicationDocument, id: string): string {
-  const value = (document as unknown as Record<string, unknown>)[id];
-  return typeof value === 'string' ? value : '';
-}
+function getDocumentField(document: CommunicationDocument, id: string): string { return document.fields[id] ?? ''; }
 function renderPreviewField(label: string, value: string): string { return `<div class="preview-field"><span>${escapeHtml(label)}</span><div>${escapeHtml(value)}</div></div>`; }
 function renderField(name: string, label: string, value: string, placeholder?: string, required = false): string { return `<label class="field"><span>${escapeHtml(label)}</span><input data-field="${escapeHtml(name)}" value="${escapeHtml(value)}"${placeholder ? ` placeholder="${escapeHtml(placeholder)}"` : ''}${required ? ' required' : ''} /></label>`; }
 function formatDate(date: Date): string { return new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }).format(date); }
