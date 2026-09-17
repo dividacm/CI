@@ -52,7 +52,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   if (!editorRoot || !statusRoot) throw new Error('Estrutura do editor não encontrada.');
 
   const storage = new LocalStorageDocumentStorage();
-  const document = loadActiveDocument(organization);
+  const document = loadActiveDocument(organization, template, storage);
   editorRoot.innerHTML = sanitizeHtml(document.bodyHtml);
   populateField(root, 'from', document.from);
   populateField(root, 'to', document.to);
@@ -127,23 +127,24 @@ function getFieldValue(root: HTMLElement, name: string): string {
   return root.querySelector<HTMLInputElement>(`[data-field="${name}"]`)?.value ?? '';
 }
 
-function loadActiveDocument(organization: OrganizationConfig): CommunicationDocument {
+function loadActiveDocument(
+  organization: OrganizationConfig,
+  template: NonNullable<OrganizationConfig['templates'][number]>,
+  storage: LocalStorageDocumentStorage,
+): CommunicationDocument {
   const activeId = localStorage.getItem('ci:active-document');
   if (activeId) {
-    const loaded = new LocalStorageDocumentStorage().load(activeId);
-    if (loaded) return loaded;
+    const loaded = storage.load(activeId);
+    if (loaded && loaded.templateId === template.id) return loaded;
   }
+
   const document = createDocument({
-    organizationId: organization.id,
-    templateId: organization.defaultTemplateId,
+    template,
     year: new Date().getFullYear(),
     number: 0,
-    defaults: {
-      from: organization.fields.from.defaultValue,
-      to: organization.fields.to.defaultValue,
-      subject: organization.fields.subject.defaultValue,
-      bodyHtml: '',
-    },
+    from: organization.fields.from.defaultValue,
+    to: organization.fields.to.defaultValue,
+    subject: organization.fields.subject.defaultValue,
   });
   localStorage.setItem('ci:active-document', document.id);
   return document;
