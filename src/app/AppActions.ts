@@ -1,4 +1,5 @@
 import { DocumentIssuer } from '../document/DocumentIssuer';
+import type { Editor } from '../editor/Editor';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { AutosaveController } from '../storage/AutosaveController';
 import type { AppState } from './AppState';
@@ -12,7 +13,7 @@ export interface AppActions {
 
 export function createAppActions(
   state: AppState,
-  editorRoot: HTMLElement,
+  editor: Editor,
   autosave: AutosaveController,
   issuer: DocumentIssuer,
   getField: (name: string) => string,
@@ -22,7 +23,7 @@ export function createAppActions(
       from: getField('from'),
       to: getField('to'),
       subject: getField('subject'),
-      bodyHtml: sanitizeHtml(editorRoot.innerHTML),
+      bodyHtml: sanitizeHtml(editor.getHtml()),
     });
     autosave.markDirty(state.document);
   };
@@ -31,7 +32,7 @@ export function createAppActions(
     sync,
     clear: (): void => {
       resetDocument(state);
-      editorRoot.innerHTML = '';
+      editor.setHtml('');
       autosave.markDirty(state.document);
     },
     issue: (): boolean => {
