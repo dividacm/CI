@@ -19,10 +19,11 @@ export function createAppActions(
   getField: (name: string) => string,
 ): AppActions {
   const sync = (): void => {
+    const fields = Object.fromEntries(
+      state.template.fields.map((field) => [field.id, getField(field.id)]),
+    );
     updateDocument(state, {
-      from: getField('from'),
-      to: getField('to'),
-      subject: getField('subject'),
+      fields,
       bodyHtml: sanitizeHtml(editor.getHtml()),
     });
     autosave.markDirty(state.document);
