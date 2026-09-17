@@ -10,6 +10,9 @@ export const defaultOrganization: OrganizationConfig = {
     fontFamily: 'Carlito, Arial, sans-serif',
     headerAsset: '/assets/cab.png',
     footerAsset: '/assets/rodape.png',
+    signatureName: 'CRISTIANE SCHWARZ',
+    signatureRole: 'Gerente de Valores em Carteira e Cobrança',
+    signatureLocation: 'Campo Mourão',
   },
   defaultTemplateId: 'comunicacao-interna-v2',
   templates: [
