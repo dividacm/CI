@@ -4,6 +4,12 @@ import type { DocumentStorage } from './DocumentStorage';
 
 const PREFIX = 'ci:document:';
 
+type StoredDocument = CommunicationDocument & {
+  from?: string;
+  to?: string;
+  subject?: string;
+};
+
 export class LocalStorageDocumentStorage implements DocumentStorage {
   public load(id: string): CommunicationDocument | null {
     const raw = localStorage.getItem(`${PREFIX}${id}`);
@@ -12,10 +18,16 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
     }
 
     try {
-      const parsed = JSON.parse(raw) as CommunicationDocument;
+      const parsed = JSON.parse(raw) as StoredDocument;
       return {
-        ...parsed,
+        id: parsed.id,
+        number: parsed.number,
+        year: parsed.year,
+        fields: normalizeFields(parsed),
         bodyHtml: sanitizeHtml(parsed.bodyHtml),
+        templateId: parsed.templateId,
+        createdAt: parsed.createdAt,
+        updatedAt: parsed.updatedAt,
       };
     } catch {
       return null;
@@ -25,6 +37,7 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
   public save(document: CommunicationDocument): void {
     const normalized: CommunicationDocument = {
       ...document,
+      fields: { ...document.fields },
       bodyHtml: sanitizeHtml(document.bodyHtml),
       updatedAt: new Date().toISOString(),
     };
@@ -35,4 +48,18 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
   public remove(id: string): void {
     localStorage.removeItem(`${PREFIX}${id}`);
   }
+}
+
+function normalizeFields(document: StoredDocument): Record<string, string> {
+  if (document.fields && typeof document.fields === 'object') {
+    return Object.fromEntries(
+      Object.entries(document.fields).filter(([, value]) => typeof value === 'string'),
+    ) as Record<string, string>;
+  }
+
+  return {
+    ...(document.from !== undefined ? { from: document.from } : {}),
+    ...(document.to !== undefined ? { to: document.to } : {}),
+    ...(document.subject !== undefined ? { subject: document.subject } : {}),
+  };
 }
