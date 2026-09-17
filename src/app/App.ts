@@ -2,11 +2,12 @@ import { DocumentIssuer } from '../document/DocumentIssuer';
 import { createDocument } from '../document/createDocument';
 import { Editor } from '../editor/Editor';
 import { PdfExporter } from '../pdf/PdfExporter';
-import { sanitizeHtml } from '../security/sanitizer';
 import { AutosaveController } from '../storage/AutosaveController';
 import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument, DocumentStatus } from '../types/document';
+import { createAppActions } from './AppActions';
+import { replaceDocument, type AppState } from './AppState';
 import { getAppElements, getFieldValue, renderDocument, renderPreview, renderShell, updateIssueButton, updatePdfButton } from './AppView';
 
 const ACTIVE_DOCUMENT_KEY = 'ci:active-document';
@@ -20,9 +21,9 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
-  let document = loadActiveDocument(template, storage);
+  const state: AppState = { document: loadActiveDocument(template, storage), template, organization };
 
-  renderDocument(document, elements, organization, template);
+  renderDocument(state.document, elements, organization, template);
   const setStatus = (status: DocumentStatus): void => {
     const labels: Record<DocumentStatus, string> = {
       saved: 'Salvo localmente.',
@@ -35,22 +36,19 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   };
 
   const autosave = new AutosaveController({ storage, delayMs: 300, onStatusChange: setStatus });
-  autosave.attach(document);
+  autosave.attach(state.document);
   setStatus('saved');
-  updateIssueButton(elements.issueButton, document);
+  updateIssueButton(elements.issueButton, state.document);
   updatePdfButton(elements.pdfButton, organization.features.pdfExport);
   const editor = new Editor(elements.editor);
+  const actions = createAppActions(state, elements.editor, autosave, issuer, (name) => getFieldValue(root, name));
 
-  const sync = (): void => {
-    document.from = getFieldValue(root, 'from');
-    document.to = getFieldValue(root, 'to');
-    document.subject = getFieldValue(root, 'subject');
-    document.bodyHtml = sanitizeHtml(elements.editor.innerHTML);
-    document.updatedAt = new Date().toISOString();
-    autosave.markDirty(document);
-    updateIssueButton(elements.issueButton, document);
-    renderPreview(elements.paper, organization, template, document);
+  const syncView = (): void => {
+    updateIssueButton(elements.issueButton, state.document);
+    renderPreview(elements.paper, organization, template, state.document);
   };
+
+  const sync = (): void => { actions.sync(); syncView(); };
 
   root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => field.addEventListener('input', sync));
   elements.editor.addEventListener('input', sync);
@@ -59,15 +57,12 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
     button.addEventListener('click', async () => {
       const action = button.dataset.action;
       if (action === 'save') { sync(); autosave.saveNow(); return; }
-      if (action === 'clear') { resetDocument(root, elements.editor, template, document); sync(); autosave.saveNow(); return; }
+      if (action === 'clear') { actions.clear(); renderDocument(state.document, elements, organization, template); autosave.saveNow(); return; }
       if (action === 'issue') {
-        if (document.number > 0) return;
-        sync(); autosave.saveNow();
-        document = issuer.issue(document);
-        autosave.attach(document);
-        renderDocument(document, elements, organization, template);
-        updateIssueButton(elements.issueButton, document);
-        elements.status.textContent = `Documento nº ${document.number}/${document.year} emitido.`;
+        if (!actions.issue()) return;
+        renderDocument(state.document, elements, organization, template);
+        updateIssueButton(elements.issueButton, state.document);
+        elements.status.textContent = `Documento nº ${state.document.number}/${state.document.year} emitido.`;
         elements.status.dataset.status = 'saved';
         return;
       }
@@ -77,7 +72,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         const previous = elements.pdfButton.textContent;
         elements.pdfButton.textContent = 'Gerando PDF…';
         try {
-          await pdfExporter.export(elements.paper, { filename: document.number > 0 ? `comunicacao_interna_${document.number}_${document.year}.pdf` : 'comunicacao_interna.pdf' });
+          await pdfExporter.export(elements.paper, { filename: state.document.number > 0 ? `comunicacao_interna_${state.document.number}_${state.document.year}.pdf` : 'comunicacao_interna.pdf' });
           elements.status.textContent = 'PDF gerado com sucesso.';
           elements.status.dataset.status = 'saved';
         } catch {
@@ -126,18 +121,4 @@ function loadActiveDocument(template: TemplateConfig, storage: LocalStorageDocum
   const document = createDocument({ template, year: new Date().getFullYear(), number: 0 });
   localStorage.setItem(ACTIVE_DOCUMENT_KEY, document.id);
   return document;
-}
-
-function resetDocument(root: HTMLElement, editorRoot: HTMLElement, template: TemplateConfig, document: CommunicationDocument): void {
-  document.number = 0;
-  document.year = new Date().getFullYear();
-  document.from = template.fields.find((field) => field.id === 'from')?.defaultValue ?? '';
-  document.to = template.fields.find((field) => field.id === 'to')?.defaultValue ?? '';
-  document.subject = template.fields.find((field) => field.id === 'subject')?.defaultValue ?? '';
-  document.bodyHtml = '';
-  document.updatedAt = new Date().toISOString();
-  editorRoot.innerHTML = '';
-  root.querySelector<HTMLInputElement>('[data-field="from"]')!.value = document.from;
-  root.querySelector<HTMLInputElement>('[data-field="to"]')!.value = document.to;
-  root.querySelector<HTMLInputElement>('[data-field="subject"]')!.value = document.subject;
 }
