@@ -9,4 +9,4 @@ if (!app) {
   throw new Error('Elemento #app não encontrado.');
 }
 
-renderApp(app, { organization: defaultOrganization });
+renderApp(app, defaultOrganization);
