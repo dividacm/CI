@@ -60,7 +60,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
-  let document = loadActiveDocument(template, storage, organization);
+  let document = loadActiveDocument(template, storage);
   editorRoot.innerHTML = sanitizeHtml(document.bodyHtml);
   populateField(root, 'from', document.from);
   populateField(root, 'to', document.to);
@@ -161,7 +161,6 @@ function getFieldValue(root: HTMLElement, name: string): string {
 function loadActiveDocument(
   template: NonNullable<OrganizationConfig['templates'][number]>,
   storage: LocalStorageDocumentStorage,
-  organization: OrganizationConfig,
 ): CommunicationDocument {
   const activeId = localStorage.getItem('ci:active-document');
   if (activeId) {
