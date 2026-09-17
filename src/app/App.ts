@@ -10,7 +10,6 @@ import type { CommunicationDocument, DocumentStatus } from '../types/document';
 export function renderApp(root: HTMLElement, organization: OrganizationConfig): void {
   const template = organization.templates.find((item) => item.id === organization.defaultTemplateId);
   if (!template) throw new Error(`Template não encontrado: ${organization.defaultTemplateId}`);
-  const fieldDefault = (id: string): string => template.fields.find((field) => field.id === id)?.defaultValue ?? '';
 
   root.innerHTML = `
     <main class="app-shell">
@@ -24,9 +23,9 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
       </header>
       <section class="editor-panel" aria-label="Editor de comunicação">
         <div class="field-grid">
-          ${renderField('from', 'De', fieldDefault('from'))}
-          ${renderField('to', 'Para', fieldDefault('to'))}
-          ${renderField('subject', 'Assunto', fieldDefault('subject'))}
+          ${renderField('from', 'De', getField(template, 'from')?.defaultValue ?? '')}
+          ${renderField('to', 'Para', getField(template, 'to')?.defaultValue ?? '')}
+          ${renderField('subject', 'Assunto', getField(template, 'subject')?.defaultValue ?? '')}
         </div>
         <div class="toolbar" role="toolbar" aria-label="Formatação">
           <button type="button" data-action="bold"><strong>B</strong></button>
@@ -61,7 +60,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
-  let document = loadActiveDocument(organization, template, storage);
+  let document = loadActiveDocument(template, storage, organization);
   editorRoot.innerHTML = sanitizeHtml(document.bodyHtml);
   populateField(root, 'from', document.from);
   populateField(root, 'to', document.to);
@@ -143,6 +142,13 @@ function renderField(name: string, label: string, value: string): string {
   return `<label class="field"><span>${escapeHtml(label)}</span><input data-field="${escapeHtml(name)}" value="${escapeHtml(value)}" /></label>`;
 }
 
+function getField(
+  template: NonNullable<OrganizationConfig['templates'][number]>,
+  id: string,
+): NonNullable<OrganizationConfig['templates'][number]>['fields'][number] | undefined {
+  return template.fields.find((field) => field.id === id);
+}
+
 function populateField(root: HTMLElement, name: string, value: string): void {
   const field = root.querySelector<HTMLInputElement>(`[data-field="${name}"]`);
   if (field) field.value = value;
@@ -153,9 +159,9 @@ function getFieldValue(root: HTMLElement, name: string): string {
 }
 
 function loadActiveDocument(
-  organization: OrganizationConfig,
   template: NonNullable<OrganizationConfig['templates'][number]>,
   storage: LocalStorageDocumentStorage,
+  organization: OrganizationConfig,
 ): CommunicationDocument {
   const activeId = localStorage.getItem('ci:active-document');
   if (activeId) {
@@ -167,9 +173,9 @@ function loadActiveDocument(
     template,
     year: new Date().getFullYear(),
     number: 0,
-    from: template.fields.find((field) => field.id === 'from')?.defaultValue,
-    to: template.fields.find((field) => field.id === 'to')?.defaultValue,
-    subject: template.fields.find((field) => field.id === 'subject')?.defaultValue,
+    from: getField(template, 'from')?.defaultValue ?? '',
+    to: getField(template, 'to')?.defaultValue ?? '',
+    subject: getField(template, 'subject')?.defaultValue ?? '',
   });
   localStorage.setItem('ci:active-document', document.id);
   return document;
