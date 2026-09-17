@@ -1,5 +1,5 @@
-import { DocumentIssuer } from '../document/DocumentIssuer';
 import { createDocument } from '../document/createDocument';
+import { DocumentIssuer } from '../document/DocumentIssuer';
 import { Editor } from '../editor/Editor';
 import { PdfExporter } from '../pdf/PdfExporter';
 import { AutosaveController } from '../storage/AutosaveController';
@@ -50,7 +50,9 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   const sync = (): void => { actions.sync(); syncView(); };
 
-  root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => field.addEventListener('input', sync));
+  root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
+    field.addEventListener('input', sync);
+  });
   elements.editor.addEventListener('input', sync);
 
   root.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
