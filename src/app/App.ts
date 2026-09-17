@@ -1,3 +1,4 @@
+import { DocumentIssuer } from '../document/DocumentIssuer';
 import { createDocument } from '../document/createDocument';
 import { Editor } from '../editor/Editor';
 import { sanitizeHtml } from '../security/sanitizer';
@@ -16,6 +17,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         <div>
           <p class="eyebrow">${escapeHtml(organization.name)}</p>
           <h1>${escapeHtml(template.name)}</h1>
+          <output id="document-number" class="document-number" aria-label="Número do documento">Rascunho</output>
         </div>
         <output id="save-status" class="save-status" aria-live="polite">Carregando…</output>
       </header>
@@ -42,6 +44,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
           <button type="button" data-action="undo">Desfazer</button>
           <button type="button" data-action="redo">Refazer</button>
           <button type="button" data-action="clear-formatting">Limpar formatação</button>
+          <button type="button" data-action="issue" class="primary-action">Emitir documento</button>
         </div>
         <article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article>
       </section>
@@ -49,14 +52,20 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   const editorRoot = root.querySelector<HTMLElement>('#editor');
   const statusRoot = root.querySelector<HTMLOutputElement>('#save-status');
-  if (!editorRoot || !statusRoot) throw new Error('Estrutura do editor não encontrada.');
+  const numberRoot = root.querySelector<HTMLOutputElement>('#document-number');
+  const issueButton = root.querySelector<HTMLButtonElement>('[data-action="issue"]');
+  if (!editorRoot || !statusRoot || !numberRoot || !issueButton) {
+    throw new Error('Estrutura do editor não encontrada.');
+  }
 
   const storage = new LocalStorageDocumentStorage();
-  const document = loadActiveDocument(organization, template, storage);
+  const issuer = new DocumentIssuer({ storage });
+  let document = loadActiveDocument(organization, template, storage);
   editorRoot.innerHTML = sanitizeHtml(document.bodyHtml);
   populateField(root, 'from', document.from);
   populateField(root, 'to', document.to);
   populateField(root, 'subject', document.subject);
+  renderDocumentNumber(numberRoot, document);
 
   const setStatus = (status: DocumentStatus): void => {
     const labels: Record<DocumentStatus, string> = {
@@ -72,6 +81,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   const autosave = new AutosaveController({ storage, delayMs: 300, onStatusChange: setStatus });
   autosave.attach(document);
   setStatus('saved');
+  updateIssueButton(issueButton, document);
   const editor = new Editor(editorRoot);
 
   const updateDocument = (): void => {
@@ -80,6 +90,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
     document.subject = getFieldValue(root, 'subject');
     document.bodyHtml = sanitizeHtml(editorRoot.innerHTML);
     autosave.markDirty(document);
+    updateIssueButton(issueButton, document);
   };
 
   root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
@@ -90,6 +101,19 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   root.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
     button.addEventListener('click', async () => {
       const action = button.dataset.action;
+      if (action === 'issue') {
+        if (document.number > 0) return;
+        updateDocument();
+        autosave.saveNow();
+        document = issuer.issue(document);
+        autosave.attach(document);
+        renderDocumentNumber(numberRoot, document);
+        updateIssueButton(issueButton, document);
+        statusRoot.textContent = `Documento nº ${document.number}/${document.year} emitido.`;
+        statusRoot.dataset.status = 'saved';
+        return;
+      }
+
       switch (action) {
         case 'bold': editor.bold(); break;
         case 'italic': editor.italic(); break;
@@ -148,6 +172,18 @@ function loadActiveDocument(
   });
   localStorage.setItem('ci:active-document', document.id);
   return document;
+}
+
+function renderDocumentNumber(root: HTMLOutputElement, document: CommunicationDocument): void {
+  root.textContent = document.number > 0
+    ? `Documento nº ${document.number}/${document.year}`
+    : 'Rascunho';
+}
+
+function updateIssueButton(button: HTMLButtonElement, document: CommunicationDocument): void {
+  const issued = document.number > 0;
+  button.disabled = issued;
+  button.textContent = issued ? 'Documento emitido' : 'Emitir documento';
 }
 
 function escapeHtml(value: string): string {
