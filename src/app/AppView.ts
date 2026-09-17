@@ -13,10 +13,11 @@ export interface AppElements {
 }
 
 export function renderShell(organization: OrganizationConfig, template: TemplateConfig): string {
+  const fields = template.fields.map((field) => renderField(field.id, field.label, field.defaultValue ?? '', field.placeholder, field.required)).join('');
   return `<main class="app-shell" style="--primary:${escapeHtml(organization.branding.primaryColor)};--secondary:${escapeHtml(organization.branding.secondaryColor)};--body-font:${escapeHtml(organization.branding.fontFamily)}">
     <header class="app-header"><div><p class="eyebrow">${escapeHtml(organization.name)}</p><h1>${escapeHtml(template.name)}</h1><output id="document-number" class="document-number">Rascunho</output></div><output id="save-status" class="save-status" aria-live="polite">Carregando…</output></header>
     <section class="editor-panel" aria-label="Editor de comunicação">
-      <div class="field-grid">${renderField('from', 'De', getField(template, 'from')?.defaultValue ?? '')}${renderField('to', 'Para', getField(template, 'to')?.defaultValue ?? '')}${renderField('subject', 'Assunto', getField(template, 'subject')?.defaultValue ?? '')}</div>
+      <div class="field-grid">${fields}</div>
       <div class="toolbar" role="toolbar" aria-label="Formatação">
         <div class="toolbar-group"><button type="button" data-action="bold" aria-label="Negrito"><strong>N</strong></button><button type="button" data-action="italic" aria-label="Itálico"><em>I</em></button><button type="button" data-action="underline" aria-label="Sublinhado"><u>S</u></button></div>
         <div class="toolbar-group"><button type="button" data-action="align-left">⟸</button><button type="button" data-action="align-center">≡</button><button type="button" data-action="align-right">⟹</button><button type="button" data-action="align-justify">≣</button></div>
@@ -44,9 +45,7 @@ export function getAppElements(root: HTMLElement): AppElements {
 
 export function renderDocument(document: CommunicationDocument, elements: AppElements, organization: OrganizationConfig, template: TemplateConfig): void {
   elements.editor.innerHTML = sanitizeHtml(document.bodyHtml);
-  populateField(elements.root, 'from', document.from);
-  populateField(elements.root, 'to', document.to);
-  populateField(elements.root, 'subject', document.subject);
+  for (const field of template.fields) populateField(elements.root, field.id, getDocumentField(document, field.id));
   renderDocumentNumber(elements.number, document);
   renderPreview(elements.paper, organization, template, document);
 }
@@ -58,21 +57,26 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   const signatureRole = organization.branding.signatureRole ?? '';
   const location = organization.branding.signatureLocation ?? '';
   const date = formatDate(new Date());
-  root.innerHTML = `<div class="paper-header">${header ? `<img src="${escapeHtml(header)}" alt="Cabeçalho">` : ''}</div><div class="paper-content"><div class="paper-title">COMUNICAÇÃO INTERNA <span>${document.number > 0 ? `Nº ${document.number}/${document.year}` : ''}</span></div>${renderPreviewField('De', document.from)}${renderPreviewField('Para', document.to)}${renderPreviewField('Assunto', document.subject)}<div class="paper-body">${sanitizeHtml(document.bodyHtml)}</div><div class="paper-signature"><div>${location ? `${escapeHtml(location)}, ${date}.` : date}</div><strong>${escapeHtml(signatureName)}</strong><div>${escapeHtml(signatureRole)}</div></div></div><div class="paper-footer">${footer ? `<img src="${escapeHtml(footer)}" alt="Rodapé">` : ''}</div>`;
+  const fields = template.fields.map((field) => renderPreviewField(field.label, getDocumentField(document, field.id))).join('');
+  root.innerHTML = `<div class="paper-header">${header ? `<img src="${escapeHtml(header)}" alt="Cabeçalho">` : ''}</div><div class="paper-content"><div class="paper-title">${escapeHtml(template.name)} <span>${document.number > 0 ? `Nº ${document.number}/${document.year}` : ''}</span></div>${fields}<div class="paper-body">${sanitizeHtml(document.bodyHtml)}</div><div class="paper-signature"><div>${location ? `${escapeHtml(location)}, ${date}.` : date}</div><strong>${escapeHtml(signatureName)}</strong><div>${escapeHtml(signatureRole)}</div></div></div><div class="paper-footer">${footer ? `<img src="${escapeHtml(footer)}" alt="Rodapé">` : ''}</div>`;
 }
 
 export function populateField(root: HTMLElement, name: string, value: string): void {
-  const field = root.querySelector<HTMLInputElement>(`[data-field="${name}"]`);
+  const field = root.querySelector<HTMLInputElement>(`[data-field="${escapeSelector(name)}"]`);
   if (field) field.value = value;
 }
 
-export function getFieldValue(root: HTMLElement, name: string): string { return root.querySelector<HTMLInputElement>(`[data-field="${name}"]`)?.value ?? ''; }
+export function getFieldValue(root: HTMLElement, name: string): string { return root.querySelector<HTMLInputElement>(`[data-field="${escapeSelector(name)}"]`)?.value ?? ''; }
 export function renderDocumentNumber(root: HTMLOutputElement, document: CommunicationDocument): void { root.textContent = document.number > 0 ? `Documento nº ${document.number}/${document.year}` : 'Rascunho'; }
 export function updateIssueButton(button: HTMLButtonElement, document: CommunicationDocument): void { const issued = document.number > 0; button.disabled = issued; button.textContent = issued ? 'Documento emitido' : 'Emitir documento'; }
 export function updatePdfButton(button: HTMLButtonElement, enabled: boolean): void { button.hidden = !enabled; }
 
+function getDocumentField(document: CommunicationDocument, id: string): string {
+  const value = (document as unknown as Record<string, unknown>)[id];
+  return typeof value === 'string' ? value : '';
+}
 function renderPreviewField(label: string, value: string): string { return `<div class="preview-field"><span>${escapeHtml(label)}</span><div>${escapeHtml(value)}</div></div>`; }
-function renderField(name: string, label: string, value: string): string { return `<label class="field"><span>${escapeHtml(label)}</span><input data-field="${escapeHtml(name)}" value="${escapeHtml(value)}" /></label>`; }
-function getField(template: TemplateConfig, id: string): TemplateConfig['fields'][number] | undefined { return template.fields.find((field) => field.id === id); }
+function renderField(name: string, label: string, value: string, placeholder?: string, required = false): string { return `<label class="field"><span>${escapeHtml(label)}</span><input data-field="${escapeHtml(name)}" value="${escapeHtml(value)}"${placeholder ? ` placeholder="${escapeHtml(placeholder)}"` : ''}${required ? ' required' : ''} /></label>`; }
 function formatDate(date: Date): string { return new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }).format(date); }
+function escapeSelector(value: string): string { return value.replace(/(["\\])/g, '\\$1'); }
 function escapeHtml(value: string): string { return value.replace(/[&<>"']/g, (character) => { const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }; return entities[character] ?? character; }); }
