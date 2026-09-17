@@ -5,22 +5,20 @@ export interface CreateDocumentInput {
   template: TemplateConfig;
   number: number;
   year: number;
-  from?: string;
-  to?: string;
-  subject?: string;
+  fields?: Record<string, string>;
 }
 
 export function createDocument(input: CreateDocumentInput): CommunicationDocument {
   const now = new Date().toISOString();
-  const field = (id: string) => input.template.fields.find((item) => item.id === id);
+  const fields = Object.fromEntries(
+    input.template.fields.map((field) => [field.id, input.fields?.[field.id] ?? field.defaultValue ?? '']),
+  );
 
   return {
     id: crypto.randomUUID(),
     number: input.number,
     year: input.year,
-    from: input.from ?? field('from')?.defaultValue ?? '',
-    to: input.to ?? field('to')?.defaultValue ?? '',
-    subject: input.subject ?? field('subject')?.defaultValue ?? '',
+    fields,
     bodyHtml: '',
     templateId: input.template.id,
     createdAt: now,
