@@ -1,6 +1,6 @@
-import type { CommunicationDocument } from '../types/document';
 import { DocumentNumbering } from '../storage/DocumentNumbering';
 import type { DocumentStorage } from '../storage/DocumentStorage';
+import type { CommunicationDocument } from '../types/document';
 
 export interface DocumentIssuerOptions {
   numbering?: DocumentNumbering;
