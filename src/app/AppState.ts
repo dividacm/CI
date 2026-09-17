@@ -8,24 +8,26 @@ export interface AppState {
 }
 
 export interface DocumentPatch {
-  from?: string;
-  to?: string;
-  subject?: string;
+  fields?: Record<string, string>;
   bodyHtml?: string;
 }
 
 export function updateDocument(state: AppState, patch: DocumentPatch): void {
-  Object.assign(state.document, patch, { updatedAt: new Date().toISOString() });
+  Object.assign(state.document, {
+    ...patch,
+    fields: patch.fields ? { ...state.document.fields, ...patch.fields } : state.document.fields,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 export function resetDocument(state: AppState): void {
-  const field = (id: string): string => state.template.fields.find((item) => item.id === id)?.defaultValue ?? '';
+  const fields = Object.fromEntries(
+    state.template.fields.map((field) => [field.id, field.defaultValue ?? '']),
+  );
   Object.assign(state.document, {
     number: 0,
     year: new Date().getFullYear(),
-    from: field('from'),
-    to: field('to'),
-    subject: field('subject'),
+    fields,
     bodyHtml: '',
     updatedAt: new Date().toISOString(),
   });
