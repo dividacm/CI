@@ -5,6 +5,9 @@ export interface BrandingConfig {
   fontFamily: string;
   headerAsset?: string;
   footerAsset?: string;
+  signatureName?: string;
+  signatureRole?: string;
+  signatureLocation?: string;
 }
 
 export interface FieldConfig {
