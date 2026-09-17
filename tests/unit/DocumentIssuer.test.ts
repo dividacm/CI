@@ -25,9 +25,7 @@ function createDraft(): CommunicationDocument {
     id: 'draft-1',
     number: 0,
     year: 2026,
-    from: 'GCCOB',
-    to: 'Equipe',
-    subject: 'Teste',
+    fields: { from: 'GCCOB', to: 'Equipe', subject: 'Teste' },
     bodyHtml: '<p>Conteúdo</p>',
     templateId: 'comunicacao-interna-v2',
     createdAt: '2026-01-01T00:00:00.000Z',
@@ -40,7 +38,7 @@ describe('DocumentIssuer', () => {
     localStorage.clear();
   });
 
-  it('allocates a definitive number and persists the issued document', () => {
+  it('aloca um número definitivo e persiste o documento emitido', () => {
     const storage = new MemoryStorage();
     const issuer = new DocumentIssuer({
       numbering: new DocumentNumbering(),
@@ -51,10 +49,11 @@ describe('DocumentIssuer', () => {
 
     expect(issued.number).toBe(1);
     expect(storage.load(issued.id)?.number).toBe(1);
+    expect(issued.fields).toEqual(createDraft().fields);
     expect(issued.bodyHtml).toBe('<p>Conteúdo</p>');
   });
 
-  it('does not silently issue an already numbered document', () => {
+  it('não emite silenciosamente um documento já numerado', () => {
     const storage = new MemoryStorage();
     const issuer = new DocumentIssuer({ storage });
     const document = { ...createDraft(), number: 7 };
