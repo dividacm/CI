@@ -17,6 +17,14 @@ export class Editor {
     this.bindHistory();
   }
 
+  getHtml(): string {
+    return this.root.innerHTML;
+  }
+
+  setHtml(html: string): void {
+    this.root.innerHTML = html;
+  }
+
   focus(): void {
     this.root.focus();
   }
