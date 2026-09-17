@@ -1,8 +1,8 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { DocumentIssuer } from '../../src/document/DocumentIssuer';
 import { DocumentNumbering } from '../../src/storage/DocumentNumbering';
-import type { CommunicationDocument } from '../../src/types/document';
 import type { DocumentStorage } from '../../src/storage/DocumentStorage';
+import type { CommunicationDocument } from '../../src/types/document';
 
 class MemoryStorage implements DocumentStorage {
   public documents = new Map<string, CommunicationDocument>();
