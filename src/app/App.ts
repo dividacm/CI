@@ -41,7 +41,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   updateIssueButton(elements.issueButton, state.document);
   updatePdfButton(elements.pdfButton, organization.features.pdfExport);
   const editor = new Editor(elements.editor);
-  const actions = createAppActions(state, elements.editor, autosave, issuer, (name) => getFieldValue(root, name));
+  const actions = createAppActions(state, editor, autosave, issuer, (name) => getFieldValue(root, name));
 
   const syncView = (): void => {
     updateIssueButton(elements.issueButton, state.document);
