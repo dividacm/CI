@@ -1,5 +1,5 @@
-import { DocumentIssuer } from '../document/DocumentIssuer';
 import { createDocument } from '../document/createDocument';
+import { DocumentIssuer } from '../document/DocumentIssuer';
 import { Editor } from '../editor/Editor';
 import { sanitizeHtml } from '../security/sanitizer';
 import { AutosaveController } from '../storage/AutosaveController';
@@ -10,6 +10,7 @@ import type { CommunicationDocument, DocumentStatus } from '../types/document';
 export function renderApp(root: HTMLElement, organization: OrganizationConfig): void {
   const template = organization.templates.find((item) => item.id === organization.defaultTemplateId);
   if (!template) throw new Error(`Template não encontrado: ${organization.defaultTemplateId}`);
+  const fieldDefault = (id: string): string => template.fields.find((field) => field.id === id)?.defaultValue ?? '';
 
   root.innerHTML = `
     <main class="app-shell">
@@ -23,9 +24,9 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
       </header>
       <section class="editor-panel" aria-label="Editor de comunicação">
         <div class="field-grid">
-          ${renderField('from', 'De', organization.fields.from.defaultValue)}
-          ${renderField('to', 'Para', organization.fields.to.defaultValue)}
-          ${renderField('subject', 'Assunto', organization.fields.subject.defaultValue)}
+          ${renderField('from', 'De', fieldDefault('from'))}
+          ${renderField('to', 'Para', fieldDefault('to'))}
+          ${renderField('subject', 'Assunto', fieldDefault('subject'))}
         </div>
         <div class="toolbar" role="toolbar" aria-label="Formatação">
           <button type="button" data-action="bold"><strong>B</strong></button>
@@ -121,8 +122,8 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'align-left': editor.align('left'); break;
         case 'align-center': editor.align('center'); break;
         case 'align-right': editor.align('right'); break;
-        case 'list-unordered': editor.list('unordered'); break;
-        case 'list-ordered': editor.list('ordered'); break;
+        case 'list-unordered': editor.list('ul'); break;
+        case 'list-ordered': editor.list('ol'); break;
         case 'upper': editor.toggleCase(true); break;
         case 'lower': editor.toggleCase(false); break;
         case 'copy': await editor.copy(); break;
@@ -166,9 +167,9 @@ function loadActiveDocument(
     template,
     year: new Date().getFullYear(),
     number: 0,
-    from: organization.fields.from.defaultValue,
-    to: organization.fields.to.defaultValue,
-    subject: organization.fields.subject.defaultValue,
+    from: template.fields.find((field) => field.id === 'from')?.defaultValue,
+    to: template.fields.find((field) => field.id === 'to')?.defaultValue,
+    subject: template.fields.find((field) => field.id === 'subject')?.defaultValue,
   });
   localStorage.setItem('ci:active-document', document.id);
   return document;
