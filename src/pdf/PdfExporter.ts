@@ -1,6 +1,3 @@
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-
 export interface PdfExporterOptions {
   filename?: string;
   scale?: number;
@@ -8,6 +5,11 @@ export interface PdfExporterOptions {
 
 export class PdfExporter {
   public async export(element: HTMLElement, options: PdfExporterOptions = {}): Promise<void> {
+    const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+      import('html2canvas'),
+      import('jspdf'),
+    ]);
+
     const canvas = await html2canvas(element, {
       scale: options.scale ?? 2,
       backgroundColor: '#ffffff',
