@@ -145,9 +145,15 @@ function appendSplittableBlockAcrossPages(
   header?: string,
   footer?: string,
 ): HTMLElement {
+  if (node.tagName === 'UL' || node.tagName === 'OL') {
+    return appendListAcrossPages(root, pages, current, node, layout, header, footer);
+  }
+
   const totalTextLength = node.textContent?.length ?? 0;
   if (!totalTextLength || !canSplitTextBlock(node)) {
-    current = getPageContent(createPage(root, layout, header, footer, pages));
+    if (current.childElementCount > 0) {
+      current = getPageContent(createPage(root, layout, header, footer, pages));
+    }
     current.appendChild(node);
     return current;
   }
@@ -178,7 +184,9 @@ function appendSplittableBlockAcrossPages(
   best = findPreferredBreak(node, best);
 
   if (best <= 0) {
-    current = getPageContent(createPage(root, layout, header, footer, pages));
+    if (current.childElementCount > 0) {
+      current = getPageContent(createPage(root, layout, header, footer, pages));
+    }
     current.appendChild(node);
     return current;
   }
@@ -206,6 +214,56 @@ function canSplitTextBlock(node: HTMLElement): boolean {
   return !['TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'UL', 'OL'].includes(node.tagName);
 }
 
+function appendListAcrossPages(
+  root: HTMLElement,
+  pages: HTMLElement[],
+  current: HTMLElement,
+  list: HTMLElement,
+  layout: PageLayoutConfig,
+  header?: string,
+  footer?: string,
+): HTMLElement {
+  const items = Array.from(list.children);
+  if (!items.length) {
+    if (current.childElementCount > 0) current = getPageContent(createPage(root, layout, header, footer, pages));
+    current.appendChild(list);
+    return current;
+  }
+
+  const listPage = (): HTMLElement => {
+    const pageList = list.cloneNode(false) as HTMLElement;
+    current.appendChild(pageList);
+    return pageList;
+  };
+
+  let target = listPage();
+  for (const item of items) {
+    const clone = item.cloneNode(true) as HTMLElement;
+    target.appendChild(clone);
+
+    if (!isOverflowing(current)) continue;
+
+    target.removeChild(clone);
+    if (target.childElementCount === 0) {
+      current.removeChild(target);
+      current.appendChild(clone);
+      if (isOverflowing(current)) {
+        current.removeChild(clone);
+        current = getPageContent(createPage(root, layout, header, footer, pages));
+        target = listPage();
+        target.appendChild(clone);
+      }
+      continue;
+    }
+
+    current = getPageContent(createPage(root, layout, header, footer, pages));
+    target = listPage();
+    target.appendChild(clone);
+  }
+
+  return current;
+}
+
 function cloneTextRange(node: Node, start: number, end: number): Node | null {
   const textLength = node.textContent?.length ?? 0;
   if (end <= 0 || start >= textLength || start >= end) return null;
@@ -230,6 +288,8 @@ function cloneTextRange(node: Node, start: number, end: number): Node | null {
 
     const element = source as HTMLElement;
     const clone = element.cloneNode(false) as HTMLElement;
+    if (element.tagName === 'BR') return clone;
+
     for (const child of Array.from(element.childNodes)) {
       const childClone = cloneRange(child);
       if (childClone) clone.appendChild(childClone);
@@ -247,8 +307,8 @@ function findPreferredBreak(node: HTMLElement, best: number): number {
   const segment = text.slice(windowStart, best);
   const breakOffset = Math.max(segment.lastIndexOf(' '), segment.lastIndexOf('\\n'), segment.lastIndexOf('\\t'));
   if (breakOffset < 0) return best;
-  const preferred = windowStart + breakOffset;
-  return preferred > 0 ? preferred : best;
+  const preferred = windowStart + breakOffset + 1;
+  return preferred > 0 && preferred <= best ? preferred : best;
 }
 
 function createPage(
