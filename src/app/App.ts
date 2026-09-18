@@ -11,8 +11,10 @@ import type { AppState } from './AppState';
 import { getAppElements, getFieldValue, renderDocument, renderPreview, renderShell, updateIssueButton, updatePdfButton } from './AppView';
 
 const ACTIVE_DOCUMENT_KEY = 'ci:active-document';
+const LAYOUT_CONFIG_KEY = 'ci:layout-config';
 
 export function renderApp(root: HTMLElement, organization: OrganizationConfig): void {
+  applySavedLayoutConfig(organization);
   const template = organization.templates.find((item) => item.id === organization.defaultTemplateId);
   if (!template) throw new Error(`Template não encontrado: ${organization.defaultTemplateId}`);
 
@@ -120,6 +122,29 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
     });
   });
 
+  root.querySelectorAll<HTMLInputElement>('[id^="margin-"]').forEach((input) => {
+    input.addEventListener('change', () => {
+      const key = input.id.replace('margin-', 'margin') as 'marginTopMm' | 'marginRightMm' | 'marginBottomMm' | 'marginLeftMm';
+      const value = clampMargin(Number(input.value));
+      organization.layout[key] = value;
+      input.value = String(value);
+      persistLayoutConfig(organization);
+      syncView();
+    });
+  });
+
+  root.querySelector<HTMLInputElement>('#header-asset')?.addEventListener('change', (event) => {
+    organization.branding.headerAsset = (event.currentTarget as HTMLInputElement).value.trim() || undefined;
+    persistLayoutConfig(organization);
+    syncView();
+  });
+
+  root.querySelector<HTMLInputElement>('#footer-asset')?.addEventListener('change', (event) => {
+    organization.branding.footerAsset = (event.currentTarget as HTMLInputElement).value.trim() || undefined;
+    persistLayoutConfig(organization);
+    syncView();
+  });
+
   root.querySelector<HTMLSelectElement>('#font-family')?.addEventListener('change', (event) => { editor.fontFamily((event.currentTarget as HTMLSelectElement).value); sync(); });
   root.querySelector<HTMLSelectElement>('#font-size')?.addEventListener('change', (event) => { editor.fontSize((event.currentTarget as HTMLSelectElement).value); sync(); });
   root.querySelector<HTMLInputElement>('#font-color')?.addEventListener('input', (event) => { editor.color((event.currentTarget as HTMLInputElement).value); sync(); });
@@ -134,4 +159,40 @@ function loadActiveDocument(template: TemplateConfig, storage: LocalStorageDocum
   const document = createDocument({ template, year: new Date().getFullYear(), number: 0 });
   localStorage.setItem(ACTIVE_DOCUMENT_KEY, document.id);
   return document;
+}
+
+function applySavedLayoutConfig(organization: OrganizationConfig): void {
+  const raw = localStorage.getItem(LAYOUT_CONFIG_KEY);
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw) as Partial<OrganizationConfig['layout']> & {
+      headerAsset?: string;
+      footerAsset?: string;
+    };
+    organization.layout = {
+      ...organization.layout,
+      ...Object.fromEntries(
+        Object.entries(saved)
+          .filter(([key, value]) => ['marginTopMm', 'marginRightMm', 'marginBottomMm', 'marginLeftMm'].includes(key) && typeof value === 'number')
+          .map(([key, value]) => [key, clampMargin(Number(value))]),
+      ),
+    };
+    if (saved.headerAsset !== undefined) organization.branding.headerAsset = saved.headerAsset || undefined;
+    if (saved.footerAsset !== undefined) organization.branding.footerAsset = saved.footerAsset || undefined;
+  } catch {
+    localStorage.removeItem(LAYOUT_CONFIG_KEY);
+  }
+}
+
+function persistLayoutConfig(organization: OrganizationConfig): void {
+  localStorage.setItem(LAYOUT_CONFIG_KEY, JSON.stringify({
+    ...organization.layout,
+    headerAsset: organization.branding.headerAsset ?? '',
+    footerAsset: organization.branding.footerAsset ?? '',
+  }));
+}
+
+function clampMargin(value: number): number {
+  if (!Number.isFinite(value)) return 20;
+  return Math.min(60, Math.max(0, Math.round(value)));
 }
