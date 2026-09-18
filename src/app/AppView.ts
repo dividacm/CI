@@ -82,7 +82,9 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   firstContent.insertAdjacentHTML('beforeend', `<div class="paper-title">${escapeHtml(template.name)} <span>${document.number > 0 ? `Nº ${document.number}/${document.year}` : ''}</span></div>${fields}`);
   appendBodyAcrossPages(root, pages, firstContent, body, organization.layout, header, footer);
 
-  let lastContent = getPageContent(pages[pages.length - 1]);
+  const lastPage = pages[pages.length - 1];
+  if (!lastPage) return;
+  let lastContent = getPageContent(lastPage);
   const signature = root.ownerDocument.createElement('div');
   signature.className = 'paper-signature';
   signature.innerHTML = `<div>${location ? `${escapeHtml(location)}, ${date}.` : date}</div><strong>${escapeHtml(signatureName)}</strong><div>${escapeHtml(signatureRole)}</div>`;
