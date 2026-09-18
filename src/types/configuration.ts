@@ -45,6 +45,7 @@ export interface OrganizationConfig {
   id: string;
   name: string;
   branding: BrandingConfig;
+  layout: PageLayoutConfig;
   defaultTemplateId: string;
   templates: TemplateConfig[];
   features: FeatureFlags;
