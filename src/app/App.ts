@@ -59,7 +59,18 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
     button.addEventListener('click', async () => {
       const action = button.dataset.action;
       if (action === 'save') { sync(); autosave.saveNow(); return; }
-      if (action === 'clear') { actions.clear(); renderDocument(state.document, elements, organization, template); autosave.saveNow(); return; }
+      if (action === 'clear') {
+        localStorage.removeItem(ACTIVE_DOCUMENT_KEY);
+        actions.clear();
+        const freshDocument = createDocument({ template, year: new Date().getFullYear(), number: 0 });
+        state.document = freshDocument;
+        localStorage.setItem(ACTIVE_DOCUMENT_KEY, freshDocument.id);
+        autosave.attach(freshDocument);
+        renderDocument(state.document, elements, organization, template);
+        updateIssueButton(elements.issueButton, state.document);
+        autosave.saveNow();
+        return;
+      }
       if (action === 'issue') {
         if (!actions.issue()) return;
         renderDocument(state.document, elements, organization, template);
