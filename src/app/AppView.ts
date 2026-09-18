@@ -221,7 +221,9 @@ function cloneTextRange(node: Node, start: number, end: number): Node | null {
       const overlapStart = Math.max(start, nodeStart) - nodeStart;
       const overlapEnd = Math.min(end, nodeEnd) - nodeStart;
       if (overlapStart >= overlapEnd) return null;
-      return source.ownerDocument.createTextNode(value.slice(overlapStart, overlapEnd));
+      const ownerDocument = source.ownerDocument;
+      if (!ownerDocument) throw new Error('Documento do nó de texto não encontrado.');
+      return ownerDocument.createTextNode(value.slice(overlapStart, overlapEnd));
     }
 
     if (source.nodeType !== Node.ELEMENT_NODE) return null;
