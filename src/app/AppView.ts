@@ -91,7 +91,7 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   signature.className = 'paper-signature';
   signature.innerHTML = `<div>${location ? `${escapeHtml(location)}, ${date}.` : date}</div><strong>${escapeHtml(signatureName)}</strong><div>${escapeHtml(signatureRole)}</div>`;
   lastContent.appendChild(signature);
-  if (lastContent.scrollHeight > lastContent.clientHeight && pages.length > 1) {
+  if (lastContent.scrollHeight > lastContent.clientHeight) {
     lastContent.removeChild(signature);
     lastContent = getPageContent(createPage(root, organization.layout, header, footer, pages));
     lastContent.appendChild(signature);
