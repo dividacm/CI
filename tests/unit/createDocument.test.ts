@@ -5,15 +5,10 @@ import type { TemplateConfig } from '../../src/types/configuration';
 const template: TemplateConfig = {
   id: 'comunicacao-interna-v2',
   name: 'Comunicação Interna',
-  page: {
-    width: '210mm',
-    height: '297mm',
-    margin: '20mm',
-  },
   fields: [
-    { id: 'from', label: 'De', type: 'text', defaultValue: 'Origem' },
-    { id: 'to', label: 'Para', type: 'text', defaultValue: 'Destino' },
-    { id: 'subject', label: 'Assunto', type: 'text', defaultValue: 'Assunto padrão' },
+    { id: 'from', label: 'De', required: true, defaultValue: 'Origem' },
+    { id: 'to', label: 'Para', required: true, defaultValue: 'Destino' },
+    { id: 'subject', label: 'Assunto', required: true, defaultValue: 'Assunto padrão' },
   ],
 };
 
@@ -24,9 +19,7 @@ describe('createDocument', () => {
     expect(document.id).toEqual(expect.any(String));
     expect(document.number).toBe(0);
     expect(document.year).toBe(2026);
-    expect(document.from).toBe('Origem');
-    expect(document.to).toBe('Destino');
-    expect(document.subject).toBe('Assunto padrão');
+    expect(document.fields).toEqual({ from: 'Origem', to: 'Destino', subject: 'Assunto padrão' });
     expect(document.bodyHtml).toBe('');
     expect(document.templateId).toBe(template.id);
     expect(document.createdAt).toEqual(expect.any(String));
@@ -38,14 +31,10 @@ describe('createDocument', () => {
       template,
       number: 12,
       year: 2026,
-      from: 'Área A',
-      to: 'Área B',
-      subject: 'Comunicado específico',
+      fields: { from: 'Área A', to: 'Área B', subject: 'Comunicado específico' },
     });
 
     expect(document.number).toBe(12);
-    expect(document.from).toBe('Área A');
-    expect(document.to).toBe('Área B');
-    expect(document.subject).toBe('Comunicado específico');
+    expect(document.fields).toEqual({ from: 'Área A', to: 'Área B', subject: 'Comunicado específico' });
   });
 });
