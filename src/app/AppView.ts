@@ -112,15 +112,96 @@ function appendBodyAcrossPages(
 ): void {
   const holder = root.ownerDocument.createElement('div');
   holder.innerHTML = html || '<p><br></p>';
+
   for (const source of Array.from(holder.children)) {
     const node = source.cloneNode(true) as HTMLElement;
+    current = appendNodeAcrossPages(root, pages, current, node, layout, header, footer);
+  }
+}
+
+function appendNodeAcrossPages(
+  root: HTMLElement,
+  pages: HTMLElement[],
+  current: HTMLElement,
+  node: HTMLElement,
+  layout: PageLayoutConfig,
+  header?: string,
+  footer?: string,
+): HTMLElement {
+  current.appendChild(node);
+  if (!isOverflowing(current)) return current;
+
+  current.removeChild(node);
+
+  if (hasOnlyTextContent(node)) {
+    return appendTextBlockAcrossPages(root, pages, current, node, layout, header, footer);
+  }
+
+  current = getPageContent(createPage(root, layout, header, footer, pages));
+  current.appendChild(node);
+  return current;
+}
+
+function appendTextBlockAcrossPages(
+  root: HTMLElement,
+  pages: HTMLElement[],
+  current: HTMLElement,
+  node: HTMLElement,
+  layout: PageLayoutConfig,
+  header?: string,
+  footer?: string,
+): HTMLElement {
+  const text = node.textContent ?? '';
+  if (!text) {
+    current = getPageContent(createPage(root, layout, header, footer, pages));
     current.appendChild(node);
+    return current;
+  }
+
+  let low = 0;
+  let high = text.length;
+  let best = 0;
+
+  while (low <= high) {
+    const middle = Math.floor((low + high) / 2);
+    const candidate = node.cloneNode(false) as HTMLElement;
+    candidate.textContent = text.slice(0, middle);
+    current.appendChild(candidate);
+
     if (isOverflowing(current)) {
-      current.removeChild(node);
-      current = getPageContent(createPage(root, layout, header, footer, pages));
-      current.appendChild(node);
+      current.removeChild(candidate);
+      high = middle - 1;
+    } else {
+      current.removeChild(candidate);
+      best = middle;
+      low = middle + 1;
     }
   }
+
+  if (best === 0) {
+    current = getPageContent(createPage(root, layout, header, footer, pages));
+    current.appendChild(node);
+    return current;
+  }
+
+  const firstPart = node.cloneNode(false) as HTMLElement;
+  firstPart.textContent = text.slice(0, best);
+  current.appendChild(firstPart);
+
+  const remainder = node.cloneNode(false) as HTMLElement;
+  remainder.textContent = text.slice(best).trimStart();
+  if (!remainder.textContent) return current;
+
+  current = getPageContent(createPage(root, layout, header, footer, pages));
+  current.appendChild(remainder);
+  if (isOverflowing(current)) {
+    return appendTextBlockAcrossPages(root, pages, current, remainder, layout, header, footer);
+  }
+  return current;
+}
+
+function hasOnlyTextContent(node: HTMLElement): boolean {
+  return Array.from(node.childNodes).every((child) => child.nodeType === Node.TEXT_NODE);
 }
 
 function createPage(
