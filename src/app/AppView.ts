@@ -133,16 +133,10 @@ function appendNodeAcrossPages(
 
   current.removeChild(node);
 
-  if (hasOnlyTextContent(node)) {
-    return appendTextBlockAcrossPages(root, pages, current, node, layout, header, footer);
-  }
-
-  current = getPageContent(createPage(root, layout, header, footer, pages));
-  current.appendChild(node);
-  return current;
+  return appendSplittableBlockAcrossPages(root, pages, current, node, layout, header, footer);
 }
 
-function appendTextBlockAcrossPages(
+function appendSplittableBlockAcrossPages(
   root: HTMLElement,
   pages: HTMLElement[],
   current: HTMLElement,
@@ -151,57 +145,108 @@ function appendTextBlockAcrossPages(
   header?: string,
   footer?: string,
 ): HTMLElement {
-  const text = node.textContent ?? '';
-  if (!text) {
+  const totalTextLength = node.textContent?.length ?? 0;
+  if (!totalTextLength || !canSplitTextBlock(node)) {
     current = getPageContent(createPage(root, layout, header, footer, pages));
     current.appendChild(node);
     return current;
   }
 
-  let low = 0;
-  let high = text.length;
+  let low = 1;
+  let high = totalTextLength;
   let best = 0;
 
   while (low <= high) {
     const middle = Math.floor((low + high) / 2);
-    const candidate = node.cloneNode(false) as HTMLElement;
-    candidate.textContent = text.slice(0, middle);
-    current.appendChild(candidate);
+    const candidate = cloneTextRange(node, 0, middle);
+    if (!candidate) {
+      low = middle + 1;
+      continue;
+    }
 
-    if (isOverflowing(current)) {
-      current.removeChild(candidate);
-      high = middle - 1;
-    } else {
-      current.removeChild(candidate);
+    current.appendChild(candidate);
+    const overflowing = isOverflowing(current);
+    current.removeChild(candidate);
+
+    if (overflowing) high = middle - 1;
+    else {
       best = middle;
       low = middle + 1;
     }
   }
 
-  if (best === 0) {
+  best = findPreferredBreak(node, best);
+
+  if (best <= 0) {
     current = getPageContent(createPage(root, layout, header, footer, pages));
     current.appendChild(node);
     return current;
   }
 
-  const firstPart = node.cloneNode(false) as HTMLElement;
-  firstPart.textContent = text.slice(0, best);
-  current.appendChild(firstPart);
+  const firstPart = cloneTextRange(node, 0, best);
+  const remainder = cloneTextRange(node, best, totalTextLength);
+  if (!firstPart) {
+    current = getPageContent(createPage(root, layout, header, footer, pages));
+    current.appendChild(node);
+    return current;
+  }
 
-  const remainder = node.cloneNode(false) as HTMLElement;
-  remainder.textContent = text.slice(best).trimStart();
-  if (!remainder.textContent) return current;
+  current.appendChild(firstPart);
+  if (!remainder || !(remainder.textContent ?? '').trim()) return current;
 
   current = getPageContent(createPage(root, layout, header, footer, pages));
   current.appendChild(remainder);
   if (isOverflowing(current)) {
-    return appendTextBlockAcrossPages(root, pages, current, remainder, layout, header, footer);
+    return appendSplittableBlockAcrossPages(root, pages, current, remainder as HTMLElement, layout, header, footer);
   }
   return current;
 }
 
-function hasOnlyTextContent(node: HTMLElement): boolean {
-  return Array.from(node.childNodes).every((child) => child.nodeType === Node.TEXT_NODE);
+function canSplitTextBlock(node: HTMLElement): boolean {
+  return !['TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'UL', 'OL'].includes(node.tagName);
+}
+
+function cloneTextRange(node: Node, start: number, end: number): Node | null {
+  const textLength = node.textContent?.length ?? 0;
+  if (end <= 0 || start >= textLength || start >= end) return null;
+
+  let offset = 0;
+
+  const cloneRange = (source: Node): Node | null => {
+    if (source.nodeType === Node.TEXT_NODE) {
+      const value = source.textContent ?? '';
+      const nodeStart = offset;
+      const nodeEnd = offset + value.length;
+      offset = nodeEnd;
+      const overlapStart = Math.max(start, nodeStart) - nodeStart;
+      const overlapEnd = Math.min(end, nodeEnd) - nodeStart;
+      if (overlapStart >= overlapEnd) return null;
+      return source.ownerDocument.createTextNode(value.slice(overlapStart, overlapEnd));
+    }
+
+    if (source.nodeType !== Node.ELEMENT_NODE) return null;
+
+    const element = source as HTMLElement;
+    const clone = element.cloneNode(false) as HTMLElement;
+    for (const child of Array.from(element.childNodes)) {
+      const childClone = cloneRange(child);
+      if (childClone) clone.appendChild(childClone);
+    }
+    return clone.childNodes.length ? clone : null;
+  };
+
+  return cloneRange(node);
+}
+
+function findPreferredBreak(node: HTMLElement, best: number): number {
+  if (best <= 0) return 0;
+  const text = node.textContent ?? '';
+  const windowStart = Math.max(0, best - 80);
+  const segment = text.slice(windowStart, best);
+  const breakOffset = Math.max(segment.lastIndexOf(' '), segment.lastIndexOf('\\n'), segment.lastIndexOf('\\t'));
+  if (breakOffset < 0) return best;
+  const preferred = windowStart + breakOffset;
+  return preferred > 0 ? preferred : best;
 }
 
 function createPage(
