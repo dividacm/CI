@@ -124,7 +124,14 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   root.querySelectorAll<HTMLInputElement>('[id^="margin-"]').forEach((input) => {
     input.addEventListener('change', () => {
-      const key = input.id.replace('margin-', 'margin') as 'marginTopMm' | 'marginRightMm' | 'marginBottomMm' | 'marginLeftMm';
+      const marginKeys: Record<string, 'marginTopMm' | 'marginRightMm' | 'marginBottomMm' | 'marginLeftMm'> = {
+        'margin-top': 'marginTopMm',
+        'margin-right': 'marginRightMm',
+        'margin-bottom': 'marginBottomMm',
+        'margin-left': 'marginLeftMm',
+      };
+      const key = marginKeys[input.id];
+      if (!key) return;
       const value = clampMargin(Number(input.value));
       organization.layout[key] = value;
       input.value = String(value);
