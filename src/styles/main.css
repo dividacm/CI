@@ -16,17 +16,28 @@ h1 { margin: 0; font-size: clamp(1.4rem, 3vw, 2rem); }
 .field > span { font-size: .8rem; font-weight: 700; color: #374151; }
 .field input { width: 100%; min-height: 40px; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; outline: none; }
 .field input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent); }
-.layout-settings { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; padding: 12px 18px; border-bottom: 1px solid #e5e7eb; background: #fbfcfd; }
-.layout-settings > strong { width: 100%; font-size: .85rem; }
+.tools-menu { flex: 1; min-width: 150px; }
+.tools-menu > summary { width: fit-content; min-height: 34px; padding: 7px 12px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; color: #1f2937; font-weight: 700; cursor: pointer; list-style: none; }
+.tools-menu > summary::-webkit-details-marker { display: none; }
+.tools-menu > summary::before { content: '▸'; display: inline-block; margin-right: 7px; transition: transform .15s ease; }
+.tools-menu[open] > summary::before { transform: rotate(90deg); }
+.tools-panel { display: grid; gap: 10px; margin-top: 10px; padding: 12px; border: 1px solid #d9dee5; border-radius: 10px; background: #fff; }
+.tool-section { min-width: 0; }
+.tool-section + .tool-section { padding-top: 10px; border-top: 1px solid #e5e7eb; }
+.tool-section h2 { margin: 0 0 8px; font-size: .78rem; text-transform: uppercase; letter-spacing: .05em; color: #4b5563; }
+.layout-settings { display: flex; flex-wrap: wrap; align-items: end; gap: 8px 10px; }
 .layout-setting, .asset-setting { display: grid; gap: 5px; }
 .layout-setting { grid-template-columns: auto 64px auto; align-items: center; }
 .layout-setting input { width: 64px; min-height: 34px; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 7px; }
 .asset-setting { min-width: 260px; flex: 1; }
 .field > span, .layout-setting > span, .asset-setting > span { font-size: .8rem; font-weight: 700; color: #374151; }
 .asset-setting input { width: 100%; min-height: 34px; padding: 5px 7px; border: 1px solid #cbd5e1; border-radius: 7px; }
-.toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; position: sticky; top: 0; z-index: 5; }
+.toolbar { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; padding: 8px 12px; border-bottom: 1px solid #e5e7eb; background: #f8fafc; position: sticky; top: 0; z-index: 5; }
+.toolbar-groups { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .toolbar-group { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding-right: 5px; border-right: 1px solid #d9dee5; }
 .toolbar-group:last-child { border-right: 0; }
+.toolbar-primary-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.toolbar-primary-actions button { min-width: 84px; }
 .toolbar button, .toolbar select, .toolbar input[type="color"] { min-height: 34px; padding: 4px 9px; border: 1px solid #cbd5e1; border-radius: 7px; background: #fff; color: #1f2937; }
 .toolbar button:hover, .toolbar select:hover { background: var(--secondary); }
 .toolbar button:focus-visible, .toolbar select:focus-visible, .toolbar input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
@@ -60,7 +71,7 @@ h1 { margin: 0; font-size: clamp(1.4rem, 3vw, 2rem); }
 .paper-signature strong { display: block; margin-top: 12px; }
 .paper-footer { position: absolute; bottom: 0; left: 0; right: 0; height: 25mm; display: flex; justify-content: center; align-items: end; overflow: hidden; }
 .paper-footer img { max-width: 100%; max-height: 25mm; object-fit: contain; }
-@media (max-width: 720px) { .layout-settings { display: grid; grid-template-columns: 1fr 1fr; } .asset-setting { min-width: 0; } }
+@media (max-width: 720px) { .layout-settings { display: grid; grid-template-columns: 1fr 1fr; } .asset-setting { min-width: 0; } .toolbar-primary-actions { width: 100%; } .toolbar-primary-actions button { flex: 1 1 auto; } .tools-menu { width: 100%; } .tools-menu > summary { width: 100%; text-align: center; } }
 [contenteditable] { caret-color: #111; }
 .hidden { display: none !important; }
 @media (max-width: 1050px) { .workspace { grid-template-columns: 1fr; } .editor-surface { border-right: 0; border-bottom: 1px solid #e5e7eb; } .preview-wrap { min-height: 680px; } }

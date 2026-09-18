@@ -24,25 +24,30 @@ export function renderShell(organization: OrganizationConfig, template: Template
     <header class="app-header"><div><p class="eyebrow">${escapeHtml(organization.name)}</p><h1>${escapeHtml(template.name)}</h1><output id="document-number" class="document-number">Rascunho</output></div><output id="save-status" class="save-status" aria-live="polite">Carregando…</output></header>
     <section class="editor-panel" aria-label="Editor de comunicação">
       <div class="field-grid">${fields}</div>
-      <div class="layout-settings" aria-label="Configuração da página">
-        <strong>Configuração da página</strong>
-        ${renderNumberSetting('Margem superior', 'margin-top', layout.marginTopMm)}
-        ${renderNumberSetting('Margem direita', 'margin-right', layout.marginRightMm)}
-        ${renderNumberSetting('Margem inferior', 'margin-bottom', layout.marginBottomMm)}
-        ${renderNumberSetting('Margem esquerda', 'margin-left', layout.marginLeftMm)}
-        <label class="asset-setting"><span>Cabeçalho (URL/caminho)</span><input id="header-asset" value="${escapeHtml(header)}" placeholder="/assets/cab.png" /></label>
-        <label class="asset-setting"><span>Rodapé (URL/caminho)</span><input id="footer-asset" value="${escapeHtml(footer)}" placeholder="/assets/rodape.png" /></label>
-      </div>
-      <div class="toolbar" role="toolbar" aria-label="Formatação">
-        <div class="toolbar-group"><button type="button" data-action="bold" aria-label="Negrito"><strong>N</strong></button><button type="button" data-action="italic" aria-label="Itálico"><em>I</em></button><button type="button" data-action="underline" aria-label="Sublinhado"><u>S</u></button></div>
-        <div class="toolbar-group"><button type="button" data-action="align-left">⟸</button><button type="button" data-action="align-center">≡</button><button type="button" data-action="align-right">⟹</button><button type="button" data-action="align-justify">≣</button></div>
-        <div class="toolbar-group"><button type="button" data-action="list-unordered">• Lista</button><button type="button" data-action="list-ordered">1. Lista</button></div>
-        <div class="toolbar-group"><select id="font-family" aria-label="Fonte"><option value="">Fonte</option><option>Arial</option><option>Times New Roman</option><option>Courier New</option><option>Carlito</option></select><button type="button" data-action="font-inc">A+</button><button type="button" data-action="font-dec">A−</button><select id="font-size" aria-label="Tamanho"><option value="">Tam</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option></select><input id="font-color" type="color" value="#111111" aria-label="Cor da fonte"></div>
-        <div class="toolbar-group"><button type="button" data-action="copy">Copiar</button><button type="button" data-action="cut">Recortar</button><button type="button" data-action="paste">Colar</button></div>
-        <div class="toolbar-group"><button type="button" data-action="upper">Aa↑</button><button type="button" data-action="lower">Aa↓</button><button type="button" data-action="clear-formatting">🧹</button><button type="button" data-action="undo">↶</button><button type="button" data-action="redo">↷</button></div>
-        <div class="toolbar-group toolbar-actions"><button type="button" data-action="pdf" class="action-orange">Baixar PDF</button><button type="button" data-action="clear" class="action-gray">Limpar</button><button type="button" data-action="save" class="action-green">Salvar</button><button type="button" data-action="issue" class="action-primary">Emitir documento</button></div>
-      </div>
-      <div class="workspace"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article><div class="preview-wrap"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div>
+      <div class="toolbar" role="toolbar" aria-label="Ferramentas do editor">
+        <div class="toolbar-actions toolbar-primary-actions"><button type="button" data-action="save" class="action-green">Salvar</button><button type="button" data-action="clear" class="action-gray">Limpar</button><button type="button" data-action="issue" class="action-primary">Emitir documento</button><button type="button" data-action="pdf" class="action-orange">Baixar PDF</button></div>
+        <details class="tools-menu">
+          <summary>Ferramentas</summary>
+          <div class="tools-panel">
+            <section class="tool-section" aria-labelledby="page-tools-title"><h2 id="page-tools-title">Layout A4</h2><div class="layout-settings">
+              ${renderNumberSetting('Margem superior', 'margin-top', layout.marginTopMm)}
+              ${renderNumberSetting('Margem direita', 'margin-right', layout.marginRightMm)}
+              ${renderNumberSetting('Margem inferior', 'margin-bottom', layout.marginBottomMm)}
+              ${renderNumberSetting('Margem esquerda', 'margin-left', layout.marginLeftMm)}
+              <label class="asset-setting"><span>Cabeçalho (URL/caminho)</span><input id="header-asset" value="${escapeHtml(header)}" placeholder="/assets/cab.png" /></label>
+              <label class="asset-setting"><span>Rodapé (URL/caminho)</span><input id="footer-asset" value="${escapeHtml(footer)}" placeholder="/assets/rodape.png" /></label>
+            </div></section>
+            <section class="tool-section" aria-labelledby="format-tools-title"><h2 id="format-tools-title">Formatação</h2><div class="toolbar-groups">
+              <div class="toolbar-group"><button type="button" data-action="bold" aria-label="Negrito"><strong>N</strong></button><button type="button" data-action="italic" aria-label="Itálico"><em>I</em></button><button type="button" data-action="underline" aria-label="Sublinhado"><u>S</u></button></div>
+              <div class="toolbar-group"><button type="button" data-action="align-left">⟸</button><button type="button" data-action="align-center">≡</button><button type="button" data-action="align-right">⟹</button><button type="button" data-action="align-justify">≣</button></div>
+              <div class="toolbar-group"><button type="button" data-action="list-unordered">• Lista</button><button type="button" data-action="list-ordered">1. Lista</button></div>
+              <div class="toolbar-group"><select id="font-family" aria-label="Fonte"><option value="">Fonte</option><option>Arial</option><option>Times New Roman</option><option>Courier New</option><option>Carlito</option></select><button type="button" data-action="font-inc">A+</button><button type="button" data-action="font-dec">A−</button><select id="font-size" aria-label="Tamanho"><option value="">Tam</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option></select><input id="font-color" type="color" value="#111111" aria-label="Cor da fonte"></div>
+              <div class="toolbar-group"><button type="button" data-action="copy">Copiar</button><button type="button" data-action="cut">Recortar</button><button type="button" data-action="paste">Colar</button></div>
+              <div class="toolbar-group"><button type="button" data-action="upper">Aa↑</button><button type="button" data-action="lower">Aa↓</button><button type="button" data-action="clear-formatting">🧹</button><button type="button" data-action="undo">↶</button><button type="button" data-action="redo">↷</button></div>
+            </div></section>
+          </div>
+        </details>
+      </div>      <div class="workspace"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article><div class="preview-wrap"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div>
     </section>
   </main>`;
 }
