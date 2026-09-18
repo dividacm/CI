@@ -2,10 +2,6 @@ import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig, PageLayoutConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
 
-const PAGE_HEIGHT_MM = 297;
-const HEADER_HEIGHT_MM = 30;
-const FOOTER_HEIGHT_MM = 25;
-
 export interface AppElements {
   root: HTMLElement;
   editor: HTMLElement;
@@ -87,7 +83,7 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   appendBodyAcrossPages(root, pages, firstContent, body, organization.layout, header, footer);
 
   let lastContent = getPageContent(pages[pages.length - 1]);
-  const signature = document.createElement('div');
+  const signature = root.ownerDocument.createElement('div');
   signature.className = 'paper-signature';
   signature.innerHTML = `<div>${location ? `${escapeHtml(location)}, ${date}.` : date}</div><strong>${escapeHtml(signatureName)}</strong><div>${escapeHtml(signatureRole)}</div>`;
   lastContent.appendChild(signature);
@@ -107,7 +103,7 @@ function appendBodyAcrossPages(
   header?: string,
   footer?: string,
 ): void {
-  const holder = document.createElement('div');
+  const holder = root.ownerDocument.createElement('div');
   holder.innerHTML = html || '<p><br></p>';
   for (const source of Array.from(holder.children)) {
     const node = source.cloneNode(true) as HTMLElement;
