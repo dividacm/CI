@@ -1,3 +1,10 @@
+export interface PageLayoutConfig {
+  marginTopMm: number;
+  marginRightMm: number;
+  marginBottomMm: number;
+  marginLeftMm: number;
+}
+
 export interface BrandingConfig {
   organizationName: string;
   primaryColor: string;
