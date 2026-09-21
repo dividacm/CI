@@ -109,7 +109,7 @@ function removeEmptyPages(pages: HTMLElement[]): void {
     const page = pages[index];
     const content = getPageContent(page);
     if (hasRenderableContent(content)) continue;
-    page.remove();
+    page.parentNode?.removeChild(page);
     pages.splice(index, 1);
   }
 }
