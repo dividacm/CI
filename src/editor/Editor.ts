@@ -194,9 +194,9 @@ export class Editor {
         case key === 'j' && !event.shiftKey: event.preventDefault(); return this.align('justify');
         case key === 'z': event.preventDefault(); return event.shiftKey ? this.redo() : this.undo();
         case key === 'y': event.preventDefault(); return this.redo();
-        case key === 'c': event.preventDefault(); return void this.copy() as unknown as boolean;
-        case key === 'x': event.preventDefault(); return void this.cut() as unknown as boolean;
-        case key === 'v': event.preventDefault(); return void this.pastePlainText() as unknown as boolean;
+        case key === 'c': event.preventDefault(); return true;
+        case key === 'x': event.preventDefault(); return true;
+        case key === 'v': event.preventDefault(); return true;
         case code === 'Digit7' && event.shiftKey: event.preventDefault(); return this.list('ol');
         case code === 'Digit8' && event.shiftKey: event.preventDefault(); return this.list('ul');
         default: return false;
