@@ -113,10 +113,21 @@ function appendBodyAcrossPages(
   const holder = root.ownerDocument.createElement('div');
   holder.innerHTML = html || '<p><br></p>';
 
-  for (const source of Array.from(holder.children)) {
-    const node = source.cloneNode(true) as HTMLElement;
+  for (const source of Array.from(holder.childNodes)) {
+    const node = source.nodeType === Node.ELEMENT_NODE
+      ? (source.cloneNode(true) as HTMLElement)
+      : wrapTextNode(source, root.ownerDocument);
+    if (!node) continue;
     current = appendNodeAcrossPages(root, pages, current, node, layout, header, footer);
   }
+}
+
+function wrapTextNode(source: Node, ownerDocument: Document): HTMLElement | null {
+  const text = source.textContent ?? '';
+  if (!text.trim()) return null;
+  const paragraph = ownerDocument.createElement('p');
+  paragraph.textContent = text;
+  return paragraph;
 }
 
 function appendNodeAcrossPages(
