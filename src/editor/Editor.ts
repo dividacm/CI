@@ -183,33 +183,35 @@ export class Editor {
       return true;
     }
 
-    const changed = (() => {
-      switch (true) {
-        case key === 'b': event.preventDefault(); return this.bold();
-        case key === 'i': event.preventDefault(); return this.italic();
-        case key === 'u': event.preventDefault(); return this.underline();
-        case key === 'l' && !event.shiftKey: event.preventDefault(); return this.align('left');
-        case key === 'e' && !event.shiftKey: event.preventDefault(); return this.align('center');
-        case key === 'r' && !event.shiftKey: event.preventDefault(); return this.align('right');
-        case key === 'j' && !event.shiftKey: event.preventDefault(); return this.align('justify');
-        case key === 'z': event.preventDefault(); return event.shiftKey ? this.redo() : this.undo();
-        case key === 'y': event.preventDefault(); return this.redo();
-        case key === 'c': event.preventDefault(); return true;
-        case key === 'x': event.preventDefault(); return true;
-        case key === 'v': event.preventDefault(); return true;
-        case code === 'Digit7' && event.shiftKey: event.preventDefault(); return this.list('ol');
-        case code === 'Digit8' && event.shiftKey: event.preventDefault(); return this.list('ul');
-        default: return false;
-      }
-    })();
+    if (key === 'z' || key === 'y') {
+      event.preventDefault();
+      const changed = key === 'y' || event.shiftKey ? this.redo() : this.undo();
+      if (changed) this.notifyChange();
+      return true;
+    }
 
     if (key === 'c' || key === 'x' || key === 'v') {
+      event.preventDefault();
       void this.handleClipboardShortcut(key);
       return true;
     }
 
+    let changed = false;
+    switch (true) {
+      case key === 'b': event.preventDefault(); changed = this.bold(); break;
+      case key === 'i': event.preventDefault(); changed = this.italic(); break;
+      case key === 'u': event.preventDefault(); changed = this.underline(); break;
+      case key === 'l' && !event.shiftKey: event.preventDefault(); changed = this.align('left'); break;
+      case key === 'e' && !event.shiftKey: event.preventDefault(); changed = this.align('center'); break;
+      case key === 'r' && !event.shiftKey: event.preventDefault(); changed = this.align('right'); break;
+      case key === 'j' && !event.shiftKey: event.preventDefault(); changed = this.align('justify'); break;
+      case code === 'Digit7' && event.shiftKey: event.preventDefault(); changed = this.list('ol'); break;
+      case code === 'Digit8' && event.shiftKey: event.preventDefault(); changed = this.list('ul'); break;
+      default: return false;
+    }
+
     if (changed) this.notifyChange();
-    return event.defaultPrevented;
+    return true;
   }
 
   private async handleClipboardShortcut(key: string): Promise<void> {
