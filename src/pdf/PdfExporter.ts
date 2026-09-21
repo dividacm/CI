@@ -25,29 +25,14 @@ export class PdfExporter {
       const width = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       const height = (canvas.height * width) / canvas.width;
+      const fitScale = Math.min(1, pageHeight / height);
+      const renderWidth = width * fitScale;
+      const renderHeight = height * fitScale;
+      const x = (width - renderWidth) / 2;
+      const y = (pageHeight - renderHeight) / 2;
 
       if (index > 0) pdf.addPage();
-      if (height <= pageHeight) {
-        pdf.addImage(image, 'PNG', 0, 0, width, height);
-        continue;
-      }
-
-      const pagePixelHeight = Math.floor((canvas.width * pageHeight) / width);
-      let offset = 0;
-      let firstSlice = true;
-      while (offset < canvas.height) {
-        if (!firstSlice) pdf.addPage();
-        const sliceHeight = Math.min(pagePixelHeight, canvas.height - offset);
-        const slice = document.createElement('canvas');
-        slice.width = canvas.width;
-        slice.height = sliceHeight;
-        const context = slice.getContext('2d');
-        if (!context) throw new Error('Não foi possível preparar a paginação do PDF.');
-        context.drawImage(canvas, 0, offset, canvas.width, sliceHeight, 0, 0, canvas.width, sliceHeight);
-        pdf.addImage(slice.toDataURL('image/png'), 'PNG', 0, 0, width, (sliceHeight * width) / canvas.width);
-        firstSlice = false;
-        offset += sliceHeight;
-      }
+      pdf.addImage(image, 'PNG', x, y, renderWidth, renderHeight);
     }
 
     pdf.save(options.filename ?? 'comunicacao_interna.pdf');
