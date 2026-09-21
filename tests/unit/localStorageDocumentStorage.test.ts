@@ -6,9 +6,7 @@ const document: CommunicationDocument = {
   id: 'doc-1',
   number: 1,
   year: 2026,
-  from: 'Origem',
-  to: 'Destino',
-  subject: 'Assunto',
+  fields: { from: 'Origem', to: 'Destino', subject: 'Assunto' },
   bodyHtml: '<p>Olá<script>alert(1)</script></p>',
   templateId: 'default',
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -27,6 +25,7 @@ describe('LocalStorageDocumentStorage', () => {
     const loaded = storage.load(document.id);
 
     expect(loaded?.bodyHtml).toBe('<p>Olá</p>');
+    expect(loaded?.fields).toEqual(document.fields);
     expect(loaded?.updatedAt).not.toBe(document.updatedAt);
   });
 
@@ -34,5 +33,25 @@ describe('LocalStorageDocumentStorage', () => {
     localStorage.setItem('ci:document:doc-1', '{invalid');
 
     expect(new LocalStorageDocumentStorage().load('doc-1')).toBeNull();
+  });
+
+  it('migra documentos legados com campos no nível raiz', () => {
+    localStorage.setItem(
+      'ci:document:legacy-1',
+      JSON.stringify({
+        ...document,
+        id: 'legacy-1',
+        fields: undefined,
+        from: 'Origem legada',
+        to: 'Destino legado',
+        subject: 'Assunto legado',
+      }),
+    );
+
+    expect(new LocalStorageDocumentStorage().load('legacy-1')?.fields).toEqual({
+      from: 'Origem legada',
+      to: 'Destino legado',
+      subject: 'Assunto legado',
+    });
   });
 });

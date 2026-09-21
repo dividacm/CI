@@ -1,3 +1,10 @@
+export interface PageLayoutConfig {
+  marginTopMm: number;
+  marginRightMm: number;
+  marginBottomMm: number;
+  marginLeftMm: number;
+}
+
 export interface BrandingConfig {
   organizationName: string;
   primaryColor: string;
@@ -38,6 +45,7 @@ export interface OrganizationConfig {
   id: string;
   name: string;
   branding: BrandingConfig;
+  layout: PageLayoutConfig;
   defaultTemplateId: string;
   templates: TemplateConfig[];
   features: FeatureFlags;

@@ -1,9 +1,9 @@
-import { DocumentIssuer } from '../document/DocumentIssuer';
+import type { DocumentIssuer } from '../document/DocumentIssuer';
 import type { Editor } from '../editor/Editor';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { AutosaveController } from '../storage/AutosaveController';
 import type { AppState } from './AppState';
-import { resetDocument, replaceDocument, updateDocument } from './AppState';
+import { replaceDocument, resetDocument, updateDocument } from './AppState';
 
 export interface AppActions {
   sync(): void;

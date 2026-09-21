@@ -14,6 +14,12 @@ export const defaultOrganization: OrganizationConfig = {
     signatureRole: 'Gerente de Valores em Carteira e Cobrança',
     signatureLocation: 'Campo Mourão',
   },
+  layout: {
+    marginTopMm: 10,
+    marginRightMm: 20,
+    marginBottomMm: 20,
+    marginLeftMm: 20,
+  },
   defaultTemplateId: 'comunicacao-interna-v2',
   templates: [
     {
@@ -40,8 +46,6 @@ export const defaultOrganization: OrganizationConfig = {
           placeholder: 'Informe o assunto da comunicação',
         },
       ],
-      headerAsset: '/assets/cab.png',
-      footerAsset: '/assets/rodape.png',
     },
   ],
   features: {
