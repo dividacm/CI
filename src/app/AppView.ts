@@ -100,16 +100,17 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
     lastContent.appendChild(signature);
   }
 
-  removeTrailingEmptyPages(pages);
+  removeEmptyPages(pages);
 }
 
-function removeTrailingEmptyPages(pages: HTMLElement[]): void {
-  while (pages.length > 1) {
-    const lastPage = pages[pages.length - 1];
-    const content = getPageContent(lastPage);
-    if (hasRenderableContent(content)) return;
-    lastPage.remove();
-    pages.pop();
+function removeEmptyPages(pages: HTMLElement[]): void {
+  for (let index = pages.length - 1; index >= 0; index -= 1) {
+    if (pages.length === 1) break;
+    const page = pages[index];
+    const content = getPageContent(page);
+    if (hasRenderableContent(content)) continue;
+    page.remove();
+    pages.splice(index, 1);
   }
 }
 
