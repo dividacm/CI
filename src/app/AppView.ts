@@ -99,6 +99,23 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
     lastContent = getPageContent(createPage(root, organization.layout, header, footer, pages));
     lastContent.appendChild(signature);
   }
+
+  removeTrailingEmptyPages(pages);
+}
+
+function removeTrailingEmptyPages(pages: HTMLElement[]): void {
+  while (pages.length > 1) {
+    const lastPage = pages[pages.length - 1];
+    const content = getPageContent(lastPage);
+    if (hasRenderableContent(content)) return;
+    lastPage.remove();
+    pages.pop();
+  }
+}
+
+function hasRenderableContent(content: HTMLElement): boolean {
+  if (content.textContent?.trim()) return true;
+  return Boolean(content.querySelector('img, svg, table, ul, ol, hr, iframe, video, audio'));
 }
 
 function appendBodyAcrossPages(
