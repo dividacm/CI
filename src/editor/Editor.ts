@@ -214,7 +214,7 @@ export class Editor {
 
   private async handleClipboardShortcut(key: string): Promise<void> {
     const changed = key === 'c' ? await this.copy() : key === 'x' ? await this.cut() : await this.pastePlainText();
-    if (changed) this.notifyChange();
+    if (changed && key !== 'c') this.notifyChange();
   }
 
   private restoreSavedSelection(): void {
