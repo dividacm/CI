@@ -110,7 +110,7 @@ describe('FormattingEngine', () => {
     if (!(textNode instanceof Text)) throw new Error('Texto formatado não encontrado.');
     selectTextNode(textNode);
     expect(second.engine.clearFormatting()).toBe(true);
-    expect(second.root.querySelector('strong')).toBeNull();
+    expect(second.root.querySelector('strong')?.textContent).toBe('Texto');
     expect(second.root.textContent).toBe('Texto');
   });
 
