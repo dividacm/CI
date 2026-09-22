@@ -45,14 +45,22 @@ describe('ClipboardService', () => {
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Texto');
   });
 
-  it('usa execCommand quando a API de clipboard falha', async () => {
+  it('usa fallback de cópia quando a API de clipboard falha', async () => {
     const root = setup();
     navigator.clipboard.writeText.mockRejectedValueOnce(new Error('blocked'));
-    const execCommand = vi.spyOn(document, 'execCommand').mockReturnValue(true);
+    const originalExecCommand = document.execCommand;
+    Object.defineProperty(document, 'execCommand', {
+      configurable: true,
+      value: vi.fn().mockReturnValue(true),
+    });
     const clipboard = new ClipboardService({ rangeEngine: new RangeEngine(root) });
     expect(await clipboard.copy()).toBe(true);
-    expect(execCommand).toHaveBeenCalledWith('copy');
-    execCommand.mockRestore();
+    expect(document.execCommand).toHaveBeenCalledWith('copy');
+    if (originalExecCommand) {
+      Object.defineProperty(document, 'execCommand', { configurable: true, value: originalExecCommand });
+    } else {
+      delete (document as Document & { execCommand?: unknown }).execCommand;
+    }
   });
 
   it('recorta a seleção depois de copiar', async () => {
