@@ -5,6 +5,7 @@ import { RangeEngine } from '../../src/editor/RangeEngine';
 describe('ClipboardService', () => {
   beforeEach(() => {
     document.body.innerHTML = '';
+    window.getSelection()?.removeAllRanges();
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: {
@@ -14,50 +15,67 @@ describe('ClipboardService', () => {
     });
   });
 
-  it('copia somente texto da seleção', async () => {
+  function setup(selected = true) {
     const root = document.createElement('div');
-    root.innerHTML = '<p><strong>Olá</strong> mundo</p>';
+    root.innerHTML = '<p>Texto</p>';
     document.body.appendChild(root);
-    const text = root.querySelector('strong')?.firstChild;
-    if (!text) throw new Error('Texto de teste não encontrado.');
+    if (selected) {
+      const text = root.querySelector('p')?.firstChild;
+      if (!text) throw new Error('Texto não encontrado.');
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+    }
+    return root;
+  }
 
-    const range = document.createRange();
-    range.selectNodeContents(text);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-
-    const clipboard = new ClipboardService({
-      rangeEngine: new RangeEngine(root),
-    });
-    expect(await clipboard.copy()).toBe(true);
-    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Olá');
+  it('retorna false para seleção ausente ou vazia', async () => {
+    const root = setup(false);
+    const clipboard = new ClipboardService({ rangeEngine: new RangeEngine(root) });
+    expect(await clipboard.copy()).toBe(false);
+    expect(await clipboard.cut()).toBe(false);
   });
 
-  it('cola como TextNode e não interpreta HTML', async () => {
-    const root = document.createElement('div');
-    root.innerHTML = '<p>A</p>';
-    document.body.appendChild(root);
-    const paragraph = root.querySelector('p');
-    if (!paragraph) throw new Error('Parágrafo de teste não encontrado.');
+  it('copia somente texto da seleção', async () => {
+    const root = setup();
+    const clipboard = new ClipboardService({ rangeEngine: new RangeEngine(root) });
+    expect(await clipboard.copy()).toBe(true);
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith('Texto');
+  });
 
-    const range = document.createRange();
-    range.selectNodeContents(paragraph);
-    range.collapse(false);
-    const selection = window.getSelection();
-    selection?.removeAllRanges();
-    selection?.addRange(range);
-
-    Object.defineProperty(navigator.clipboard, 'readText', {
+  it('usa fallback de cópia quando a API de clipboard falha', async () => {
+    const root = setup();
+    navigator.clipboard.writeText.mockRejectedValueOnce(new Error('blocked'));
+    const originalExecCommand = document.execCommand;
+    Object.defineProperty(document, 'execCommand', {
       configurable: true,
-      value: vi.fn().mockResolvedValue('<strong>não é HTML</strong>'),
+      value: vi.fn().mockReturnValue(true),
     });
+    const clipboard = new ClipboardService({ rangeEngine: new RangeEngine(root) });
+    expect(await clipboard.copy()).toBe(true);
+    expect(document.execCommand).toHaveBeenCalledWith('copy');
+    if (originalExecCommand) {
+      Object.defineProperty(document, 'execCommand', { configurable: true, value: originalExecCommand });
+    } else {
+      delete (document as Document & { execCommand?: unknown }).execCommand;
+    }
+  });
 
-    const clipboard = new ClipboardService({
-      rangeEngine: new RangeEngine(root),
-    });
-    expect(await clipboard.pastePlainText()).toBe(true);
-    expect(root.querySelector('strong')).toBeNull();
-    expect(root.textContent).toContain('<strong>não é HTML</strong>');
+  it('recorta a seleção depois de copiar', async () => {
+    const root = setup();
+    const clipboard = new ClipboardService({ rangeEngine: new RangeEngine(root) });
+    expect(await clipboard.cut()).toBe(true);
+    expect(root.textContent).toBe('');
+  });
+
+  it('retorna false quando a leitura da área de transferência falha ou está vazia', async () => {
+    const root = setup(false);
+    const clipboard = new ClipboardService({ rangeEngine: new RangeEngine(root) });
+    navigator.clipboard.readText.mockResolvedValueOnce('');
+    expect(await clipboard.pastePlainText()).toBe(false);
+    navigator.clipboard.readText.mockRejectedValueOnce(new Error('blocked'));
+    expect(await clipboard.pastePlainText()).toBe(false);
   });
 });

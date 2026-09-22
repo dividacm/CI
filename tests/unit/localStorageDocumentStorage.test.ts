@@ -18,37 +18,53 @@ describe('LocalStorageDocumentStorage', () => {
     localStorage.clear();
   });
 
-  it('salva e carrega o documento sanitizado', () => {
+  it('retorna null para documento inexistente e dados JSON inválidos', () => {
     const storage = new LocalStorageDocumentStorage();
+    expect(storage.load('missing')).toBeNull();
+    localStorage.setItem('ci:document:doc-1', '{invalid');
+    expect(storage.load('doc-1')).toBeNull();
+  });
 
+  it('salva, carrega, remove e sanitiza o documento', () => {
+    const storage = new LocalStorageDocumentStorage();
     storage.save(document);
     const loaded = storage.load(document.id);
-
     expect(loaded?.bodyHtml).toBe('<p>Olá</p>');
     expect(loaded?.fields).toEqual(document.fields);
     expect(loaded?.updatedAt).not.toBe(document.updatedAt);
+
+    storage.remove(document.id);
+    expect(storage.load(document.id)).toBeNull();
   });
 
-  it('retorna null para dados JSON inválidos', () => {
-    localStorage.setItem('ci:document:doc-1', '{invalid');
-
-    expect(new LocalStorageDocumentStorage().load('doc-1')).toBeNull();
-  });
-
-  it('migra documentos legados com campos no nível raiz', () => {
+  it('migra documentos legados e filtra campos que não são texto', () => {
     localStorage.setItem(
       'ci:document:legacy-1',
       JSON.stringify({
         ...document,
         id: 'legacy-1',
+        fields: { from: 'Origem', invalid: 123, empty: null },
+        from: 'Origem legada',
+        to: 'Destino legado',
+        subject: 'Assunto legado',
+      }),
+    );
+    expect(new LocalStorageDocumentStorage().load('legacy-1')?.fields).toEqual({
+      from: 'Origem',
+    });
+
+    localStorage.setItem(
+      'ci:document:legacy-2',
+      JSON.stringify({
+        ...document,
+        id: 'legacy-2',
         fields: undefined,
         from: 'Origem legada',
         to: 'Destino legado',
         subject: 'Assunto legado',
       }),
     );
-
-    expect(new LocalStorageDocumentStorage().load('legacy-1')?.fields).toEqual({
+    expect(new LocalStorageDocumentStorage().load('legacy-2')?.fields).toEqual({
       from: 'Origem legada',
       to: 'Destino legado',
       subject: 'Assunto legado',
