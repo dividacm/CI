@@ -21,6 +21,17 @@ describe('HistoryManager', () => {
     expect(editor.innerHTML).toBe('<p>B</p>');
   });
 
+  it('retorna false quando não há undo ou redo disponível e clear limpa as pilhas', () => {
+    const editor = document.createElement('div');
+    const history = new HistoryManager();
+    expect(history.undo(editor)).toBe(false);
+    expect(history.redo(editor)).toBe(false);
+    history.captureSnapshot('A');
+    history.clear();
+    expect(history.undo(editor)).toBe(false);
+    expect(history.redo(editor)).toBe(false);
+  });
+
   it('descarta o redo quando um novo estado é capturado', () => {
     const editor = document.createElement('div');
     const history = new HistoryManager();
