@@ -20,18 +20,32 @@ function selectContents(root: HTMLElement): void {
   selection?.addRange(range);
 }
 
+function selectTextNode(node: Text): void {
+  const range = document.createRange();
+  range.selectNodeContents(node);
+  const selection = window.getSelection();
+  selection?.removeAllRanges();
+  selection?.addRange(range);
+}
+
 describe('FormattingEngine', () => {
   beforeEach(() => document.body.innerHTML = '');
 
   it('aplica negrito, itálico e sublinhado', () => {
-    const { root, engine } = setup();
-    selectContents(root);
-    expect(engine.bold()).toBe(true);
-    selectContents(root);
-    expect(engine.italic()).toBe(true);
-    selectContents(root);
-    expect(engine.underline()).toBe(true);
-    expect(root.innerHTML).toContain('<u>');
+    const bold = setup();
+    selectContents(bold.root);
+    expect(bold.engine.bold()).toBe(true);
+    expect(bold.root.querySelector('strong')).not.toBeNull();
+
+    const italic = setup();
+    selectContents(italic.root);
+    expect(italic.engine.italic()).toBe(true);
+    expect(italic.root.querySelector('em')).not.toBeNull();
+
+    const underline = setup();
+    selectContents(underline.root);
+    expect(underline.engine.underline()).toBe(true);
+    expect(underline.root.querySelector('u')).not.toBeNull();
   });
 
   it('alinha o bloco selecionado', () => {
@@ -42,14 +56,20 @@ describe('FormattingEngine', () => {
   });
 
   it('aplica fonte, tamanho e cor', () => {
-    const { root, engine } = setup();
-    selectContents(root);
-    expect(engine.setFontFamily('Carlito')).toBe(true);
-    selectContents(root);
-    expect(engine.setFontSize('18px')).toBe(true);
-    selectContents(root);
-    expect(engine.setColor('#123456')).toBe(true);
-    expect(root.querySelector('span')).not.toBeNull();
+    const family = setup();
+    selectContents(family.root);
+    expect(family.engine.setFontFamily('Carlito')).toBe(true);
+    expect(family.root.querySelector('span')).not.toBeNull();
+
+    const size = setup();
+    selectContents(size.root);
+    expect(size.engine.setFontSize('18px')).toBe(true);
+    expect(size.root.querySelector('span')).not.toBeNull();
+
+    const color = setup();
+    selectContents(color.root);
+    expect(color.engine.setColor('#123456')).toBe(true);
+    expect(color.root.querySelector('span')).not.toBeNull();
   });
 
   it('insere lista ordenada e não ordenada', () => {
@@ -80,15 +100,18 @@ describe('FormattingEngine', () => {
   });
 
   it('altera maiúsculas/minúsculas e limpa formatação', () => {
-    const { root, engine } = setup('<p><strong>Texto</strong></p>');
+    const { root, engine } = setup('<p>Texto</p>');
     selectContents(root);
     expect(engine.toggleCase(true)).toBe(true);
     expect(root.textContent).toContain('TEXTO');
 
     const second = setup('<p><strong>Texto</strong></p>');
-    selectContents(second.root);
+    const textNode = second.root.querySelector('strong')?.firstChild;
+    if (!(textNode instanceof Text)) throw new Error('Texto formatado não encontrado.');
+    selectTextNode(textNode);
     expect(second.engine.clearFormatting()).toBe(true);
     expect(second.root.querySelector('strong')).toBeNull();
+    expect(second.root.textContent).toBe('Texto');
   });
 
   it('retorna false sem seleção ou para operação inválida de bloco', () => {
