@@ -52,6 +52,15 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   const sync = (): void => { actions.sync(); syncView(); };
 
+  editor.setSaveHandler(() => {
+    sync();
+    autosave.saveNow();
+  });
+
+  root.querySelector<HTMLElement>('.toolbar')?.addEventListener('pointerdown', () => {
+    editor.rememberSelection();
+  });
+
   root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
     field.addEventListener('input', sync);
   });

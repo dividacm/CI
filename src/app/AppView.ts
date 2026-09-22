@@ -107,6 +107,7 @@ function removeEmptyPages(pages: HTMLElement[]): void {
   for (let index = pages.length - 1; index >= 0; index -= 1) {
     if (pages.length === 1) break;
     const page = pages[index];
+    if (!page) continue;
     const content = getPageContent(page);
     if (hasRenderableContent(content)) continue;
     page.remove();
