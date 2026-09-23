@@ -1,3 +1,4 @@
+import { getObservability } from '../observability/Observability';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { CommunicationDocument } from '../types/document';
 import type { DocumentStorage } from './DocumentStorage';
@@ -29,7 +30,12 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
         createdAt: parsed.createdAt,
         updatedAt: parsed.updatedAt,
       };
-    } catch {
+    } catch (error) {
+      getObservability().captureError(error, {
+        operation: 'load',
+        component: 'LocalStorageDocumentStorage',
+        documentId: id,
+      });
       return null;
     }
   }
