@@ -12,13 +12,16 @@ export interface Observability {
   captureError(error: unknown, context: ErrorContext): void;
 }
 
+const SENSITIVE_KEY_PATTERN = /(?:password|passwd|token|secret|authorization|cookie|bodyhtml|content|html|document|fields?)/i;
+const MAX_STRING_LENGTH = 500;
+
 const defaultObservability: Observability = {
   log(level, message, context = {}) {
     const entry = {
       timestamp: new Date().toISOString(),
       level,
-      message,
-      context,
+      message: sanitizeString(message),
+      context: sanitizeContext(context),
     };
     const serialized = JSON.stringify(entry);
     if (level === 'error') console.error(serialized);
@@ -43,6 +46,28 @@ export function getObservability(): Observability {
 
 export function setObservability(observability: Observability): void {
   currentObservability = observability;
+}
+
+function sanitizeContext(context: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(context).map(([key, value]) => [
+      key,
+      SENSITIVE_KEY_PATTERN.test(key) ? '[REDACTED]' : sanitizeValue(value),
+    ]),
+  );
+}
+
+function sanitizeValue(value: unknown): unknown {
+  if (typeof value === 'string') return sanitizeString(value);
+  if (Array.isArray(value)) return value.map(sanitizeValue);
+  if (value && typeof value === 'object') {
+    return sanitizeContext(value as Record<string, unknown>);
+  }
+  return value;
+}
+
+function sanitizeString(value: string): string {
+  return value.length > MAX_STRING_LENGTH ? `${value.slice(0, MAX_STRING_LENGTH)}…` : value;
 }
 
 function normalizeError(error: unknown): { name: string; message: string; stack?: string } {
