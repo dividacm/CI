@@ -48,6 +48,10 @@ export function setObservability(observability: Observability): void {
   currentObservability = observability;
 }
 
+export function resetObservability(): void {
+  currentObservability = defaultObservability;
+}
+
 function sanitizeContext(context: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(context).map(([key, value]) => [
