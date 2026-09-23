@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AutosaveController } from '../../src/storage/AutosaveController';
-import type { CommunicationDocument } from '../../src/types/document';
 import type { DocumentStorage } from '../../src/storage/DocumentStorage';
+import type { CommunicationDocument } from '../../src/types/document';
 
 const document: CommunicationDocument = {
   id: 'doc-1',
