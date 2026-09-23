@@ -1,6 +1,6 @@
+import { getObservability } from '../observability/Observability';
 import type { CommunicationDocument, DocumentStatus } from '../types/document';
 import type { DocumentStorage } from './DocumentStorage';
-import { getObservability } from '../observability/Observability';
 
 export interface AutosaveControllerOptions {
   storage: DocumentStorage;
