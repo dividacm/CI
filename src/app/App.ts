@@ -84,7 +84,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         return;
       }
       if (action === 'issue') {
-        if (!actions.issue()) return;
+        if (!(await actions.issue())) return;
         renderDocument(state.document, elements, organization, template);
         updateIssueButton(elements.issueButton, state.document);
         elements.status.textContent = `Documento nº ${state.document.number}/${state.document.year} emitido.`;
