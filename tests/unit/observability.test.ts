@@ -29,6 +29,24 @@ describe('Observability', () => {
     });
   });
 
+  it('sanitiza mensagens de erro não-Error', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    resetObservability();
+    getObservability().captureError(
+      'Falha <p>conteúdo</p> token=segredo',
+      { operation: 'load', component: 'Test' },
+    );
+
+    const serialized = consoleError.mock.calls[0][0] as string;
+    const entry = JSON.parse(serialized) as { message: string };
+    expect(entry.message).toContain('[REDACTED]');
+    expect(entry.message).not.toContain('segredo');
+    expect(entry.message).not.toContain('<p>');
+
+    consoleError.mockRestore();
+  });
+
   it('redige contexto sensível e limita strings no logger padrão', () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
