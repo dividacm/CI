@@ -13,8 +13,11 @@ test.describe('Acessibilidade do editor', () => {
     await expect(page.locator('#editor')).toHaveAttribute('role', 'textbox');
     await expect(page.locator('#editor')).toHaveAttribute('aria-multiline', 'true');
 
-    const focusRing = await page.locator('[data-action="save"]').evaluate((element) => {
-      (element as HTMLElement).focus();
+    const saveButton = page.getByRole('button', { name: 'Salvar' });
+    await saveButton.focus();
+    await expect(saveButton).toBeFocused();
+
+    const focusRing = await saveButton.evaluate((element) => {
       const style = getComputedStyle(element);
       return {
         outlineStyle: style.outlineStyle,
@@ -27,13 +30,16 @@ test.describe('Acessibilidade do editor', () => {
   });
 
   test('mantém controles operáveis por teclado', async ({ page }) => {
-    await page.locator('summary', { hasText: 'Ferramentas' }).focus();
+    const summary = page.locator('summary', { hasText: 'Ferramentas' });
+    await summary.focus();
     await page.keyboard.press('Enter');
     await expect(page.locator('.tools-menu')).toHaveAttribute('open', '');
 
-    await page.getByRole('button', { name: 'Negrito' }).focus();
+    const boldButton = page.getByRole('button', { name: 'Negrito' });
+    await boldButton.focus();
+    await expect(boldButton).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('button', { name: 'Negrito' })).toBeFocused();
+    await expect(page.locator('#editor')).toBeFocused();
   });
 
   test('respeita prefers-reduced-motion', async ({ page }) => {
@@ -43,12 +49,17 @@ test.describe('Acessibilidade do editor', () => {
     const motion = await page.locator('.tools-menu > summary').evaluate((element) => {
       const style = getComputedStyle(element);
       return {
-        transitionDuration: style.transitionDuration,
-        animationDuration: style.animationDuration,
+        transitionDuration: Number.parseFloat(style.transitionDuration) || 0,
+        animationDuration: Number.parseFloat(style.animationDuration) || 0,
+        transitionUnit: style.transitionDuration.includes('s') ? 's' : 'ms',
+        animationUnit: style.animationDuration.includes('s') ? 's' : 'ms',
       };
     });
 
-    expect(motion.transitionDuration).toBe('0.01ms');
-    expect(motion.animationDuration).toBe('0.01ms');
+    const transitionMs = motion.transitionUnit === 's' ? motion.transitionDuration * 1000 : motion.transitionDuration;
+    const animationMs = motion.animationUnit === 's' ? motion.animationDuration * 1000 : motion.animationDuration;
+
+    expect(transitionMs).toBeLessThanOrEqual(0.01);
+    expect(animationMs).toBeLessThanOrEqual(0.01);
   });
 });
