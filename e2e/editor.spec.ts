@@ -21,6 +21,7 @@ test.describe('Comunicação Interna editor', () => {
     const editor = page.locator('#editor');
 
     await subject.fill('Teste E2E');
+    await page.locator('summary', { hasText: 'Ferramentas' }).click();
     await editor.click();
     await editor.pressSequentially('Conteúdo de teste E2E');
 
@@ -43,6 +44,7 @@ test.describe('Comunicação Interna editor', () => {
 
     await editor.click();
     await editor.pressSequentially('Texto para histórico');
+    await page.locator('summary', { hasText: 'Ferramentas' }).click();
     await expect(editor).toContainText('Texto para histórico');
 
     await page.getByRole('button', { name: '↶' }).click();
