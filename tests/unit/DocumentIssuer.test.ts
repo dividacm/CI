@@ -38,14 +38,14 @@ describe('DocumentIssuer', () => {
     localStorage.clear();
   });
 
-  it('aloca um número definitivo e persiste o documento emitido', () => {
+  it('aloca um número definitivo e persiste o documento emitido', async () => {
     const storage = new MemoryStorage();
     const issuer = new DocumentIssuer({
       numbering: new DocumentNumbering(),
       storage,
     });
 
-    const issued = issuer.issue(createDraft());
+    const issued = await issuer.issue(createDraft());
 
     expect(issued.number).toBe(1);
     expect(storage.load(issued.id)?.number).toBe(1);
@@ -53,12 +53,12 @@ describe('DocumentIssuer', () => {
     expect(issued.bodyHtml).toBe('<p>Conteúdo</p>');
   });
 
-  it('não emite silenciosamente um documento já numerado', () => {
+  it('não emite silenciosamente um documento já numerado', async () => {
     const storage = new MemoryStorage();
     const issuer = new DocumentIssuer({ storage });
     const document = { ...createDraft(), number: 7 };
 
-    expect(() => issuer.issue(document)).toThrow(
+    await expect(issuer.issue(document)).rejects.toThrow(
       'O documento já possui numeração definitiva.',
     );
     expect(new DocumentNumbering().peek(2026)).toBe(0);
