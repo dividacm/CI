@@ -23,11 +23,13 @@ test.describe('Acessibilidade do editor', () => {
       return {
         outlineStyle: style.outlineStyle,
         outlineWidth: style.outlineWidth,
+        boxShadow: style.boxShadow,
       };
     });
 
     expect(focusRing.outlineStyle).not.toBe('none');
     expect(focusRing.outlineWidth).not.toBe('0px');
+    expect(focusRing.boxShadow).not.toBe('none');
   });
 
   test('mantém controles operáveis por teclado', async ({ page }) => {
