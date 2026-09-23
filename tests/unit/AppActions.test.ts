@@ -32,7 +32,7 @@ describe('createAppActions', () => {
     expect(autosave.markDirty).toHaveBeenCalled();
   });
 
-  it('emite documento uma única vez e conecta o autosave', () => {
+  it('emite documento uma única vez e conecta o autosave', async () => {
     const s = state();
     const issued = { ...s.document, number: 12 };
     const editor = { getHtml: () => '<p>Conteúdo</p>', setHtml: vi.fn() } as any;
