@@ -1,3 +1,4 @@
+import { getObservability } from '../observability/Observability';
 import { createDocument } from '../document/createDocument';
 import { DocumentIssuer } from '../document/DocumentIssuer';
 import { Editor } from '../editor/Editor';
@@ -99,7 +100,12 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
           await pdfExporter.export(elements.paper, { filename: state.document.number > 0 ? `comunicacao_interna_${state.document.number}_${state.document.year}.pdf` : 'comunicacao_interna.pdf' });
           elements.status.textContent = 'PDF gerado com sucesso.';
           elements.status.dataset.status = 'saved';
-        } catch {
+        } catch (error) {
+          getObservability().captureError(error, {
+            operation: 'export',
+            component: 'PdfExporter',
+            documentId: state.document.id,
+          });
           elements.status.textContent = 'Falha ao gerar PDF.';
           elements.status.dataset.status = 'error';
         } finally { elements.pdfButton.disabled = false; elements.pdfButton.textContent = previous; }
@@ -195,7 +201,11 @@ function applySavedLayoutConfig(organization: OrganizationConfig): void {
     };
     if (saved.headerAsset !== undefined) organization.branding.headerAsset = saved.headerAsset || undefined;
     if (saved.footerAsset !== undefined) organization.branding.footerAsset = saved.footerAsset || undefined;
-  } catch {
+  } catch (error) {
+    getObservability().captureError(error, {
+      operation: 'load-layout-config',
+      component: 'App',
+    });
     localStorage.removeItem(LAYOUT_CONFIG_KEY);
   }
 }
