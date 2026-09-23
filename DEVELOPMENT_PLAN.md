@@ -837,3 +837,18 @@ A arquitetura deverá permitir evolução para:
 - observabilidade distribuída.
 
 Esses recursos não fazem parte do MVP e não devem aumentar desnecessariamente a complexidade inicial.
+
+---
+
+# 27. Status atual — Hardening A11.2
+
+- **A11.1 — Playwright E2E:** concluída e validada no CI.
+- **A11.2 — Observabilidade e resiliência:** em andamento.
+- Camada de observabilidade desacoplada implementada, com logs JSON, contexto de erro, stack trace e redaction conservadora de dados sensíveis.
+- Autosave possui retry com backoff e estado explícito de erro.
+- Falhas de leitura de JSON do storage e de configuração de layout são observáveis.
+- Exportação de PDF registra falhas com contexto do documento.
+- Auditoria inicial de dependências identificou `@testing-library/dom` como candidato a dependência não utilizada; a remoção deve ser feita somente após atualizar o lockfile com o gerenciador de pacotes.
+- `@types/node` permanece justificado pela toolchain Vite/TypeScript.
+- `DOMPurify`, `html2canvas` e `jsPDF` estão diretamente associados a funcionalidades de produção.
+- Próximas verificações: acessibilidade automatizada, medição de documentos longos/autosave, auditoria de código não utilizado e revisão de concorrência do emissor de numeração.
