@@ -37,12 +37,12 @@ describe('createAppActions', () => {
     const issued = { ...s.document, number: 12 };
     const editor = { getHtml: () => '<p>Conteúdo</p>', setHtml: vi.fn() } as any;
     const autosave = { markDirty: vi.fn(), saveNow: vi.fn(), attach: vi.fn() } as any;
-    const issuer = { issue: vi.fn().mockReturnValue(issued) } as any;
+    const issuer = { issue: vi.fn().mockResolvedValue(issued) } as any;
     const actions = createAppActions(s, editor, autosave, issuer, () => 'x');
-    expect(actions.issue()).toBe(true);
+    await expect(actions.issue()).resolves.toBe(true);
     expect(issuer.issue).toHaveBeenCalled();
     expect(autosave.saveNow).toHaveBeenCalled();
     expect(autosave.attach).toHaveBeenCalledWith(issued);
-    expect(actions.issue()).toBe(false);
+    await expect(actions.issue()).resolves.toBe(false);
   });
 });
