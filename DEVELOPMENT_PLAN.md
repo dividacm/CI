@@ -851,4 +851,6 @@ Esses recursos não fazem parte do MVP e não devem aumentar desnecessariamente 
 - Auditoria inicial de dependências identificou `@testing-library/dom` como candidato a dependência não utilizada; a remoção deve ser feita somente após atualizar o lockfile com o gerenciador de pacotes.
 - `@types/node` permanece justificado pela toolchain Vite/TypeScript.
 - `DOMPurify`, `html2canvas` e `jsPDF` estão diretamente associados a funcionalidades de produção.
-- Próximas verificações: acessibilidade automatizada, medição de documentos longos/autosave, auditoria de código não utilizado e revisão de concorrência do emissor de numeração.
+- Próximas verificações: acessibilidade automatizada, medição de documentos longos/autosave e auditoria de código não utilizado.
+- Emissor de numeração passou a usar Web Locks por ano, serializando a seção crítica entre abas/contexts da mesma origem; a API de emissão tornou-se assíncrona para respeitar a aquisição do lock.
+- Em ambientes sem Web Locks, a implementação mantém fallback local e registra warning explícito, pois localStorage sozinho não oferece garantia atômica entre abas.
