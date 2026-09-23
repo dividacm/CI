@@ -1,7 +1,7 @@
-import { getObservability } from '../observability/Observability';
 import { createDocument } from '../document/createDocument';
 import { DocumentIssuer } from '../document/DocumentIssuer';
 import { Editor } from '../editor/Editor';
+import { getObservability } from '../observability/Observability';
 import { PdfExporter } from '../pdf/PdfExporter';
 import { AutosaveController } from '../storage/AutosaveController';
 import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
