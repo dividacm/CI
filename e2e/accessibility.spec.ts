@@ -14,7 +14,8 @@ test.describe('Acessibilidade do editor', () => {
     await expect(page.locator('#editor')).toHaveAttribute('aria-multiline', 'true');
 
     const saveButton = page.getByRole('button', { name: 'Salvar' });
-    await saveButton.focus();
+    await page.locator('input[data-field]').last().focus();
+    await page.keyboard.press('Tab');
     await expect(saveButton).toBeFocused();
 
     const focusRing = await saveButton.evaluate((element) => {
