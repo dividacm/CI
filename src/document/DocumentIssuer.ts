@@ -16,14 +16,14 @@ export class DocumentIssuer {
     this.storage = options.storage;
   }
 
-  public issue(document: CommunicationDocument): CommunicationDocument {
+  public async issue(document: CommunicationDocument): Promise<CommunicationDocument> {
     if (document.number > 0) {
       throw new Error('O documento já possui numeração definitiva.');
     }
 
     const issued: CommunicationDocument = {
       ...document,
-      number: this.numbering.next(document.year),
+      number: await this.numbering.next(document.year),
       updatedAt: new Date().toISOString(),
     };
 
