@@ -76,6 +76,7 @@ describe('AutosaveController', () => {
     const autosave = new AutosaveController({
       storage,
       delayMs: 300,
+      retryDelaysMs: [],
       onStatusChange: (status) => statuses.push(status),
     });
     const document = createDocument();

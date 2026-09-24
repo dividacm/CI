@@ -837,3 +837,22 @@ A arquitetura deverá permitir evolução para:
 - observabilidade distribuída.
 
 Esses recursos não fazem parte do MVP e não devem aumentar desnecessariamente a complexidade inicial.
+
+---
+
+# 27. Status atual — Hardening A11.2
+
+- **A11.1 — Playwright E2E:** concluída e validada no CI.
+- **A11.2 — Observabilidade e resiliência:** concluída e validada no CI.
+- Camada de observabilidade desacoplada implementada, com logs JSON, contexto de erro, stack trace e redaction conservadora de dados sensíveis.
+- Autosave possui retry com backoff e estado explícito de erro.
+- Falhas de leitura de JSON do storage e de configuração de layout são observáveis.
+- Exportação de PDF registra falhas com contexto do documento.
+- Auditoria de dependências concluída: `@testing-library/dom` foi removido por não ser utilizado; o lockfile foi sincronizado e os pipelines foram validados.
+- `@types/node` permanece justificado pela toolchain Vite/TypeScript.
+- `DOMPurify`, `html2canvas` e `jsPDF` estão diretamente associados a funcionalidades de produção.
+- Acessibilidade automatizada foi validada: nomes/roles, foco visível, operação por teclado e `prefers-reduced-motion`.
+- Performance de documentos longos foi medida em E2E, com benchmark de 5k, 20k e 50k caracteres; os resultados atuais não justificam uma reescrita estrutural da paginação.
+- Emissor de numeração passou a usar Web Locks por ano, serializando a seção crítica entre abas/contexts da mesma origem; a API de emissão tornou-se assíncrona para respeitar a aquisição do lock.
+- Em ambientes sem Web Locks, a implementação mantém fallback local e registra warning explícito, pois localStorage sozinho não oferece garantia atômica entre abas.
+- **A11.2 encerrada. Próximo marco: validação de produção / V1.**

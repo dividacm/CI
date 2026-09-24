@@ -8,7 +8,7 @@ import { replaceDocument, resetDocument, updateDocument } from './AppState';
 export interface AppActions {
   sync(): void;
   clear(): void;
-  issue(): boolean;
+  issue(): Promise<boolean>;
 }
 
 export function createAppActions(
@@ -36,11 +36,11 @@ export function createAppActions(
       editor.setHtml('');
       autosave.markDirty(state.document);
     },
-    issue: (): boolean => {
+    issue: async (): Promise<boolean> => {
       if (state.document.number > 0) return false;
       sync();
       autosave.saveNow();
-      replaceDocument(state, issuer.issue(state.document));
+      replaceDocument(state, await issuer.issue(state.document));
       autosave.attach(state.document);
       return true;
     },
