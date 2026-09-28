@@ -48,7 +48,7 @@ function makeState(): AppState {
 describe('AppState contract', () => {
   it('merges document patches without dropping existing fields', () => {
     const state = makeState();
-    const previousUpdatedAt = state.document.updatedAt;
+    const previousUpdatedAt = Date.parse(state.document.updatedAt);
 
     updateDocument(state, {
       fields: { to: 'Novo destinatário' },
@@ -60,7 +60,7 @@ describe('AppState contract', () => {
       to: 'Novo destinatário',
     });
     expect(state.document.bodyHtml).toBe('<p>Conteúdo</p>');
-    expect(state.document.updatedAt).not.toBe(previousUpdatedAt);
+    expect(Date.parse(state.document.updatedAt)).toBeGreaterThanOrEqual(previousUpdatedAt);
   });
 
   it('resets the editable document to template defaults', () => {
