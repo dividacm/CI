@@ -3,8 +3,8 @@ import { createAppActions } from '../../src/app/AppActions';
 import type { AppState } from '../../src/app/AppState';
 import { createDocument } from '../../src/document/createDocument';
 import type { DocumentIssuer } from '../../src/document/DocumentIssuer';
-import type { OrganizationConfig, TemplateConfig } from '../../src/types/configuration';
 import type { AutosaveController } from '../../src/storage/AutosaveController';
+import type { OrganizationConfig, TemplateConfig } from '../../src/types/configuration';
 
 const template: TemplateConfig = {
   id: 'default',
