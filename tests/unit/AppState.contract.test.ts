@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resetDocument, updateDocument, type AppState } from '../../src/app/AppState';
+import { type AppState, resetDocument, updateDocument } from '../../src/app/AppState';
 import { createDocument } from '../../src/document/createDocument';
 import type { OrganizationConfig, TemplateConfig } from '../../src/types/configuration';
 
