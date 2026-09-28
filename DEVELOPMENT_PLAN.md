@@ -856,3 +856,62 @@ Esses recursos não fazem parte do MVP e não devem aumentar desnecessariamente 
 - Emissor de numeração passou a usar Web Locks por ano, serializando a seção crítica entre abas/contexts da mesma origem; a API de emissão tornou-se assíncrona para respeitar a aquisição do lock.
 - Em ambientes sem Web Locks, a implementação mantém fallback local e registra warning explícito, pois localStorage sozinho não oferece garantia atômica entre abas.
 - **A11.2 encerrada. Próximo marco: validação de produção / V1.**
+
+
+---
+
+# 28. V2 — Evolução do Editor
+
+**Status:** iniciada após validação de produção V1  
+**Branch de trabalho inicial:** `chore/v2-foundation`
+
+A V2 evolui o editor preservando os quality gates e o comportamento validado em produção. Novos recursos devem ser adicionados incrementalmente, sem alterar diretamente `main`.
+
+## 28.1 V2.0 — Fundação da evolução
+
+Objetivo: preparar os contratos arquiteturais necessários para recursos avançados sem reescrever prematuramente o editor.
+
+### Diagnóstico inicial concluído
+
+- `main` é a referência de produção após o merge da V1.
+- `dev` está 1 commit atrás de `main`; a V2 não será baseada na divergência antiga.
+- `Editor` concentra seleção, formatação, histórico e clipboard por meio de serviços especializados.
+- `App` ainda coordena editor, persistência, preview, configuração e PDF; essa fronteira deve ser observada antes de qualquer extração.
+- `CommunicationDocument` atualmente persiste `bodyHtml` e metadados; a evolução para elementos estruturados deverá ser incremental e compatível.
+- O preview/paginação permanece isolado em `AppView` e não será reescrito sem evidência de necessidade.
+
+### Ações V2.0
+
+1. Mapear os contratos atuais entre `App`, `Editor`, `AppView`, documento, storage e PDF.
+2. Definir fronteiras para futuros elementos estruturados.
+3. Preservar `bodyHtml` enquanto não houver migração de modelo validada.
+4. Criar testes de caracterização para os contratos que serão alterados.
+5. Separar responsabilidades apenas quando houver benefício arquitetural demonstrável.
+6. Manter compatibilidade com autosave, undo/redo, PDF, acessibilidade e observabilidade.
+7. Não introduzir framework de UI nem dependências de runtime sem necessidade.
+8. Validar cada incremento com TypeScript, Biome, testes, cobertura, build e Playwright.
+
+### Critérios de saída da V2.0
+
+- contratos críticos documentados;
+- testes de regressão cobrindo os comportamentos preservados;
+- fronteiras de evolução definidas;
+- nenhuma regressão nos fluxos V1;
+- CI e E2E verdes;
+- PR revisável e pequeno.
+
+## 28.2 Ordem planejada após V2.0
+
+1. **V2.1 — Régua e layout**
+2. **V2.2 — Tipografia**
+3. **V2.3 — Tabelas**
+4. **V2.4 — Elementos gráficos**
+5. **V2.5 — Conectores**
+6. **V2.6 — Zoom**
+7. **V2.7 — Paginação avançada**
+8. **V2.8 — Templates e personalização multi-organização**
+9. **V2.9 — Hardening e validação final**
+
+### Regra de evolução
+
+Nenhum recurso novo deve comprometer os fluxos já validados em produção. Cada sprint deverá produzir uma mudança pequena, testável e reversível.
