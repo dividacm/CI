@@ -69,6 +69,8 @@ export function renderDocument(document: CommunicationDocument, elements: AppEle
   for (const field of template.fields) populateField(elements.root, field.id, getDocumentField(document, field.id));
   renderDocumentNumber(elements.number, document);
   renderPreview(elements.paper, organization, template, document);
+  const ruler = elements.root.querySelector<HTMLElement>('#horizontal-ruler');
+  if (ruler) renderHorizontalRuler(ruler, { pageWidthMm: 210, marginLeftMm: organization.layout.marginLeftMm, marginRightMm: organization.layout.marginRightMm });
 }
 
 export function renderPreview(root: HTMLElement, organization: OrganizationConfig, template: TemplateConfig, document: CommunicationDocument): void {
