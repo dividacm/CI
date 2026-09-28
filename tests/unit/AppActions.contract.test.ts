@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createAppActions } from '../../src/app/AppActions';
-import { createDocument } from '../../src/document/createDocument';
 import type { AppState } from '../../src/app/AppState';
-import type { TemplateConfig, OrganizationConfig } from '../../src/types/configuration';
-import type { AutosaveController } from '../../src/storage/AutosaveController';
+import { createDocument } from '../../src/document/createDocument';
 import type { DocumentIssuer } from '../../src/document/DocumentIssuer';
+import type { OrganizationConfig, TemplateConfig } from '../../src/types/configuration';
+import type { AutosaveController } from '../../src/storage/AutosaveController';
 
 const template: TemplateConfig = {
   id: 'default',
