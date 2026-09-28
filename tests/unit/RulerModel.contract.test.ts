@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { PageLayoutConfig } from '../../src/types/configuration';
 import {
   CSS_PX_PER_INCH,
-  MM_PER_INCH,
   createHorizontalRulerTicks,
   createRulerMetrics,
+  MM_PER_INCH,
   mmToPx,
   pxToMm,
 } from '../../src/layout/RulerModel';
+import type { PageLayoutConfig } from '../../src/types/configuration';
 
 const layout: PageLayoutConfig = {
   marginTopMm: 10,
@@ -25,30 +25,17 @@ describe('RulerModel contract', () => {
 
   it('calculates the printable content area from page size and margins', () => {
     const metrics = createRulerMetrics(210, 297, layout);
-
-    expect(metrics).toEqual({
-      pageWidthMm: 210,
-      pageHeightMm: 297,
-      contentWidthMm: 170,
-      contentHeightMm: 267,
-    });
+    expect(metrics).toEqual({ pageWidthMm: 210, pageHeightMm: 297, contentWidthMm: 170, contentHeightMm: 267 });
   });
 
   it('does not produce negative content dimensions', () => {
-    const metrics = createRulerMetrics(100, 80, {
-      marginTopMm: 50,
-      marginRightMm: 60,
-      marginBottomMm: 50,
-      marginLeftMm: 60,
-    });
-
+    const metrics = createRulerMetrics(100, 80, { marginTopMm: 50, marginRightMm: 60, marginBottomMm: 50, marginLeftMm: 60 });
     expect(metrics.contentWidthMm).toBe(0);
     expect(metrics.contentHeightMm).toBe(0);
   });
 
   it('creates deterministic horizontal ticks in millimeters', () => {
     const ticks = createHorizontalRulerTicks(40, 10);
-
     expect(ticks).toHaveLength(5);
     expect(ticks.map((tick) => tick.valueMm)).toEqual([0, 10, 20, 30, 40]);
     expect(ticks.map((tick) => tick.major)).toEqual([true, false, true, false, true]);
@@ -56,8 +43,6 @@ describe('RulerModel contract', () => {
   });
 
   it('rejects an invalid ruler interval', () => {
-    expect(() => createHorizontalRulerTicks(210, 0)).toThrow(
-      'O intervalo da régua deve ser maior que zero.',
-    );
+    expect(() => createHorizontalRulerTicks(210, 0)).toThrow('O intervalo da régua deve ser maior que zero.');
   });
 });
