@@ -12,8 +12,8 @@ describe('RulerView contract', () => {
     });
 
     expect(root.querySelectorAll('.ruler-tick')).toHaveLength(22);
-    expect(root.querySelector('.ruler-margin-left')?.getAttribute('style')).toContain('left: 75.59055118110236px');
-    expect(root.querySelector('.ruler-margin-right')?.getAttribute('style')).toContain('left: 642.5196850393701px');
+    expect(Number.parseFloat(root.querySelector('.ruler-margin-left')?.style.left ?? '')).toBeCloseTo(75.59055118110236, 10);
+    expect(Number.parseFloat(root.querySelector('.ruler-margin-right')?.style.left ?? '')).toBeCloseTo(642.5196850393701, 10);
     expect(root.querySelector('.ruler-label')?.textContent).toBe('0');
     expect(root.querySelectorAll('.ruler-tick-major')).toHaveLength(11);
   });
