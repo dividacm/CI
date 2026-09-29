@@ -1,4 +1,5 @@
 import { RangeEngine } from './RangeEngine';
+import { createTableModel } from './TableModel';
 
 export type TextAlignment = 'left' | 'center' | 'right' | 'justify';
 export type ListType = 'ul' | 'ol';
@@ -60,6 +61,29 @@ export class FormattingEngine {
     list.appendChild(item);
     selection.range.insertNode(list);
     return true;
+  }
+
+  insertTable(rows = 2, columns = 3): boolean {
+    const engine = new RangeEngine(this.root);
+    if (!engine.getSelection()) return false;
+
+    const model = createTableModel(rows, columns);
+    const table = document.createElement('table');
+    table.setAttribute('data-ci-table', 'true');
+
+    const body = document.createElement('tbody');
+    for (let row = 0; row < model.rows; row += 1) {
+      const tr = document.createElement('tr');
+      for (let column = 0; column < model.columns; column += 1) {
+        const cell = document.createElement('td');
+        cell.textContent = model.cells[row]?.[column]?.content ?? '';
+        tr.appendChild(cell);
+      }
+      body.appendChild(tr);
+    }
+
+    table.appendChild(body);
+    return engine.replaceSelection(table);
   }
 
   toggleCase(upper: boolean): boolean {
