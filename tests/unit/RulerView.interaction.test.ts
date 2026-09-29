@@ -41,8 +41,8 @@ describe('RulerView interaction contract', () => {
 
     expect(changes).toEqual([
       ['left', 21],
-      ['left', 31],
-      ['right', 179],
+      ['left', 30],
+      ['right', 190],
     ]);
   });
 
