@@ -2,11 +2,13 @@ import { ClipboardService } from '../clipboard/ClipboardService';
 import { FormattingEngine, type ListType, type TextAlignment } from './FormattingEngine';
 import { HistoryManager } from './HistoryManager';
 import { RangeEngine } from './RangeEngine';
+import { TableInteractions } from './TableInteractions';
 
 export class Editor {
   private readonly formatting: FormattingEngine;
   private readonly history: HistoryManager;
   private readonly clipboard: ClipboardService;
+  private readonly tables: TableInteractions;
   private savedSelection: Range | null = null;
   private saveHandler: (() => void) | null = null;
 
@@ -15,6 +17,8 @@ export class Editor {
     this.formatting = new FormattingEngine(root);
     this.history = new HistoryManager();
     this.clipboard = new ClipboardService({ rangeEngine });
+    this.tables = new TableInteractions(root);
+    this.tables.bind();
     this.history.capture(root);
     this.bindHistory();
     this.bindSelection();
@@ -98,6 +102,34 @@ export class Editor {
 
   insertTable(rows = 2, columns = 3): boolean {
     return this.apply(() => this.formatting.insertTable(rows, columns));
+  }
+
+  selectTableRow(): boolean {
+    return this.apply(() => this.tables.selectRow());
+  }
+
+  selectTableColumn(): boolean {
+    return this.apply(() => this.tables.selectColumn());
+  }
+
+  insertTableRow(): boolean {
+    return this.apply(() => this.tables.insertRow());
+  }
+
+  deleteTableRow(): boolean {
+    return this.apply(() => this.tables.deleteRow());
+  }
+
+  insertTableColumn(): boolean {
+    return this.apply(() => this.tables.insertColumn());
+  }
+
+  deleteTableColumn(): boolean {
+    return this.apply(() => this.tables.deleteColumn());
+  }
+
+  resizeTableColumn(deltaPx: number): boolean {
+    return this.apply(() => this.tables.resizeSelectedColumn(deltaPx));
   }
 
   fontFamily(value: string): boolean {
