@@ -19,7 +19,7 @@ export class TableInteractions {
 
   selectRow(): boolean {
     const cell = this.selectedCell;
-    const row = cell?.closest('tr');
+    const row = cell?.closest<HTMLTableRowElement>('tr');
     if (!row) return false;
     this.selectionMode = 'row';
     this.renderSelection();
@@ -52,7 +52,7 @@ export class TableInteractions {
 
   deleteRow(): boolean {
     const row = this.selectedCell?.closest('tr');
-    const table = row?.closest('table[data-ci-table]');
+    const table = row?.closest<HTMLTableElement>('table[data-ci-table]');
     if (!row || !table || table.rows.length <= 1) return false;
     const rowIndex = row.rowIndex;
     row.remove();
@@ -90,7 +90,7 @@ export class TableInteractions {
 
   resizeSelectedColumn(deltaPx: number): boolean {
     const cell = this.selectedCell;
-    const table = cell?.closest('table[data-ci-table]');
+    const table = cell?.closest<HTMLTableElement>('table[data-ci-table]');
     if (!cell || !table || !Number.isFinite(deltaPx) || deltaPx === 0) return false;
     const currentWidth = cell.getBoundingClientRect().width || 72;
     const nextWidth = Math.max(72, Math.min(420, currentWidth + deltaPx));
@@ -116,7 +116,7 @@ export class TableInteractions {
     }
 
     if (this.selectionMode === 'row') {
-      const row = cell.closest('tr');
+      const row = cell.closest<HTMLTableRowElement>('tr');
       row?.querySelectorAll<HTMLElement>('td').forEach((item) => item.setAttribute('data-ci-table-selected', 'row'));
       return;
     }
