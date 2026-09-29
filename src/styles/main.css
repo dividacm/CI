@@ -15,3 +15,22 @@ html,body,#app{min-height:100%;margin:0}body{min-height:100vh;background:var(--c
 @media(max-width:720px){.horizontal-ruler{transform-origin:top left}.preview-column{overflow:auto}.app-shell{padding:12px}.app-header{align-items:flex-start;flex-direction:column}.field-grid{grid-template-columns:1fr}.toolbar{position:static;align-items:stretch}.toolbar-primary-actions{width:100%}.toolbar-primary-actions button{flex:1 1 auto}.tools-menu{width:100%}.tools-menu>summary{width:100%;text-align:center}.layout-settings{display:grid;grid-template-columns:1fr 1fr}.asset-setting{min-width:0}.paper{transform:scale(.65);transform-origin:top left;margin-right:-73mm;margin-bottom:-105mm}}
 @media print{body{background:#fff}.app-header,.field-grid,.toolbar,.editor-surface{display:none}.editor-panel{border:0;box-shadow:none}.workspace{display:block}.preview-wrap{padding:0;background:#fff;overflow:visible}.paper{box-shadow:none;margin:0}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+.editor-surface table[data-ci-table] {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+}
+
+.editor-surface table[data-ci-table] td {
+  border: 1px solid #9ca3af;
+  min-width: 72px;
+  min-height: 28px;
+  padding: 6px 8px;
+  vertical-align: top;
+}
+
+.editor-surface table[data-ci-table] td:focus {
+  outline: 2px solid #111827;
+  outline-offset: -2px;
+}
