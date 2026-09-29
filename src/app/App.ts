@@ -26,7 +26,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   tableButton.dataset.action = 'table-insert';
   tableButton.textContent = 'Tabela 2×3';
   tableButton.setAttribute('aria-label', 'Inserir tabela 2 por 3');
-  const tableActions = [
+  const tableActions: Array<[string, string, string]> = [
     ['table-row-select', 'Linha', 'Selecionar linha'],
     ['table-column-select', 'Coluna', 'Selecionar coluna'],
     ['table-row-add', '+ Linha', 'Inserir linha'],
