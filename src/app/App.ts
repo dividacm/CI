@@ -1,6 +1,7 @@
 import { createDocument } from '../document/createDocument';
 import { DocumentIssuer } from '../document/DocumentIssuer';
 import { Editor } from '../editor/Editor';
+import { renderHorizontalRuler } from '../layout/RulerView';
 import { getObservability } from '../observability/Observability';
 import { PdfExporter } from '../pdf/PdfExporter';
 import { AutosaveController } from '../storage/AutosaveController';
@@ -46,10 +47,32 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   const editor = new Editor(elements.editor);
   const actions = createAppActions(state, editor, autosave, issuer, (name) => getFieldValue(root, name));
 
+  const syncRuler = (): void => {
+    const ruler = elements.root.querySelector<HTMLElement>('#horizontal-ruler');
+    if (!ruler) return;
+    renderHorizontalRuler(
+      ruler,
+      {
+        pageWidthMm: 210,
+        marginLeftMm: organization.layout.marginLeftMm,
+        marginRightMm: organization.layout.marginRightMm,
+      },
+      (side, valueMm) => {
+        const key = side === 'left' ? 'marginLeftMm' : 'marginRightMm';
+        organization.layout[key] = valueMm;
+        persistLayoutConfig(organization);
+        syncView();
+      },
+    );
+  };
+
   const syncView = (): void => {
     updateIssueButton(elements.issueButton, state.document);
     renderPreview(elements.paper, organization, template, state.document);
+    syncRuler();
   };
+
+  syncRuler();
 
   const sync = (): void => { actions.sync(); syncView(); };
 
@@ -81,6 +104,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         renderDocument(state.document, elements, organization, template);
         updateIssueButton(elements.issueButton, state.document);
         autosave.saveNow();
+        syncRuler();
         return;
       }
       if (action === 'issue') {
@@ -89,6 +113,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         updateIssueButton(elements.issueButton, state.document);
         elements.status.textContent = `Documento nº ${state.document.number}/${state.document.year} emitido.`;
         elements.status.dataset.status = 'saved';
+        syncRuler();
         return;
       }
       if (action === 'pdf') {
