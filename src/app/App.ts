@@ -1,9 +1,9 @@
 import { createDocument } from '../document/createDocument';
 import { DocumentIssuer } from '../document/DocumentIssuer';
 import { Editor } from '../editor/Editor';
+import { renderHorizontalRuler } from '../layout/RulerView';
 import { getObservability } from '../observability/Observability';
 import { PdfExporter } from '../pdf/PdfExporter';
-import { renderHorizontalRuler } from '../layout/RulerView';
 import { AutosaveController } from '../storage/AutosaveController';
 import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
