@@ -56,20 +56,24 @@ describe('V2.1.4 layout regression contract', () => {
 
     const ruler = root.querySelector<HTMLElement>('#horizontal-ruler');
     const left = root.querySelector<HTMLElement>('.ruler-margin-left');
-    const content = root.querySelector<HTMLElement>('.paper-page-content');
-
-    if (!ruler || !left || !content) throw new Error('Estrutura de layout não encontrada.');
+    if (!ruler || !left) throw new Error('Estrutura de layout não encontrada.');
 
     left.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight' }));
 
     const saved = JSON.parse(localStorage.getItem('ci:layout-config') ?? '{}') as {
       marginLeftMm?: number;
     };
+    const updatedLeft = root.querySelector<HTMLElement>('.ruler-margin-left');
+    const updatedContent = root.querySelector<HTMLElement>('.paper-page-content');
+
+    if (!updatedLeft || !updatedContent) {
+      throw new Error('Layout atualizado não encontrado.');
+    }
 
     expect(saved.marginLeftMm).toBe(21);
-    expect(left.getAttribute('aria-valuenow')).toBe('21');
-    expect(left.style.left).toBe('79.37007874015748px');
-    expect(content.style.paddingLeft).toBe('21mm');
+    expect(updatedLeft.getAttribute('aria-valuenow')).toBe('21');
+    expect(updatedLeft.style.left).toBe('79.37007874015748px');
+    expect(updatedContent.style.paddingLeft).toBe('21mm');
   });
 
   it('restores persisted ruler margins on a fresh app render', () => {
