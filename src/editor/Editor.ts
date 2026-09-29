@@ -96,6 +96,10 @@ export class Editor {
     return this.apply(() => this.formatting.insertList(type));
   }
 
+  insertTable(rows = 2, columns = 3): boolean {
+    return this.apply(() => this.formatting.insertTable(rows, columns));
+  }
+
   fontFamily(value: string): boolean {
     return this.apply(() => this.formatting.setFontFamily(value));
   }

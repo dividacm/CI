@@ -21,6 +21,12 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   if (!template) throw new Error(`Template não encontrado: ${organization.defaultTemplateId}`);
 
   root.innerHTML = renderShell(organization, template);
+  const tableButton = root.ownerDocument.createElement('button');
+  tableButton.type = 'button';
+  tableButton.dataset.action = 'table-insert';
+  tableButton.textContent = 'Tabela 2×3';
+  tableButton.setAttribute('aria-label', 'Inserir tabela 2 por 3');
+  root.querySelector('.toolbar-groups')?.appendChild(tableButton);
   const elements = getAppElements(root);
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
@@ -146,6 +152,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'align-justify': editor.align('justify'); break;
         case 'list-unordered': editor.list('ul'); break;
         case 'list-ordered': editor.list('ol'); break;
+        case 'table-insert': editor.insertTable(2, 3); break;
         case 'font-inc': editor.fontSize('16px'); break;
         case 'font-dec': editor.fontSize('12px'); break;
         case 'upper': editor.toggleCase(true); break;
