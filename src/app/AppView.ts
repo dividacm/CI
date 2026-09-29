@@ -339,7 +339,7 @@ function findPreferredBreak(node: HTMLElement, best: number): number {
   const text = node.textContent ?? '';
   const windowStart = Math.max(0, best - 80);
   const segment = text.slice(windowStart, best);
-  const breakOffset = Math.max(segment.lastIndexOf(' '), segment.lastIndexOf('\\n'), segment.lastIndexOf('\\t'));
+  const breakOffset = Math.max(segment.lastIndexOf(' '), segment.lastIndexOf('\n'), segment.lastIndexOf('\t'));
   if (breakOffset < 0) return best;
   const preferred = windowStart + breakOffset + 1;
   return preferred > 0 && preferred <= best ? preferred : best;
