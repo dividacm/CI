@@ -13,11 +13,15 @@ const ALLOWED_TAGS = [
   'p',
   'span',
   'strong',
+  'table',
+  'tbody',
+  'td',
+  'tr',
   'u',
   'ul',
 ];
 
-const ALLOWED_ATTR = ['href', 'title', 'target', 'rel', 'style'];
+const ALLOWED_ATTR = ['data-ci-table', 'href', 'title', 'target', 'rel', 'style'];
 
 export function sanitizeHtml(html: string): string {
   return DOMPurify.sanitize(html, {
