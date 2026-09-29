@@ -1,3 +1,4 @@
+import { FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS } from '../editor/TypographyModel';
 import { renderHorizontalRuler } from '../layout/RulerView';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig, PageLayoutConfig, TemplateConfig } from '../types/configuration';
@@ -42,7 +43,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
               <div class="toolbar-group"><button type="button" data-action="bold" aria-label="Negrito"><strong>N</strong></button><button type="button" data-action="italic" aria-label="Itálico"><em>I</em></button><button type="button" data-action="underline" aria-label="Sublinhado"><u>S</u></button></div>
               <div class="toolbar-group"><button type="button" data-action="align-left">⟸</button><button type="button" data-action="align-center">≡</button><button type="button" data-action="align-right">⟹</button><button type="button" data-action="align-justify">≣</button></div>
               <div class="toolbar-group"><button type="button" data-action="list-unordered">• Lista</button><button type="button" data-action="list-ordered">1. Lista</button></div>
-              <div class="toolbar-group"><select id="font-family" aria-label="Fonte"><option value="">Fonte</option><option>Arial</option><option>Times New Roman</option><option>Courier New</option><option>Carlito</option></select><button type="button" data-action="font-inc">A+</button><button type="button" data-action="font-dec">A−</button><select id="font-size" aria-label="Tamanho"><option value="">Tam</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option></select><input id="font-color" type="color" value="#111111" aria-label="Cor da fonte"></div>
+              <div class="toolbar-group"><select id="font-family" aria-label="Fonte"><option value="">Fonte</option>${FONT_FAMILY_OPTIONS.map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`).join('')}</select><button type="button" data-action="font-inc">A+</button><button type="button" data-action="font-dec">A−</button><select id="font-size" aria-label="Tamanho"><option value="">Tam</option>${FONT_SIZE_OPTIONS.map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`).join('')}</select><input id="font-color" type="color" value="#111111" aria-label="Cor da fonte"></div>
               <div class="toolbar-group"><button type="button" data-action="copy">Copiar</button><button type="button" data-action="cut">Recortar</button><button type="button" data-action="paste">Colar</button></div>
               <div class="toolbar-group"><button type="button" data-action="upper">Aa↑</button><button type="button" data-action="lower">Aa↓</button><button type="button" data-action="clear-formatting">🧹</button><button type="button" data-action="undo">↶</button><button type="button" data-action="redo">↷</button></div>
             </div></section>
@@ -338,7 +339,7 @@ function findPreferredBreak(node: HTMLElement, best: number): number {
   const text = node.textContent ?? '';
   const windowStart = Math.max(0, best - 80);
   const segment = text.slice(windowStart, best);
-  const breakOffset = Math.max(segment.lastIndexOf(' '), segment.lastIndexOf('\\n'), segment.lastIndexOf('\\t'));
+  const breakOffset = Math.max(segment.lastIndexOf(' '), segment.lastIndexOf('\n'), segment.lastIndexOf('\t'));
   if (breakOffset < 0) return best;
   const preferred = windowStart + breakOffset + 1;
   return preferred > 0 && preferred <= best ? preferred : best;
