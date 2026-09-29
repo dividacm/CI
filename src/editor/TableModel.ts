@@ -36,7 +36,9 @@ export function getTableCell(table: TableModel, row: number, column: number): Ta
 
 export function setTableCellContent(table: TableModel, row: number, column: number, content: string): TableModel {
   const next = cloneTable(table);
-  next.cells[row]![column] = { content };
+  const rowCells = next.cells[row];
+  if (!rowCells) throw new RangeError('Linha da tabela não encontrada.');
+  rowCells[column] = { content };
   return next;
 }
 
@@ -46,8 +48,13 @@ export function resizeTable(table: TableModel, rows: number, columns: number): T
   const next = createTableModel(normalizedRows, normalizedColumns);
 
   for (let row = 0; row < Math.min(table.rows, normalizedRows); row += 1) {
+    const sourceRow = table.cells[row];
+    const targetRow = next.cells[row];
+    if (!sourceRow || !targetRow) continue;
+
     for (let column = 0; column < Math.min(table.columns, normalizedColumns); column += 1) {
-      next.cells[row]![column] = { ...table.cells[row]![column] };
+      const sourceCell = sourceRow[column];
+      if (sourceCell) targetRow[column] = { ...sourceCell };
     }
   }
 
