@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { renderApp } from '../../src/app/App';
 import type { OrganizationConfig, TemplateConfig } from '../../src/types/configuration';
 
