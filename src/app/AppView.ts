@@ -1,5 +1,5 @@
-import { renderHorizontalRuler } from '../layout/RulerView';
 import { FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS } from '../editor/TypographyModel';
+import { renderHorizontalRuler } from '../layout/RulerView';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig, PageLayoutConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
