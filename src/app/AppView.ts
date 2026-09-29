@@ -1,3 +1,4 @@
+import { renderHorizontalRuler } from '../layout/RulerView';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig, PageLayoutConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
@@ -47,7 +48,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
             </div></section>
           </div>
         </details>
-      </div>      <div class="workspace"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article><div class="preview-wrap"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div>
+      </div>      <div class="workspace"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article><div class="preview-column"><div id="horizontal-ruler" class="horizontal-ruler"></div><div class="preview-wrap"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div></div>
     </section>
   </main>`;
 }
@@ -68,6 +69,8 @@ export function renderDocument(document: CommunicationDocument, elements: AppEle
   for (const field of template.fields) populateField(elements.root, field.id, getDocumentField(document, field.id));
   renderDocumentNumber(elements.number, document);
   renderPreview(elements.paper, organization, template, document);
+  const ruler = elements.root.querySelector<HTMLElement>('#horizontal-ruler');
+  if (ruler) renderHorizontalRuler(ruler, { pageWidthMm: 210, marginLeftMm: organization.layout.marginLeftMm, marginRightMm: organization.layout.marginRightMm });
 }
 
 export function renderPreview(root: HTMLElement, organization: OrganizationConfig, template: TemplateConfig, document: CommunicationDocument): void {
