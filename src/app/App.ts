@@ -50,15 +50,6 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
   const elements = getAppElements(root);
   const tableTools = tableGroup;
-  const syncTableTools = (): void => {
-    tableTools.hidden = !editorHasActiveTable();
-  };
-  const editorHasActiveTable = (): boolean => {
-    const selection = window.getSelection();
-    const anchor = selection?.anchorNode;
-    const anchorElement = anchor instanceof Element ? anchor : anchor?.parentElement;
-    return Boolean(anchorElement?.closest('table[data-ci-table]'));
-  };
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
@@ -82,6 +73,9 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   updateIssueButton(elements.issueButton, state.document);
   updatePdfButton(elements.pdfButton, organization.features.pdfExport);
   const editor = new Editor(elements.editor);
+  const syncTableTools = (): void => {
+    tableTools.hidden = !editor.hasActiveTableCell();
+  };
   const actions = createAppActions(state, editor, autosave, issuer, (name) => getFieldValue(root, name));
 
   const syncRuler = (): void => {
