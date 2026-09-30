@@ -57,7 +57,7 @@ describe('V2.3.2 table interactions', () => {
     expect(tables.moveByTab()).toBe(true);
     expect(tables.moveByTab()).toBe(true);
     expect(root.querySelectorAll('tr')).toHaveLength(3);
-    expect(root.querySelectorAll('tr')[2]?.cells[0]).toHaveAttribute('data-ci-table-selected', 'cell');
+    expect(root.querySelectorAll('tr')[2]?.cells[0]?.getAttribute('data-ci-table-selected')).toBe('cell');
   });
 
   it('moves backwards with Shift+Tab without creating a row', () => {
