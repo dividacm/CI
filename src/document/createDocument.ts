@@ -20,6 +20,7 @@ export function createDocument(input: CreateDocumentInput): CommunicationDocumen
     year: input.year,
     fields,
     bodyHtml: '',
+    graphics: [],
     templateId: input.template.id,
     createdAt: now,
     updatedAt: now,

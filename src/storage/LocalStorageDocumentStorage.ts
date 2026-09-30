@@ -1,3 +1,4 @@
+import { normalizeGraphicElements } from '../graphics/GraphicElementModel';
 import { getObservability } from '../observability/Observability';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { CommunicationDocument } from '../types/document';
@@ -26,6 +27,7 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
         year: parsed.year,
         fields: normalizeFields(parsed),
         bodyHtml: sanitizeHtml(parsed.bodyHtml),
+        graphics: normalizeGraphicElements(parsed.graphics),
         templateId: parsed.templateId,
         createdAt: parsed.createdAt,
         updatedAt: parsed.updatedAt,
@@ -45,6 +47,7 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
       ...document,
       fields: { ...document.fields },
       bodyHtml: sanitizeHtml(document.bodyHtml),
+      graphics: normalizeGraphicElements(document.graphics),
       updatedAt: new Date().toISOString(),
     };
 
