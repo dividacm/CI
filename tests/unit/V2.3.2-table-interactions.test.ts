@@ -47,8 +47,6 @@ describe('V2.3.2 table interactions', () => {
     expect(tables.resizeSelectedColumn(-1000)).toBe(true);
     expect(root.querySelector('td')?.getAttribute('style')).toContain('72px');
   });
-});
-
   it('moves to the next cell and creates a row after the last cell', () => {
     const { root, tables } = setup();
     expect(tables.moveByTab()).toBe(true);
@@ -68,3 +66,13 @@ describe('V2.3.2 table interactions', () => {
     expect(tables.moveByTab(true)).toBe(true);
     expect(root.querySelector('[data-ci-table-selected="cell"]')?.textContent).toBe('A');
   });
+  it('resynchronizes the selected cell after the editor HTML is replaced', () => {
+    const { root, tables } = setup();
+    const replacement = '<table data-ci-table="true"><tbody><tr><td>Novo</td><td>Valor</td></tr></tbody></table>';
+    root.innerHTML = replacement;
+    tables.syncSelection();
+    expect(root.querySelector('[data-ci-table-selected="cell"]')?.textContent).toBe('Novo');
+    expect(tables.insertColumn()).toBe(true);
+    expect(root.querySelectorAll('tr')[0]?.cells).toHaveLength(3);
+  });
+});

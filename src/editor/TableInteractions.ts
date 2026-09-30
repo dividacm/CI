@@ -17,6 +17,18 @@ export class TableInteractions {
     });
   }
 
+  syncSelection(): void {
+    const cell = this.selectedCell;
+    if (cell && this.root.contains(cell) && cell.closest('table[data-ci-table]')) {
+      this.renderSelection();
+      return;
+    }
+
+    this.selectedCell = this.root.querySelector<HTMLTableCellElement>('table[data-ci-table] td') ?? null;
+    this.selectionMode = 'cell';
+    this.renderSelection();
+  }
+
   selectRow(): boolean {
     const cell = this.selectedCell;
     const row = cell?.closest<HTMLTableRowElement>('tr');
