@@ -77,7 +77,9 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   const syncTableTools = (): void => {
     tableTools.hidden = !editor.hasActiveTableCell();
   };
-  const graphics = new GraphicElementInteractions(elements.editor, {
+  const graphicsRoot = elements.editor.parentElement;
+  if (!graphicsRoot) throw new Error('Canvas gráfico não encontrado.');
+  const graphics = new GraphicElementInteractions(graphicsRoot, {
     onChange: () => sync(),
   });
   graphics.setElements(state.document.graphics ?? []);
