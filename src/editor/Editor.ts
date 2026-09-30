@@ -133,6 +133,10 @@ export class Editor {
     return this.apply(() => this.tables.resizeSelectedColumn(deltaPx));
   }
 
+  hasActiveTableCell(): boolean {
+    return this.tables.hasActiveCell();
+  }
+
   fontFamily(value: string): boolean {
     return this.apply(() => this.formatting.setFontFamily(value));
   }

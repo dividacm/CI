@@ -54,6 +54,24 @@ describe('Editor', () => {
     expect(root.innerHTML).toBe('<p>A</p>');
   });
 
+  it('identifica quando a seleção ativa está dentro de uma tabela', () => {
+    const { root, editor } = createEditor('<table data-ci-table="true"><tbody><tr><td>A</td><td>B</td></tr></tbody></table>');
+    const cell = root.querySelector<HTMLTableCellElement>('td');
+    if (!cell) throw new Error('Célula de teste não encontrada.');
+    cell.click();
+    const text = cell.firstChild;
+    if (!text) throw new Error('Texto da célula não encontrado.');
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    expect(editor.hasActiveTableCell()).toBe(true);
+
+    editor.setHtml('<p>Fora da tabela</p>');
+    expect(editor.hasActiveTableCell()).toBe(false);
+  });
+
   it('lê e substitui o HTML e permite configurar o callback de salvar', () => {
     const { root, editor } = createEditor();
     const save = vi.fn();

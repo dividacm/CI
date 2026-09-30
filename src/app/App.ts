@@ -49,6 +49,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   }
   root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
   const elements = getAppElements(root);
+  const tableTools = tableGroup;
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
@@ -72,6 +73,9 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   updateIssueButton(elements.issueButton, state.document);
   updatePdfButton(elements.pdfButton, organization.features.pdfExport);
   const editor = new Editor(elements.editor);
+  const syncTableTools = (): void => {
+    tableTools.hidden = !editor.hasActiveTableCell();
+  };
   const actions = createAppActions(state, editor, autosave, issuer, (name) => getFieldValue(root, name));
 
   const syncRuler = (): void => {
@@ -101,7 +105,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   syncRuler();
 
-  const sync = (): void => { actions.sync(); syncView(); };
+  const sync = (): void => { actions.sync(); syncView(); syncTableTools(); };
 
   editor.setSaveHandler(() => {
     sync();
@@ -111,6 +115,11 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   root.querySelector<HTMLElement>('.toolbar')?.addEventListener('pointerdown', () => {
     editor.rememberSelection();
   });
+
+  elements.editor.addEventListener('click', syncTableTools);
+  elements.editor.addEventListener('keyup', syncTableTools);
+  elements.editor.addEventListener('focus', syncTableTools);
+  document.addEventListener('selectionchange', syncTableTools);
 
   root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
     field.addEventListener('input', sync);
