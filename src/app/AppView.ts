@@ -49,7 +49,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
             </div></section>
           </div>
         </details>
-      </div>      <div class="workspace"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article><div class="preview-column"><div id="horizontal-ruler" class="horizontal-ruler"></div><div class="preview-wrap"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div></div>
+      </div>      <div class="workspace"><div class="editor-canvas"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article></div><div class="preview-column"><div id="horizontal-ruler" class="horizontal-ruler"></div><div class="preview-wrap"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div></div>
     </section>
   </main>`;
 }
