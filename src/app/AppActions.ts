@@ -1,7 +1,6 @@
 import type { DocumentIssuer } from '../document/DocumentIssuer';
 import type { Editor } from '../editor/Editor';
 import { sanitizeHtml } from '../security/sanitizer';
-import type { GraphicElement } from '../graphics/GraphicElementModel';
 import type { AutosaveController } from '../storage/AutosaveController';
 import type { AppState } from './AppState';
 import { replaceDocument, resetDocument, updateDocument } from './AppState';
@@ -49,3 +48,4 @@ export function createAppActions(
     },
   };
 }
+import type { GraphicElement } from '../graphics/GraphicElementModel';
