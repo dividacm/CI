@@ -31,6 +31,7 @@ export class Editor {
   setHtml(html: string): void {
     this.root.innerHTML = html;
     this.savedSelection = null;
+    this.tables.syncSelection();
   }
 
   focus(): void {
@@ -154,13 +155,19 @@ export class Editor {
 
   undo(): boolean {
     const changed = this.history.undo(this.root);
-    if (changed) this.rememberSelection();
+    if (changed) {
+      this.rememberSelection();
+      this.tables.syncSelection();
+    }
     return changed;
   }
 
   redo(): boolean {
     const changed = this.history.redo(this.root);
-    if (changed) this.rememberSelection();
+    if (changed) {
+      this.rememberSelection();
+      this.tables.syncSelection();
+    }
     return changed;
   }
 
