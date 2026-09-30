@@ -11,6 +11,8 @@ export class Editor {
   private readonly tables: TableInteractions;
   private savedSelection: Range | null = null;
   private saveHandler: (() => void) | null = null;
+  private externalUndo: (() => boolean) | null = null;
+  private externalRedo: (() => boolean) | null = null;
 
   constructor(private readonly root: HTMLElement) {
     const rangeEngine = new RangeEngine(root);
@@ -45,6 +47,11 @@ export class Editor {
     const range = selection.getRangeAt(0);
     if (!this.root.contains(range.commonAncestorContainer)) return;
     this.savedSelection = range.cloneRange();
+  }
+
+  setExternalHistoryHandlers(undo: (() => boolean) | null, redo: (() => boolean) | null): void {
+    this.externalUndo = undo;
+    this.externalRedo = redo;
   }
 
   setSaveHandler(handler: (() => void) | null): void {
@@ -245,7 +252,8 @@ export class Editor {
 
     if (key === 'z' || key === 'y') {
       event.preventDefault();
-      const changed = key === 'y' || event.shiftKey ? this.redo() : this.undo();
+      const useExternal = this.externalUndo && this.externalRedo;
+      const changed = useExternal && key === 'z' && !event.shiftKey ? this.externalUndo() : useExternal && (key === 'y' || event.shiftKey) ? this.externalRedo() : key === 'y' || event.shiftKey ? this.redo() : this.undo();
       if (changed) this.notifyChange();
       return true;
     }
