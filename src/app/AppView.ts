@@ -66,10 +66,7 @@ export function getAppElements(root: HTMLElement): AppElements {
 }
 
 export function renderDocument(document: CommunicationDocument, elements: AppElements, organization: OrganizationConfig, template: TemplateConfig): void {
-  const graphicLayer = elements.editor.querySelector<HTMLElement>('.graphic-elements-layer');
-  graphicLayer?.remove();
   elements.editor.innerHTML = sanitizeHtml(document.bodyHtml);
-  if (graphicLayer) elements.editor.appendChild(graphicLayer);
   for (const field of template.fields) populateField(elements.root, field.id, getDocumentField(document, field.id));
   renderDocumentNumber(elements.number, document);
   renderPreview(elements.paper, organization, template, document);
