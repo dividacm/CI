@@ -101,6 +101,14 @@ export class TableInteractions {
     return true;
   }
 
+  hasActiveCell(): boolean {
+    const selection = window.getSelection();
+    const anchor = selection?.anchorNode;
+    const anchorElement = anchor instanceof Element ? anchor : anchor?.parentElement;
+    const activeTable = anchorElement?.closest('table[data-ci-table]');
+    return Boolean(this.selectedCell && activeTable && this.selectedCell.closest('table[data-ci-table]') === activeTable);
+  }
+
   moveByTab(reverse = false): boolean {
     const cell = this.selectedCell;
     const table = cell?.closest<HTMLTableElement>('table[data-ci-table]');
