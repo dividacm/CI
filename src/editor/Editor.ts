@@ -252,8 +252,9 @@ export class Editor {
 
     if (key === 'z' || key === 'y') {
       event.preventDefault();
-      const useExternal = this.externalUndo && this.externalRedo;
-      const changed = useExternal && key === 'z' && !event.shiftKey ? this.externalUndo() : useExternal && (key === 'y' || event.shiftKey) ? this.externalRedo() : key === 'y' || event.shiftKey ? this.redo() : this.undo();
+      const externalUndo = this.externalUndo;
+      const externalRedo = this.externalRedo;
+      const changed = externalUndo && externalRedo && key === 'z' && !event.shiftKey ? externalUndo() : externalUndo && externalRedo && (key === 'y' || event.shiftKey) ? externalRedo() : key === 'y' || event.shiftKey ? this.redo() : this.undo();
       if (changed) this.notifyChange();
       return true;
     }
