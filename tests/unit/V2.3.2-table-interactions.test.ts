@@ -48,3 +48,23 @@ describe('V2.3.2 table interactions', () => {
     expect(root.querySelector('td')?.getAttribute('style')).toContain('72px');
   });
 });
+
+  it('moves to the next cell and creates a row after the last cell', () => {
+    const { root, tables } = setup();
+    expect(tables.moveByTab()).toBe(true);
+    expect(root.querySelector('[data-ci-table-selected="cell"]')?.textContent).toBe('B');
+    expect(tables.moveByTab()).toBe(true);
+    expect(tables.moveByTab()).toBe(true);
+    expect(tables.moveByTab()).toBe(true);
+    expect(root.querySelectorAll('tr')).toHaveLength(3);
+    expect(root.querySelectorAll('tr')[2]?.cells[0]?.getAttribute('data-ci-table-selected')).toBe('cell');
+  });
+
+  it('moves backwards with Shift+Tab without creating a row', () => {
+    const { root, tables } = setup();
+    expect(tables.moveByTab(true)).toBe(false);
+    expect(root.querySelectorAll('tr')).toHaveLength(2);
+    expect(tables.moveByTab()).toBe(true);
+    expect(tables.moveByTab(true)).toBe(true);
+    expect(root.querySelector('[data-ci-table-selected="cell"]')?.textContent).toBe('A');
+  });

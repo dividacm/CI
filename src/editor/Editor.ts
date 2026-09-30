@@ -194,6 +194,7 @@ export class Editor {
     });
 
     this.root.addEventListener('keydown', (event) => {
+      if (this.handleTableNavigation(event)) return;
       if (this.handleShortcut(event)) return;
 
       if (!(event.ctrlKey || event.metaKey)) return;
@@ -205,6 +206,18 @@ export class Editor {
       else this.undo();
       this.notifyChange();
     });
+  }
+
+  private handleTableNavigation(event: KeyboardEvent): boolean {
+    if (event.key !== 'Tab') return false;
+    const target = event.target;
+    if (!(target instanceof Node) || !this.root.contains(target)) return false;
+    if (!this.tables.hasActiveCell()) return false;
+
+    event.preventDefault();
+    const changed = this.apply(() => this.tables.moveByTab(event.shiftKey));
+    if (changed) this.notifyChange();
+    return true;
   }
 
   private handleShortcut(event: KeyboardEvent): boolean {
