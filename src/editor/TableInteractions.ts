@@ -68,7 +68,7 @@ export class TableInteractions {
     const table = cell?.closest<HTMLTableElement>('table[data-ci-table]');
     if (!cell || !table) return false;
     const columnIndex = cell.cellIndex + 1;
-    Array.from(table.rows).forEach((row) => row.insertCell(columnIndex));
+    Array.from(table.rows).forEach((row) => { row.insertCell(columnIndex); });
     this.selectedCell = table.rows[0]?.cells[Math.min(columnIndex, (table.rows[0]?.cells.length ?? 1) - 1)] ?? null;
     this.selectionMode = 'cell';
     this.renderSelection();
@@ -80,7 +80,7 @@ export class TableInteractions {
     const table = cell?.closest<HTMLTableElement>('table[data-ci-table]');
     if (!cell || !table || (table.rows[0]?.cells.length ?? 0) <= 1) return false;
     const columnIndex = cell.cellIndex;
-    Array.from(table.rows).forEach((row) => row.deleteCell(columnIndex));
+    Array.from(table.rows).forEach((row) => { row.deleteCell(columnIndex); });
     const firstRow = table.rows[0];
     this.selectedCell = firstRow?.cells[Math.min(columnIndex, firstRow.cells.length - 1)] ?? null;
     this.selectionMode = 'cell';
@@ -117,7 +117,7 @@ export class TableInteractions {
 
     if (this.selectionMode === 'row') {
       const row = cell.closest<HTMLTableRowElement>('tr');
-      row?.querySelectorAll<HTMLElement>('td').forEach((item) => item.setAttribute('data-ci-table-selected', 'row'));
+      row?.querySelectorAll<HTMLElement>('td').forEach((item) => { item.setAttribute('data-ci-table-selected', 'row'); });
       return;
     }
 
