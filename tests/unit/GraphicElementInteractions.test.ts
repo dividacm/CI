@@ -23,9 +23,9 @@ describe('GraphicElementInteractions', () => {
 
     const node = root.querySelector<HTMLElement>('[data-graphic-id="shape-1"]');
     expect(node).not.toBeNull();
-    node?.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 20 }));
-    document.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: 30, clientY: 35 }));
-    document.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, clientX: 30, clientY: 35 }));
+    node?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 20 }));
+    document.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 30, clientY: 35 }));
+    document.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 30, clientY: 35 }));
 
     expect(interactions.getElements()[0]?.position).toEqual({ x: 30, y: 35 });
   });
