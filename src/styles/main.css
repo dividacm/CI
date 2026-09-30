@@ -34,3 +34,7 @@ html,body,#app{min-height:100%;margin:0}body{min-height:100vh;background:var(--c
   outline: 2px solid #111827;
   outline-offset: -2px;
 }
+
+.editor-surface table[data-ci-table] td[data-ci-table-selected] { background: color-mix(in srgb, var(--color-primary) 12%, #fff); }
+.table-tools { border-right: 0; }
+@media(max-width:720px){.table-tools{width:100%;overflow:auto;flex-wrap:nowrap}.table-tools button{flex:0 0 auto}}

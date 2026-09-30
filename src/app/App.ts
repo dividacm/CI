@@ -26,7 +26,28 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   tableButton.dataset.action = 'table-insert';
   tableButton.textContent = 'Tabela 2×3';
   tableButton.setAttribute('aria-label', 'Inserir tabela 2 por 3');
-  root.querySelector('.toolbar-groups')?.appendChild(tableButton);
+  const tableActions: Array<[string, string, string]> = [
+    ['table-row-select', 'Linha', 'Selecionar linha'],
+    ['table-column-select', 'Coluna', 'Selecionar coluna'],
+    ['table-row-add', '+ Linha', 'Inserir linha'],
+    ['table-row-delete', '− Linha', 'Excluir linha'],
+    ['table-column-add', '+ Col', 'Inserir coluna'],
+    ['table-column-delete', '− Col', 'Excluir coluna'],
+    ['table-column-widen', 'Col +', 'Aumentar largura da coluna'],
+    ['table-column-narrow', 'Col −', 'Reduzir largura da coluna'],
+  ];
+  const tableGroup = root.ownerDocument.createElement('div');
+  tableGroup.className = 'toolbar-group table-tools';
+  tableGroup.appendChild(tableButton);
+  for (const [action, label, ariaLabel] of tableActions) {
+    const button = root.ownerDocument.createElement('button');
+    button.type = 'button';
+    button.dataset.action = action;
+    button.textContent = label;
+    button.setAttribute('aria-label', ariaLabel);
+    tableGroup.appendChild(button);
+  }
+  root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
   const elements = getAppElements(root);
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
@@ -153,6 +174,14 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'list-unordered': editor.list('ul'); break;
         case 'list-ordered': editor.list('ol'); break;
         case 'table-insert': editor.insertTable(2, 3); break;
+        case 'table-row-select': editor.selectTableRow(); break;
+        case 'table-column-select': editor.selectTableColumn(); break;
+        case 'table-row-add': editor.insertTableRow(); break;
+        case 'table-row-delete': editor.deleteTableRow(); break;
+        case 'table-column-add': editor.insertTableColumn(); break;
+        case 'table-column-delete': editor.deleteTableColumn(); break;
+        case 'table-column-widen': editor.resizeTableColumn(24); break;
+        case 'table-column-narrow': editor.resizeTableColumn(-24); break;
         case 'font-inc': editor.fontSize('16px'); break;
         case 'font-dec': editor.fontSize('12px'); break;
         case 'upper': editor.toggleCase(true); break;
