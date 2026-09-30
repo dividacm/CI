@@ -31,6 +31,7 @@ export function resetDocument(state: AppState): void {
     year: new Date().getFullYear(),
     fields,
     bodyHtml: '',
+    graphics: [],
     updatedAt: new Date().toISOString(),
   });
 }
