@@ -1,5 +1,6 @@
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
+import type { GraphicElement } from '../graphics/GraphicElementModel';
 
 export interface AppState {
   document: CommunicationDocument;
@@ -10,6 +11,7 @@ export interface AppState {
 export interface DocumentPatch {
   fields?: Record<string, string>;
   bodyHtml?: string;
+  graphics?: GraphicElement[];
 }
 
 export function updateDocument(state: AppState, patch: DocumentPatch): void {
