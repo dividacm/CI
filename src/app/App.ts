@@ -49,6 +49,16 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   }
   root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
   const elements = getAppElements(root);
+  const tableTools = tableGroup;
+  const syncTableTools = (): void => {
+    tableTools.hidden = !editorHasActiveTable();
+  };
+  const editorHasActiveTable = (): boolean => {
+    const selection = window.getSelection();
+    const anchor = selection?.anchorNode;
+    const anchorElement = anchor instanceof Element ? anchor : anchor?.parentElement;
+    return Boolean(anchorElement?.closest('table[data-ci-table]'));
+  };
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
@@ -101,7 +111,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   syncRuler();
 
-  const sync = (): void => { actions.sync(); syncView(); };
+  const sync = (): void => { actions.sync(); syncView(); syncTableTools(); };
 
   editor.setSaveHandler(() => {
     sync();
@@ -111,6 +121,11 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   root.querySelector<HTMLElement>('.toolbar')?.addEventListener('pointerdown', () => {
     editor.rememberSelection();
   });
+
+  elements.editor.addEventListener('click', syncTableTools);
+  elements.editor.addEventListener('keyup', syncTableTools);
+  elements.editor.addEventListener('focus', syncTableTools);
+  document.addEventListener('selectionchange', syncTableTools);
 
   root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
     field.addEventListener('input', sync);
