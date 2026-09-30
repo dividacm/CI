@@ -101,6 +101,39 @@ export class TableInteractions {
     return true;
   }
 
+  moveByTab(reverse = false): boolean {
+    const cell = this.selectedCell;
+    const table = cell?.closest<HTMLTableElement>('table[data-ci-table]');
+    if (!cell || !table) return false;
+
+    const cells = Array.from(table.rows).flatMap((row) => Array.from(row.cells));
+    const currentIndex = cells.indexOf(cell);
+    if (currentIndex < 0) return false;
+
+    const nextIndex = currentIndex + (reverse ? -1 : 1);
+    if (nextIndex >= 0 && nextIndex < cells.length) {
+      this.selectedCell = cells[nextIndex] ?? null;
+      this.selectionMode = 'cell';
+      this.renderSelection();
+      return true;
+    }
+
+    if (reverse) return false;
+
+    const lastRow = table.rows[table.rows.length - 1];
+    if (!lastRow) return false;
+    const nextRow = lastRow.cloneNode(true) as HTMLTableRowElement;
+    nextRow.querySelectorAll('td').forEach((item) => {
+      item.textContent = '';
+      item.removeAttribute('style');
+    });
+    lastRow.after(nextRow);
+    this.selectedCell = nextRow.cells[0] ?? null;
+    this.selectionMode = 'cell';
+    this.renderSelection();
+    return true;
+  }
+
   private renderSelection(): void {
     this.root.querySelectorAll<HTMLElement>('[data-ci-table-selected]').forEach((item) => {
       item.removeAttribute('data-ci-table-selected');
