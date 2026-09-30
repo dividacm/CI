@@ -66,8 +66,6 @@ describe('V2.3.2 table interactions', () => {
     expect(tables.moveByTab(true)).toBe(true);
     expect(root.querySelector('[data-ci-table-selected="cell"]')?.textContent).toBe('A');
   });
-});
-
   it('resynchronizes the selected cell after the editor HTML is replaced', () => {
     const { root, tables } = setup();
     const replacement = '<table data-ci-table="true"><tbody><tr><td>Novo</td><td>Valor</td></tr></tbody></table>';
@@ -77,3 +75,4 @@ describe('V2.3.2 table interactions', () => {
     expect(tables.insertColumn()).toBe(true);
     expect(root.querySelectorAll('tr')[0]?.cells).toHaveLength(3);
   });
+});
