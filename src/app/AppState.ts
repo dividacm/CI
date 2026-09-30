@@ -1,5 +1,6 @@
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
+import type { GraphicElement } from '../graphics/GraphicElementModel';
 
 export interface AppState {
   document: CommunicationDocument;
