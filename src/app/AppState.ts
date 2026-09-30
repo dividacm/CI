@@ -38,4 +38,3 @@ export function resetDocument(state: AppState): void {
 export function replaceDocument(state: AppState, document: CommunicationDocument): void {
   state.document = document;
 }
-import type { GraphicElement } from '../graphics/GraphicElementModel';
