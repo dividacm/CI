@@ -1,7 +1,7 @@
 import type { DocumentIssuer } from '../document/DocumentIssuer';
 import type { Editor } from '../editor/Editor';
-import { sanitizeHtml } from '../security/sanitizer';
 import type { GraphicElement } from '../graphics/GraphicElementModel';
+import { sanitizeHtml } from '../security/sanitizer';
 
 import type { AutosaveController } from '../storage/AutosaveController';
 import type { AppState } from './AppState';
