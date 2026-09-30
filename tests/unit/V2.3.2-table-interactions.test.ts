@@ -76,3 +76,24 @@ describe('V2.3.2 table interactions', () => {
     expect(root.querySelectorAll('tr')[0]?.cells).toHaveLength(3);
   });
 });
+
+  it('keeps the table valid when deleting the last possible row or column', () => {
+    const { root, tables } = setup();
+    expect(tables.deleteRow()).toBe(true);
+    expect(tables.deleteRow()).toBe(false);
+    expect(root.querySelectorAll('tr')).toHaveLength(1);
+    expect(tables.deleteColumn()).toBe(true);
+    expect(tables.deleteColumn()).toBe(false);
+    expect(root.querySelectorAll('tr')[0]?.cells).toHaveLength(1);
+  });
+
+  it('rejects invalid resize deltas without mutating the table', () => {
+    const { root, tables } = setup();
+    const cell = root.querySelector('td');
+    const before = cell?.getAttribute('style');
+    expect(tables.resizeSelectedColumn(0)).toBe(false);
+    expect(tables.resizeSelectedColumn(Number.NaN)).toBe(false);
+    expect(tables.resizeSelectedColumn(Number.POSITIVE_INFINITY)).toBe(false);
+    expect(cell?.getAttribute('style')).toBe(before);
+  });
+
