@@ -107,7 +107,7 @@ export class TableInteractions {
     });
 
     const cell = this.selectedCell;
-    const table = cell?.closest('table[data-ci-table]');
+    const table = cell?.closest<HTMLTableElement>('table[data-ci-table]');
     if (!cell || !table) return;
 
     if (this.selectionMode === 'cell') {
