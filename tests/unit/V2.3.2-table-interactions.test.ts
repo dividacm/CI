@@ -47,8 +47,6 @@ describe('V2.3.2 table interactions', () => {
     expect(tables.resizeSelectedColumn(-1000)).toBe(true);
     expect(root.querySelector('td')?.getAttribute('style')).toContain('72px');
   });
-});
-
   it('moves to the next cell and creates a row after the last cell', () => {
     const { root, tables } = setup();
     expect(tables.moveByTab()).toBe(true);
@@ -68,3 +66,4 @@ describe('V2.3.2 table interactions', () => {
     expect(tables.moveByTab(true)).toBe(true);
     expect(root.querySelector('[data-ci-table-selected="cell"]')?.textContent).toBe('A');
   });
+});
