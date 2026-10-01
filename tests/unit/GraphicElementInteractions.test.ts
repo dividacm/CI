@@ -299,11 +299,11 @@ describe('GraphicElementInteractions', () => {
     const handle = root.querySelector<HTMLElement>('[data-resize-handle="resize-a"]');
     expect(handle).not.toBeNull();
     handle?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 130, clientY: 50 }));
-    document.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 170, clientY: 70 }));
-    document.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 170, clientY: 70 }));
+    document.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 190, clientY: 70 }));
+    document.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 190, clientY: 70 }));
 
-    expect(interactions.getElements().find((element) => element.id === 'resize-a')?.size.width).toBe(56);
-    expect(interactions.getElements().find((element) => element.id === 'resize-b')?.position.x).toBe(106);
+    expect(interactions.getElements().find((element) => element.id === 'resize-a')?.size.width).toBe(60);
+    expect(interactions.getElements().find((element) => element.id === 'resize-b')?.position.x).toBe(130);
     expect(interactions.undo()).toBe(true);
     expect(interactions.getElements().find((element) => element.id === 'resize-a')?.size.width).toBe(40);
   });
