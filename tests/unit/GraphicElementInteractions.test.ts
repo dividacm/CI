@@ -137,7 +137,7 @@ describe('GraphicElementInteractions', () => {
     expect(root.querySelector('[data-graphic-id="shape-first"]')?.getAttribute('data-selected')).toBe('true');
     expect(interactions.redo()).toBe(true);
     expect(interactions.getElements().map((element) => element.id)).toEqual(['shape-second', 'shape-first']);
-    expect(root.querySelector('[data-graphic-id="shape-first"]')).toHaveAttribute('data-selected', 'true');
+    expect(root.querySelector('[data-graphic-id="shape-first"]')?.getAttribute('data-selected')).toBe('true');
   });
 
   it('returns false when ordering has no effect or no selection', () => {
