@@ -98,6 +98,62 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.getElements()).toHaveLength(1);
   });
 
+  it('duplicates the selected element with preserved content and selection', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'shape-duplicate',
+      kind: 'shape',
+      position: { x: 10, y: 20 },
+      data: { label: 'Original' },
+    })]);
+    root.querySelector<HTMLElement>('[data-graphic-id="shape-duplicate"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 20 }),
+    );
+
+    expect(interactions.duplicateSelected()).toBe(true);
+    expect(interactions.getElements()).toHaveLength(2);
+    expect(interactions.getElements()[1]?.data.label).toBe('Original');
+    expect(interactions.getElements()[1]?.position).toEqual({ x: 22, y: 32 });
+    expect(root.querySelector('[data-graphic-id="shape-duplicate"]')).not.toHaveAttribute('data-selected', 'true');
+    expect(root.querySelectorAll('[data-selected="true"]')).toHaveLength(1);
+  });
+
+  it('changes z-order and preserves selection through undo and redo', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    const first = createGraphicElement({ id: 'shape-first', kind: 'shape' });
+    const second = createGraphicElement({ id: 'shape-second', kind: 'shape', position: { x: 20, y: 20 } });
+    interactions.setElements([first, second]);
+    root.querySelector<HTMLElement>('[data-graphic-id="shape-first"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 0, clientY: 0 }),
+    );
+
+    expect(interactions.bringSelectedToFront()).toBe(true);
+    expect(interactions.getElements().map((element) => element.id)).toEqual(['shape-second', 'shape-first']);
+    expect(root.querySelector('[data-graphic-id="shape-first"]')).toHaveAttribute('data-selected', 'true');
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements().map((element) => element.id)).toEqual(['shape-first', 'shape-second']);
+    expect(root.querySelector('[data-graphic-id="shape-first"]')).toHaveAttribute('data-selected', 'true');
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.getElements().map((element) => element.id)).toEqual(['shape-second', 'shape-first']);
+    expect(root.querySelector('[data-graphic-id="shape-first"]')).toHaveAttribute('data-selected', 'true');
+  });
+
+  it('returns false when ordering has no effect or no selection', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({ id: 'shape-only', kind: 'shape' })]);
+    root.querySelector<HTMLElement>('[data-graphic-id="shape-only"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 0, clientY: 0 }),
+    );
+    expect(interactions.bringSelectedToFront()).toBe(false);
+    expect(interactions.sendSelectedToBack()).toBe(false);
+    expect(interactions.duplicateSelected()).toBe(true);
+    expect(interactions.sendSelectedToBack()).toBe(true);
+    expect(interactions.getElements()[0]?.id).not.toBe('shape-only');
+  });
+
   it('supports undo and redo', () => {
     const root = document.createElement('article');
     const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
