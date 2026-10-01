@@ -21,6 +21,7 @@ export function createDocument(input: CreateDocumentInput): CommunicationDocumen
     fields,
     bodyHtml: '',
     graphics: [],
+    connectors: [],
     templateId: input.template.id,
     createdAt: now,
     updatedAt: now,
