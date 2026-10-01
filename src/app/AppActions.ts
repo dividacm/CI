@@ -20,8 +20,8 @@ export function createAppActions(
   autosave: AutosaveController,
   issuer: DocumentIssuer,
   getField: (name: string) => string,
-  getGraphics: () => GraphicElement[] = [],
-  getConnectors: () => GraphicConnector[] = [],
+  getGraphics: () => GraphicElement[] = () => [],
+  getConnectors: () => GraphicConnector[] = () => [],
 ): AppActions {
   const sync = (): void => {
     const fields = Object.fromEntries(
