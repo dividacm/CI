@@ -321,7 +321,8 @@ export class GraphicElementInteractions {
 
     const additive = event.ctrlKey || event.metaKey;
     const wasSelected = this.selectedIds.has(id);
-    if (!additive || !wasSelected) this.selectFromElement(id, additive);
+    if (additive || !wasSelected) this.selectFromElement(id, additive);
+    if (!this.selectedIds.has(id)) return;
 
     const ids = [...this.selectedIds].length ? [...this.selectedIds] : [id];
     const selectedElements = this.elements.filter((item) => ids.includes(item.id));
