@@ -95,7 +95,10 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
     },
   });
   const syncGraphicTools = (): void => {
-    if (graphicTools) graphicTools.hidden = graphics.getSelectedIds().length === 0;
+    const selectedCount = graphics.getSelectedIds().length;
+    if (graphicTools) graphicTools.hidden = selectedCount === 0;
+    const connectButton = root.querySelector<HTMLButtonElement>('[data-action="graphic-connect"]');
+    if (connectButton) connectButton.disabled = selectedCount !== 2;
   };
   const syncConnectorTools = (): void => {
     if (connectorTools) connectorTools.hidden = !connectors.hasSelection();
