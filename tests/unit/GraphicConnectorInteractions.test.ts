@@ -42,7 +42,7 @@ describe('GraphicConnectorInteractions', () => {
     const { root, interactions } = setup();
     expect(interactions.connect('from', 'to')).toBe(true);
 
-    root.querySelector<SVGLineElement>('.graphic-connector')?.dispatchEvent(
+    root.querySelector('.graphic-connector')?.dispatchEvent(
       new MouseEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 60 }),
     );
 
