@@ -373,6 +373,7 @@ export class GraphicElementInteractions {
   private resizeSelection(dx: number, dy: number): void {
     if (this.drag?.originElements.length === 1) {
       const origin = this.drag.originElements[0];
+      if (!origin) return;
       const element = this.elements.find((item) => item.id === origin.id);
       if (!element) return;
       element.size.width = Math.max(72, origin.size.width + dx);
