@@ -43,7 +43,7 @@ describe('GraphicConnectorInteractions', () => {
     expect(interactions.connect('from', 'to')).toBe(true);
 
     root.querySelector('.graphic-connector')?.dispatchEvent(
-      new MouseEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 60 }),
+      new Event('pointerdown', { bubbles: true, cancelable: true }),
     );
 
     expect(interactions.hasSelection()).toBe(true);
