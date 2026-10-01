@@ -42,10 +42,9 @@ describe('GraphicConnectorInteractions', () => {
     const { root, interactions } = setup();
     expect(interactions.connect('from', 'to')).toBe(true);
 
-    root.querySelector('.graphic-connector')?.dispatchEvent(
-      new Event('pointerdown', { bubbles: true, cancelable: true }),
-    );
-
+    const connector = root.querySelector<SVGLineElement>('.graphic-connector');
+    expect(connector).not.toBeNull();
+    expect(interactions.selectConnector(connector!.dataset.connectorId!)).toBe(true);
     expect(interactions.hasSelection()).toBe(true);
     expect(interactions.deleteSelected()).toBe(true);
     expect(interactions.getConnectors()).toHaveLength(0);
