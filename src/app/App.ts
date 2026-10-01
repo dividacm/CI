@@ -4,6 +4,15 @@ import { Editor } from '../editor/Editor';
 import { GraphicConnectorInteractions } from '../graphics/GraphicConnectorInteractions';
 import { GraphicElementInteractions } from '../graphics/GraphicElementInteractions';
 import { renderHorizontalRuler } from '../layout/RulerView';
+import { getObservability } from '../observability/Observability';
+import { PdfExporter } from '../pdf/PdfExporter';
+import { AutosaveController } from '../storage/AutosaveController';
+import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
+import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
+import type { CommunicationDocument, DocumentStatus } from '../types/document';
+import { createAppActions } from './AppActions';
+import type { AppState } from './AppState';
+import { getAppElements, getFieldValue, renderDocument, renderPreview, renderShell, updateIssueButton, updatePdfButton } from './AppView';
 
 const ACTIVE_DOCUMENT_KEY = 'ci:active-document';
 const LAYOUT_CONFIG_KEY = 'ci:layout-config';
