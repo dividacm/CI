@@ -1,6 +1,7 @@
 import { createDocument } from '../document/createDocument';
 import { DocumentIssuer } from '../document/DocumentIssuer';
 import { Editor } from '../editor/Editor';
+import { GraphicElementInteractions } from '../graphics/GraphicElementInteractions';
 import { renderHorizontalRuler } from '../layout/RulerView';
 import { getObservability } from '../observability/Observability';
 import { PdfExporter } from '../pdf/PdfExporter';
@@ -76,7 +77,14 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   const syncTableTools = (): void => {
     tableTools.hidden = !editor.hasActiveTableCell();
   };
-  const actions = createAppActions(state, editor, autosave, issuer, (name) => getFieldValue(root, name));
+  const graphicsRoot = elements.editor.parentElement;
+  if (!graphicsRoot) throw new Error('Canvas gráfico não encontrado.');
+  const graphics = new GraphicElementInteractions(graphicsRoot, {
+    onChange: () => sync(),
+  });
+  graphics.setElements(state.document.graphics ?? []);
+  editor.setExternalHistoryHandlers(() => graphics.undo(), () => graphics.redo());
+  const actions = createAppActions(state, editor, autosave, issuer, (name) => getFieldValue(root, name), () => graphics.getElements());
 
   const syncRuler = (): void => {
     const ruler = elements.root.querySelector<HTMLElement>('#horizontal-ruler');
@@ -138,6 +146,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         localStorage.setItem(ACTIVE_DOCUMENT_KEY, freshDocument.id);
         autosave.attach(freshDocument);
         renderDocument(state.document, elements, organization, template);
+        graphics.setElements(state.document.graphics ?? []);
         updateIssueButton(elements.issueButton, state.document);
         autosave.saveNow();
         syncRuler();
@@ -183,6 +192,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'list-unordered': editor.list('ul'); break;
         case 'list-ordered': editor.list('ol'); break;
         case 'table-insert': editor.insertTable(2, 3); break;
+        case 'graphic-insert': graphics.insertShape(); break;
         case 'table-row-select': editor.selectTableRow(); break;
         case 'table-column-select': editor.selectTableColumn(); break;
         case 'table-row-add': editor.insertTableRow(); break;
@@ -198,8 +208,8 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'copy': await editor.copy(); break;
         case 'cut': await editor.cut(); break;
         case 'paste': await editor.pastePlainText(); break;
-        case 'undo': editor.undo(); break;
-        case 'redo': editor.redo(); break;
+        case 'undo': (graphics.hasSelection() ? graphics.undo() : editor.undo()); break;
+        case 'redo': (graphics.hasSelection() ? graphics.redo() : editor.redo()); break;
         case 'clear-formatting': editor.clearFormatting(); break;
         default: return;
       }
