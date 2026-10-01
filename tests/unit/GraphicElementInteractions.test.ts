@@ -163,4 +163,71 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.redo()).toBe(true);
     expect(interactions.getElements()).toHaveLength(1);
   });
+
+  it('renders the visual class according to the graphic kind', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({ id: 'shape-kind', kind: 'shape' }),
+      createGraphicElement({ id: 'smartart-kind', kind: 'smartart', position: { x: 20, y: 20 } }),
+    ]);
+
+    expect(root.querySelector('[data-graphic-id="shape-kind"]')?.classList.contains('graphic-element-shape')).toBe(true);
+    expect(root.querySelector('[data-graphic-id="smartart-kind"]')?.classList.contains('graphic-element-smartart')).toBe(true);
+  });
+
+  it('rotates the selected element through the rotation handle and supports undo/redo', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({
+        id: 'shape-rotate',
+        kind: 'shape',
+        position: { x: 0, y: 0 },
+        size: { width: 100, height: 100 },
+      }),
+    ]);
+
+    const node = root.querySelector<HTMLElement>('[data-graphic-id="shape-rotate"]');
+    node?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 50, clientY: 0 }));
+    const rotateHandle = root.querySelector<HTMLElement>('[data-rotate-handle="shape-rotate"]');
+    expect(rotateHandle).not.toBeNull();
+
+    rotateHandle?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 50, clientY: 0 }));
+    document.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 100, clientY: 50 }));
+    document.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 100, clientY: 50 }));
+
+    expect(interactions.getElements()[0]?.rotation).toBe(90);
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements()[0]?.rotation).toBe(0);
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.getElements()[0]?.rotation).toBe(90);
+  });
+
+  it('records resize changes in undo and redo history', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({
+        id: 'shape-resize',
+        kind: 'shape',
+        size: { width: 100, height: 80 },
+      }),
+    ]);
+
+    const node = root.querySelector<HTMLElement>('[data-graphic-id="shape-resize"]');
+    node?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 80 }));
+    const resizeHandle = root.querySelector<HTMLElement>('[data-resize-handle="shape-resize"]');
+    expect(resizeHandle).not.toBeNull();
+
+    resizeHandle?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 100, clientY: 80 }));
+    document.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 140, clientY: 110 }));
+    document.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 140, clientY: 110 }));
+
+    expect(interactions.getElements()[0]?.size).toEqual({ width: 140, height: 110 });
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements()[0]?.size).toEqual({ width: 100, height: 80 });
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.getElements()[0]?.size).toEqual({ width: 140, height: 110 });
+  });
 });
