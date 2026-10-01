@@ -67,6 +67,12 @@ export class GraphicElementInteractions {
     return [...this.selectedIds];
   }
 
+  clearSelection(): void {
+    if (!this.selectedIds.size) return;
+    this.selectedIds.clear();
+    this.render();
+  }
+
   duplicateSelected(): boolean {
     if (!this.selectedIds.size) return false;
     const sources = this.elements.filter((element) => this.selectedIds.has(element.id));
