@@ -142,6 +142,7 @@ export class GraphicConnectorInteractions {
       line.setAttribute('class', connector.id === this.selectedId ? 'graphic-connector graphic-connector-selected' : 'graphic-connector');
       line.setAttribute('role', 'button');
       line.setAttribute('aria-label', 'Conector');
+      line.addEventListener('pointerdown', this.handleConnectorPointerDown);
       this.svg.appendChild(line);
     }
   }
