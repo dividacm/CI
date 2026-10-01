@@ -38,6 +38,41 @@ export class GraphicElementInteractions {
     return this.selectedId !== null;
   }
 
+  duplicateSelected(): boolean {
+    if (!this.selectedId) return false;
+    const source = this.elements.find((element) => element.id === this.selectedId);
+    if (!source) return false;
+    const duplicate = createGraphicElement({
+      kind: source.kind,
+      position: { x: source.position.x + 12, y: source.position.y + 12 },
+      size: { ...source.size },
+      rotation: source.rotation,
+      data: { ...source.data },
+    });
+    this.commit([...this.elements, duplicate], duplicate.id);
+    return true;
+  }
+
+  bringSelectedToFront(): boolean {
+    return this.moveSelectedToIndex(this.elements.length - 1);
+  }
+
+  sendSelectedToBack(): boolean {
+    return this.moveSelectedToIndex(0);
+  }
+
+  private moveSelectedToIndex(targetIndex: number): boolean {
+    if (!this.selectedId) return false;
+    const currentIndex = this.elements.findIndex((element) => element.id === this.selectedId);
+    if (currentIndex < 0 || currentIndex === targetIndex) return false;
+    const next = cloneElements(this.elements);
+    const [selected] = next.splice(currentIndex, 1);
+    if (!selected) return false;
+    next.splice(Math.max(0, Math.min(targetIndex, next.length)), 0, selected);
+    this.commit(next, selected.id);
+    return true;
+  }
+
   insertShape(): boolean {
     const element = createGraphicElement({
       kind: 'shape',
@@ -53,8 +88,9 @@ export class GraphicElementInteractions {
     const previous = this.undoStack.pop();
     if (!previous) return false;
     this.redoStack.push(this.getElements());
+    const selectedId = this.selectedId;
     this.elements = cloneElements(previous);
-    this.selectedId = this.elements[0]?.id ?? null;
+    this.selectedId = selectedId && this.elements.some((element) => element.id === selectedId) ? selectedId : null;
     this.render();
     this.options.onChange(this.getElements());
     return true;
@@ -64,8 +100,9 @@ export class GraphicElementInteractions {
     const next = this.redoStack.pop();
     if (!next) return false;
     this.undoStack.push(this.getElements());
+    const selectedId = this.selectedId;
     this.elements = cloneElements(next);
-    this.selectedId = this.elements[0]?.id ?? null;
+    this.selectedId = selectedId && this.elements.some((element) => element.id === selectedId) ? selectedId : null;
     this.render();
     this.options.onChange(this.getElements());
     return true;
@@ -197,6 +234,12 @@ export class GraphicElementInteractions {
     if (!this.selectedId) return;
     const target = event.target;
     if (target instanceof HTMLElement && target !== this.root && !this.root.contains(target)) return;
+
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') {
+      event.preventDefault();
+      this.duplicateSelected();
+      return;
+    }
 
     if (event.key === 'Delete' || event.key === 'Backspace') {
       event.preventDefault();
