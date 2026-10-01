@@ -30,6 +30,25 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.getElements()[0]?.position).toEqual({ x: 30, y: 35 });
   });
 
+  it('restores the pre-drag state on undo', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    const element = createGraphicElement({ id: 'shape-undo', kind: 'shape', position: { x: 10, y: 20 } });
+    interactions.setElements([element]);
+
+    const node = root.querySelector<HTMLElement>('[data-graphic-id="shape-undo"]');
+    expect(node).not.toBeNull();
+    node?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 20 }));
+    document.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 30, clientY: 35 }));
+    document.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 30, clientY: 35 }));
+
+    expect(interactions.getElements()[0]?.position).toEqual({ x: 30, y: 35 });
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements()[0]?.position).toEqual({ x: 10, y: 20 });
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.getElements()[0]?.position).toEqual({ x: 30, y: 35 });
+  });
+
   it('supports undo and redo', () => {
     const root = document.createElement('article');
     const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });

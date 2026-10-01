@@ -166,22 +166,27 @@ export class GraphicElementInteractions {
 
   private handlePointerUp = (): void => {
     if (!this.drag) return;
+    const drag = this.drag;
     const changed = this.elements.some((element) => {
-      if (element.id !== this.drag?.id) return false;
-      return element.position.x !== this.drag.originX || element.position.y !== this.drag.originY ||
-        element.size.width !== this.drag.originWidth || element.size.height !== this.drag.originHeight;
+      if (element.id !== drag.id) return false;
+      return element.position.x !== drag.originX || element.position.y !== drag.originY ||
+        element.size.width !== drag.originWidth || element.size.height !== drag.originHeight;
     });
     if (changed) {
-      const current = this.getElements();
-      const previous = cloneElements(current);
-      const changedElement = previous.find((element) => element.id === this.drag?.id);
-      if (changedElement) {
-        changedElement.position.x = this.drag.originX;
-        changedElement.position.y = this.drag.originY;
-        changedElement.size.width = this.drag.originWidth;
-        changedElement.size.height = this.drag.originHeight;
-      }
+      const previous = this.elements.map((element) => ({
+        ...element,
+        position: {
+          x: element.id === drag.id ? drag.originX : element.position.x,
+          y: element.id === drag.id ? drag.originY : element.position.y,
+        },
+        size: {
+          width: element.id === drag.id ? drag.originWidth : element.size.width,
+          height: element.id === drag.id ? drag.originHeight : element.size.height,
+        },
+        data: { ...element.data },
+      }));
       this.undoStack.push(previous);
+      if (this.undoStack.length > 50) this.undoStack.shift();
       this.redoStack = [];
       this.options.onChange(this.getElements());
     }
