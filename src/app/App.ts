@@ -51,6 +51,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
   const elements = getAppElements(root);
   const tableTools = tableGroup;
+  const graphicTools = root.querySelector<HTMLElement>('.graphic-tools');
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
@@ -82,7 +83,11 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   const graphics = new GraphicElementInteractions(graphicsRoot, {
     onChange: () => sync(),
   });
+  const syncGraphicTools = (): void => {
+    if (graphicTools) graphicTools.hidden = !graphics.hasSelection();
+  };
   graphics.setElements(state.document.graphics ?? []);
+  syncGraphicTools();
   editor.setExternalHistoryHandlers(() => graphics.undo(), () => graphics.redo());
   const actions = createAppActions(state, editor, autosave, issuer, (name) => getFieldValue(root, name), () => graphics.getElements());
 
@@ -113,7 +118,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   syncRuler();
 
-  const sync = (): void => { actions.sync(); syncView(); syncTableTools(); };
+  const sync = (): void => { actions.sync(); syncView(); syncTableTools(); syncGraphicTools(); };
 
   editor.setSaveHandler(() => {
     sync();
@@ -127,6 +132,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   elements.editor.addEventListener('click', syncTableTools);
   elements.editor.addEventListener('keyup', syncTableTools);
   elements.editor.addEventListener('focus', syncTableTools);
+  graphicsRoot.addEventListener('pointerdown', () => queueMicrotask(syncGraphicTools));
   document.addEventListener('selectionchange', syncTableTools);
 
   root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
@@ -147,6 +153,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         autosave.attach(freshDocument);
         renderDocument(state.document, elements, organization, template);
         graphics.setElements(state.document.graphics ?? []);
+        syncGraphicTools();
         updateIssueButton(elements.issueButton, state.document);
         autosave.saveNow();
         syncRuler();
@@ -193,6 +200,9 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'list-ordered': editor.list('ol'); break;
         case 'table-insert': editor.insertTable(2, 3); break;
         case 'graphic-insert': graphics.insertShape(); break;
+        case 'graphic-duplicate': graphics.duplicateSelected(); break;
+        case 'graphic-front': graphics.bringSelectedToFront(); break;
+        case 'graphic-back': graphics.sendSelectedToBack(); break;
         case 'table-row-select': editor.selectTableRow(); break;
         case 'table-column-select': editor.selectTableColumn(); break;
         case 'table-row-add': editor.insertTableRow(); break;
