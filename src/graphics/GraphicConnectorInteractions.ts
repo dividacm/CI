@@ -52,6 +52,14 @@ export class GraphicConnectorInteractions {
     this.options.onSelectionChange?.();
   }
 
+  selectConnector(id: string): boolean {
+    if (!this.connectors.some((connector) => connector.id === id)) return false;
+    this.selectedId = this.selectedId === id ? null : id;
+    this.render(this.options.getElements());
+    this.options.onSelectionChange?.();
+    return true;
+  }
+
   connect(fromId: string, toId: string): boolean {
     if (fromId === toId) return false;
     const elements = this.options.getElements();
@@ -154,9 +162,7 @@ export class GraphicConnectorInteractions {
     if (!id) return;
     event.preventDefault();
     event.stopPropagation();
-    this.selectedId = this.selectedId === id ? null : id;
-    this.render(this.options.getElements());
-    this.options.onSelectionChange?.();
+    this.selectConnector(id);
   };
 
   private handleRootPointerDown = (event: PointerEvent): void => {
