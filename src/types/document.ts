@@ -1,3 +1,4 @@
+import type { GraphicConnector } from '../graphics/GraphicConnectorModel';
 import type { GraphicElement } from '../graphics/GraphicElementModel';
 
 export interface CommunicationDocument {
@@ -7,6 +8,7 @@ export interface CommunicationDocument {
   fields: Record<string, string>;
   bodyHtml: string;
   graphics?: GraphicElement[];
+  connectors?: GraphicConnector[];
   templateId: string;
   createdAt: string;
   updatedAt: string;
