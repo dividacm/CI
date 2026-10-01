@@ -148,13 +148,9 @@ export class GraphicConnectorInteractions {
   }
 
   private handleConnectorPointerDown = (event: PointerEvent): void => {
-    const currentTarget = event.currentTarget;
-    const target = currentTarget instanceof SVGElement && currentTarget.tagName.toLowerCase() === 'line'
-      ? currentTarget
-      : event.target instanceof Element && event.target.tagName.toLowerCase() === 'line'
-        ? event.target
-        : null;
-    const id = target?.dataset.connectorId;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const id = target.getAttribute('data-connector-id');
     if (!id) return;
     event.preventDefault();
     event.stopPropagation();
