@@ -194,11 +194,36 @@ export class GraphicElementInteractions {
   };
 
   private handleKeyDown = (event: KeyboardEvent): void => {
-    if (!this.selectedId || !(event.key === 'Delete' || event.key === 'Backspace')) return;
+    if (!this.selectedId) return;
     const target = event.target;
     if (target instanceof HTMLElement && target !== this.root && !this.root.contains(target)) return;
+
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      event.preventDefault();
+      this.commit(this.elements.filter((element) => element.id !== this.selectedId), null);
+      return;
+    }
+
+    const deltas: Record<string, { x: number; y: number }> = {
+      ArrowLeft: { x: -1, y: 0 },
+      ArrowRight: { x: 1, y: 0 },
+      ArrowUp: { x: 0, y: -1 },
+      ArrowDown: { x: 0, y: 1 },
+    };
+    const delta = deltas[event.key];
+    if (!delta || event.altKey || event.ctrlKey || event.metaKey) return;
+
+    const element = this.elements.find((item) => item.id === this.selectedId);
+    if (!element) return;
+
     event.preventDefault();
-    this.commit(this.elements.filter((element) => element.id !== this.selectedId), null);
+    const step = event.shiftKey ? 10 : 1;
+    const next = cloneElements(this.elements);
+    const moved = next.find((item) => item.id === this.selectedId);
+    if (!moved) return;
+    moved.position.x = Math.max(0, moved.position.x + delta.x * step);
+    moved.position.y = Math.max(0, moved.position.y + delta.y * step);
+    this.commit(next, this.selectedId);
   };
 }
 
