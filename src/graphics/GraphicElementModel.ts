@@ -16,6 +16,7 @@ export interface GraphicElement {
   position: GraphicElementPosition;
   size: GraphicElementSize;
   rotation: number;
+  groupId?: string;
   data: Record<string, string>;
 }
 
@@ -25,6 +26,7 @@ export interface CreateGraphicElementInput {
   position?: Partial<GraphicElementPosition>;
   size?: Partial<GraphicElementSize>;
   rotation?: number;
+  groupId?: string;
   data?: Record<string, string>;
 }
 
@@ -44,6 +46,7 @@ export function createGraphicElement(input: CreateGraphicElementInput): GraphicE
       height: input.size?.height ?? DEFAULT_SIZE.height,
     },
     rotation: input.rotation ?? 0,
+    ...(input.groupId ? { groupId: input.groupId } : {}),
     data: { ...(input.data ?? {}) },
   };
 }
@@ -62,6 +65,7 @@ export function normalizeGraphicElement(element: GraphicElement): GraphicElement
     position: { x: element.position.x, y: element.position.y },
     size: { width: element.size.width, height: element.size.height },
     rotation: element.rotation,
+    ...(typeof element.groupId === 'string' && element.groupId.trim() ? { groupId: element.groupId } : {}),
     data: Object.fromEntries(
       Object.entries(element.data ?? {}).filter(([, value]) => typeof value === 'string'),
     ),
