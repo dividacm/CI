@@ -148,8 +148,8 @@ export class GraphicConnectorInteractions {
 
   private handleConnectorPointerDown = (event: PointerEvent): void => {
     const target = event.target;
-    if (!(target instanceof SVGLineElement)) return;
-    const id = target.dataset.connectorId;
+    if (!(target instanceof Element) || target.tagName.toLowerCase() !== 'line') return;
+    const id = (target as SVGElement).dataset.connectorId;
     if (!id) return;
     event.preventDefault();
     event.stopPropagation();
