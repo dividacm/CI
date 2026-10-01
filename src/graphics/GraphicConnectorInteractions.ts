@@ -54,7 +54,7 @@ export class GraphicConnectorInteractions {
 
   selectConnector(id: string): boolean {
     if (!this.connectors.some((connector) => connector.id === id)) return false;
-    this.selectedId = this.selectedId === id ? null : id;
+    this.selectedId = id;
     this.render(this.options.getElements());
     this.options.onSelectionChange?.();
     return true;
