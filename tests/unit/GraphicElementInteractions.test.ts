@@ -49,6 +49,31 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.getElements()[0]?.position).toEqual({ x: 30, y: 35 });
   });
 
+  it('moves the selected element with arrows and shift-step', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'shape-keyboard',
+      kind: 'shape',
+      position: { x: 10, y: 20 },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="shape-keyboard"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 20 }),
+    );
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    expect(interactions.getElements()[0]?.position).toEqual({ x: 11, y: 20 });
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', shiftKey: true, bubbles: true }));
+    expect(interactions.getElements()[0]?.position).toEqual({ x: 11, y: 30 });
+
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements()[0]?.position).toEqual({ x: 11, y: 20 });
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.getElements()[0]?.position).toEqual({ x: 11, y: 30 });
+  });
+
   it('supports undo and redo', () => {
     const root = document.createElement('article');
     const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
