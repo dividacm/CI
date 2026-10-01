@@ -250,9 +250,9 @@ export class GraphicElementInteractions {
     const next = additive ? new Set(this.selectedIds) : new Set<string>();
     const allSelected = ids.every((itemId) => next.has(itemId));
     if (allSelected) {
-      ids.forEach((itemId) => next.delete(itemId));
+      for (const itemId of ids) next.delete(itemId);
     } else {
-      ids.forEach((itemId) => next.add(itemId));
+      for (const itemId of ids) next.add(itemId);
     }
     this.selectedIds = next;
     this.render();
