@@ -74,6 +74,30 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.getElements()[0]?.position).toEqual({ x: 11, y: 30 });
   });
 
+  it('supports deletion and ignores modified arrow shortcuts', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'shape-delete',
+      kind: 'shape',
+      position: { x: 10, y: 20 },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="shape-delete"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 20 }),
+    );
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', altKey: true, bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', ctrlKey: true, bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', metaKey: true, bubbles: true }));
+    expect(interactions.getElements()[0]?.position).toEqual({ x: 10, y: 20 });
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Backspace', bubbles: true }));
+    expect(interactions.getElements()).toHaveLength(0);
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements()).toHaveLength(1);
+  });
+
   it('supports undo and redo', () => {
     const root = document.createElement('article');
     const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
