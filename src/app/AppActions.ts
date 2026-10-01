@@ -1,6 +1,9 @@
 import type { DocumentIssuer } from '../document/DocumentIssuer';
 import type { Editor } from '../editor/Editor';
+import type { GraphicConnector } from '../graphics/GraphicConnectorModel';
+import type { GraphicElement } from '../graphics/GraphicElementModel';
 import { sanitizeHtml } from '../security/sanitizer';
+
 import type { AutosaveController } from '../storage/AutosaveController';
 import type { AppState } from './AppState';
 import { replaceDocument, resetDocument, updateDocument } from './AppState';
@@ -17,6 +20,8 @@ export function createAppActions(
   autosave: AutosaveController,
   issuer: DocumentIssuer,
   getField: (name: string) => string,
+  getGraphics: () => GraphicElement[] = () => [],
+  getConnectors: () => GraphicConnector[] = () => [],
 ): AppActions {
   const sync = (): void => {
     const fields = Object.fromEntries(
@@ -25,6 +30,8 @@ export function createAppActions(
     updateDocument(state, {
       fields,
       bodyHtml: sanitizeHtml(editor.getHtml()),
+      graphics: getGraphics(),
+      connectors: getConnectors(),
     });
     autosave.markDirty(state.document);
   };

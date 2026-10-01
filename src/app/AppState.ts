@@ -1,3 +1,5 @@
+import type { GraphicConnector } from '../graphics/GraphicConnectorModel';
+import type { GraphicElement } from '../graphics/GraphicElementModel';
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
 
@@ -10,6 +12,8 @@ export interface AppState {
 export interface DocumentPatch {
   fields?: Record<string, string>;
   bodyHtml?: string;
+  graphics?: GraphicElement[];
+  connectors?: GraphicConnector[];
 }
 
 export function updateDocument(state: AppState, patch: DocumentPatch): void {
@@ -29,6 +33,8 @@ export function resetDocument(state: AppState): void {
     year: new Date().getFullYear(),
     fields,
     bodyHtml: '',
+    graphics: [],
+    connectors: [],
     updatedAt: new Date().toISOString(),
   });
 }

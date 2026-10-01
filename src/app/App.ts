@@ -1,6 +1,8 @@
 import { createDocument } from '../document/createDocument';
 import { DocumentIssuer } from '../document/DocumentIssuer';
 import { Editor } from '../editor/Editor';
+import { GraphicConnectorInteractions } from '../graphics/GraphicConnectorInteractions';
+import { GraphicElementInteractions } from '../graphics/GraphicElementInteractions';
 import { renderHorizontalRuler } from '../layout/RulerView';
 import { getObservability } from '../observability/Observability';
 import { PdfExporter } from '../pdf/PdfExporter';
@@ -26,8 +28,32 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   tableButton.dataset.action = 'table-insert';
   tableButton.textContent = 'Tabela 2×3';
   tableButton.setAttribute('aria-label', 'Inserir tabela 2 por 3');
-  root.querySelector('.toolbar-groups')?.appendChild(tableButton);
+  const tableActions: Array<[string, string, string]> = [
+    ['table-row-select', 'Linha', 'Selecionar linha'],
+    ['table-column-select', 'Coluna', 'Selecionar coluna'],
+    ['table-row-add', '+ Linha', 'Inserir linha'],
+    ['table-row-delete', '− Linha', 'Excluir linha'],
+    ['table-column-add', '+ Col', 'Inserir coluna'],
+    ['table-column-delete', '− Col', 'Excluir coluna'],
+    ['table-column-widen', 'Col +', 'Aumentar largura da coluna'],
+    ['table-column-narrow', 'Col −', 'Reduzir largura da coluna'],
+  ];
+  const tableGroup = root.ownerDocument.createElement('div');
+  tableGroup.className = 'toolbar-group table-tools';
+  tableGroup.appendChild(tableButton);
+  for (const [action, label, ariaLabel] of tableActions) {
+    const button = root.ownerDocument.createElement('button');
+    button.type = 'button';
+    button.dataset.action = action;
+    button.textContent = label;
+    button.setAttribute('aria-label', ariaLabel);
+    tableGroup.appendChild(button);
+  }
+  root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
   const elements = getAppElements(root);
+  const tableTools = tableGroup;
+  const graphicTools = root.querySelector<HTMLElement>('.graphic-tools');
+  const connectorTools = root.querySelector<HTMLElement>('.connector-tools');
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
@@ -51,7 +77,49 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   updateIssueButton(elements.issueButton, state.document);
   updatePdfButton(elements.pdfButton, organization.features.pdfExport);
   const editor = new Editor(elements.editor);
-  const actions = createAppActions(state, editor, autosave, issuer, (name) => getFieldValue(root, name));
+  const syncTableTools = (): void => {
+    tableTools.hidden = !editor.hasActiveTableCell();
+  };
+  const graphicsRoot = elements.editor.parentElement;
+  if (!graphicsRoot) throw new Error('Canvas gráfico não encontrado.');
+  const graphics = new GraphicElementInteractions(graphicsRoot, {
+    onChange: () => sync(),
+  });
+  const connectors = new GraphicConnectorInteractions(graphicsRoot, {
+    getElements: () => graphics.getElements(),
+    onChange: () => sync(),
+    onSelectionChange: () => {
+      if (connectors.hasSelection()) graphics.clearSelection();
+      syncConnectorTools();
+      syncGraphicTools();
+    },
+  });
+  const syncGraphicTools = (): void => {
+    const selectedCount = graphics.getSelectedIds().length;
+    if (graphicTools) graphicTools.hidden = selectedCount === 0;
+    const connectButton = root.querySelector<HTMLButtonElement>('[data-action="graphic-connect"]');
+    if (connectButton) connectButton.disabled = selectedCount !== 2;
+  };
+  const syncConnectorTools = (): void => {
+    if (connectorTools) connectorTools.hidden = !connectors.hasSelection();
+  };
+  graphics.setElements(state.document.graphics ?? []);
+  connectors.setConnectors(state.document.connectors ?? []);
+  syncGraphicTools();
+  syncConnectorTools();
+  editor.setExternalHistoryHandlers(
+    () => connectors.hasSelection() ? connectors.undo() : graphics.hasSelection() ? graphics.undo() : false,
+    () => connectors.hasSelection() ? connectors.redo() : graphics.hasSelection() ? graphics.redo() : false,
+  );
+  const actions = createAppActions(
+    state,
+    editor,
+    autosave,
+    issuer,
+    (name) => getFieldValue(root, name),
+    () => graphics.getElements(),
+    () => connectors.getConnectors(),
+  );
 
   const syncRuler = (): void => {
     const ruler = elements.root.querySelector<HTMLElement>('#horizontal-ruler');
@@ -80,7 +148,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   syncRuler();
 
-  const sync = (): void => { actions.sync(); syncView(); };
+  const sync = (): void => { actions.sync(); syncView(); syncTableTools(); syncGraphicTools(); };
 
   editor.setSaveHandler(() => {
     sync();
@@ -90,6 +158,12 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   root.querySelector<HTMLElement>('.toolbar')?.addEventListener('pointerdown', () => {
     editor.rememberSelection();
   });
+
+  elements.editor.addEventListener('click', syncTableTools);
+  elements.editor.addEventListener('keyup', syncTableTools);
+  elements.editor.addEventListener('focus', syncTableTools);
+  graphicsRoot.addEventListener('pointerdown', () => queueMicrotask(() => { syncGraphicTools(); syncConnectorTools(); }));
+  document.addEventListener('selectionchange', syncTableTools);
 
   root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
     field.addEventListener('input', sync);
@@ -108,6 +182,10 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         localStorage.setItem(ACTIVE_DOCUMENT_KEY, freshDocument.id);
         autosave.attach(freshDocument);
         renderDocument(state.document, elements, organization, template);
+        graphics.setElements(state.document.graphics ?? []);
+        connectors.setConnectors(state.document.connectors ?? []);
+        syncGraphicTools();
+        syncConnectorTools();
         updateIssueButton(elements.issueButton, state.document);
         autosave.saveNow();
         syncRuler();
@@ -153,6 +231,24 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'list-unordered': editor.list('ul'); break;
         case 'list-ordered': editor.list('ol'); break;
         case 'table-insert': editor.insertTable(2, 3); break;
+        case 'graphic-insert': graphics.insertShape(); break;
+        case 'graphic-duplicate': graphics.duplicateSelected(); break;
+        case 'graphic-front': graphics.bringSelectedToFront(); break;
+        case 'graphic-back': graphics.sendSelectedToBack(); break;
+        case 'graphic-connect': {
+          const ids = graphics.getSelectedIds();
+          if (ids.length === 2) connectors.connect(ids[0]!, ids[1]!);
+          break;
+        }
+        case 'connector-delete': connectors.deleteSelected(); break;
+        case 'table-row-select': editor.selectTableRow(); break;
+        case 'table-column-select': editor.selectTableColumn(); break;
+        case 'table-row-add': editor.insertTableRow(); break;
+        case 'table-row-delete': editor.deleteTableRow(); break;
+        case 'table-column-add': editor.insertTableColumn(); break;
+        case 'table-column-delete': editor.deleteTableColumn(); break;
+        case 'table-column-widen': editor.resizeTableColumn(24); break;
+        case 'table-column-narrow': editor.resizeTableColumn(-24); break;
         case 'font-inc': editor.fontSize('16px'); break;
         case 'font-dec': editor.fontSize('12px'); break;
         case 'upper': editor.toggleCase(true); break;
@@ -160,8 +256,18 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'copy': await editor.copy(); break;
         case 'cut': await editor.cut(); break;
         case 'paste': await editor.pastePlainText(); break;
-        case 'undo': editor.undo(); break;
-        case 'redo': editor.redo(); break;
+        case 'undo': {
+          if (connectors.hasSelection()) connectors.undo();
+          else if (graphics.hasSelection()) graphics.undo();
+          else editor.undo();
+          break;
+        }
+        case 'redo': {
+          if (connectors.hasSelection()) connectors.redo();
+          else if (graphics.hasSelection()) graphics.redo();
+          else editor.redo();
+          break;
+        }
         case 'clear-formatting': editor.clearFormatting(); break;
         default: return;
       }

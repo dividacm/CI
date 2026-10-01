@@ -71,7 +71,7 @@ function cloneTable(table: TableModel): TableModel {
 
 function normalizeDimension(value: number, label: string): number {
   if (!Number.isInteger(value) || value < 1) {
-    throw new RangeError('A quantidade de ' + label + ' deve ser um inteiro maior que zero.');
+    throw new RangeError(`A quantidade de ${label} deve ser um inteiro maior que zero.`);
   }
   return value;
 }

@@ -1,3 +1,5 @@
+import { normalizeGraphicConnectors } from '../graphics/GraphicConnectorModel';
+import { normalizeGraphicElements } from '../graphics/GraphicElementModel';
 import { getObservability } from '../observability/Observability';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { CommunicationDocument } from '../types/document';
@@ -20,12 +22,16 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
 
     try {
       const parsed = JSON.parse(raw) as StoredDocument;
+      const graphics = normalizeGraphicElements(parsed.graphics);
+      const elementIds = new Set(graphics.map((element) => element.id));
       return {
         id: parsed.id,
         number: parsed.number,
         year: parsed.year,
         fields: normalizeFields(parsed),
         bodyHtml: sanitizeHtml(parsed.bodyHtml),
+        graphics,
+        connectors: normalizeGraphicConnectors(parsed.connectors, elementIds),
         templateId: parsed.templateId,
         createdAt: parsed.createdAt,
         updatedAt: parsed.updatedAt,
@@ -45,6 +51,8 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
       ...document,
       fields: { ...document.fields },
       bodyHtml: sanitizeHtml(document.bodyHtml),
+      graphics: normalizeGraphicElements(document.graphics),
+      connectors: normalizeGraphicConnectors(document.connectors, new Set(normalizeGraphicElements(document.graphics).map((element) => element.id))),
       updatedAt: new Date().toISOString(),
     };
 
