@@ -24,7 +24,7 @@ describe('GraphicConnectorInteractions', () => {
     expect(interactions.connect('from', 'to')).toBe(true);
     expect(interactions.getConnectors()).toHaveLength(1);
     expect(interactions.getConnectors()[0]).toMatchObject({ fromId: 'from', toId: 'to', type: 'straight' });
-    expect(root.querySelector('[data-connector-id="')) .not.toBeNull();
+    expect(root.querySelector('[data-connector-id]')).not.toBeNull();
     expect(root.querySelector('.graphic-connector')).not.toBeNull();
     expect(onChange).toHaveBeenCalledTimes(1);
   });
@@ -64,10 +64,9 @@ describe('GraphicConnectorInteractions', () => {
   it('re-renders endpoints when graphic positions change', () => {
     const { root, elements, interactions } = setup();
     interactions.connect('from', 'to');
-    const line = root.querySelector<SVGLineElement>('.graphic-connector');
-    expect(line?.getAttribute('x1')).toBe('60');
+    expect(root.querySelector<SVGLineElement>('.graphic-connector')?.getAttribute('x1')).toBe('60');
     elements[1]!.position.x = 320;
     interactions.setElements(elements);
-    expect(line?.getAttribute('x2')).toBe('370');
+    expect(root.querySelector<SVGLineElement>('.graphic-connector')?.getAttribute('x2')).toBe('370');
   });
 });
