@@ -115,7 +115,7 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.getElements()).toHaveLength(2);
     expect(interactions.getElements()[1]?.data.label).toBe('Original');
     expect(interactions.getElements()[1]?.position).toEqual({ x: 22, y: 32 });
-    expect(root.querySelector('[data-graphic-id="shape-duplicate"]')).not.toHaveAttribute('data-selected', 'true');
+    expect(root.querySelector('[data-graphic-id="shape-duplicate"]')?.hasAttribute('data-selected')).toBe(false);
     expect(root.querySelectorAll('[data-selected="true"]')).toHaveLength(1);
   });
 
@@ -131,7 +131,7 @@ describe('GraphicElementInteractions', () => {
 
     expect(interactions.bringSelectedToFront()).toBe(true);
     expect(interactions.getElements().map((element) => element.id)).toEqual(['shape-second', 'shape-first']);
-    expect(root.querySelector('[data-graphic-id="shape-first"]')).toHaveAttribute('data-selected', 'true');
+    expect(root.querySelector('[data-graphic-id="shape-first"]')?.getAttribute('data-selected')).toBe('true');
     expect(interactions.undo()).toBe(true);
     expect(interactions.getElements().map((element) => element.id)).toEqual(['shape-first', 'shape-second']);
     expect(root.querySelector('[data-graphic-id="shape-first"]')).toHaveAttribute('data-selected', 'true');
