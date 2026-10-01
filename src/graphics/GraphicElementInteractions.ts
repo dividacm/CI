@@ -4,13 +4,26 @@ interface GraphicElementInteractionsOptions {
   onChange: (elements: GraphicElement[]) => void;
 }
 
+type GraphicDrag = {
+  id: string;
+  startX: number;
+  startY: number;
+  originX: number;
+  originY: number;
+  resizing: boolean;
+  rotating: boolean;
+  originWidth: number;
+  originHeight: number;
+  originRotation: number;
+};
+
 export class GraphicElementInteractions {
   private readonly layer: HTMLDivElement;
   private elements: GraphicElement[] = [];
   private selectedId: string | null = null;
   private undoStack: GraphicElement[][] = [];
   private redoStack: GraphicElement[][] = [];
-  private drag: { id: string; startX: number; startY: number; originX: number; originY: number; resizing: boolean; originWidth: number; originHeight: number } | null = null;
+  private drag: GraphicDrag | null = null;
 
   constructor(private readonly root: HTMLElement, private readonly options: GraphicElementInteractionsOptions) {
     root.style.position = root.style.position || 'relative';
@@ -25,13 +38,13 @@ export class GraphicElementInteractions {
   }
 
   setElements(elements: GraphicElement[]): void {
-    this.elements = elements.map((element) => ({ ...element, position: { ...element.position }, size: { ...element.size }, data: { ...element.data } }));
+    this.elements = cloneElements(elements);
     if (!this.elements.some((element) => element.id === this.selectedId)) this.selectedId = null;
     this.render();
   }
 
   getElements(): GraphicElement[] {
-    return this.elements.map((element) => ({ ...element, position: { ...element.position }, size: { ...element.size }, data: { ...element.data } }));
+    return cloneElements(this.elements);
   }
 
   hasSelection(): boolean {
@@ -122,7 +135,8 @@ export class GraphicElementInteractions {
     this.layer.replaceChildren();
     for (const element of this.elements) {
       const node = this.root.ownerDocument.createElement('div');
-      node.className = 'graphic-element graphic-element-shape';
+      const kindClass = element.kind === 'smartart' ? 'graphic-element-smartart' : 'graphic-element-shape';
+      node.className = `graphic-element ${kindClass}`;
       node.dataset.graphicId = element.id;
       node.setAttribute('role', 'button');
       node.setAttribute('aria-label', element.data.label || 'Elemento gráfico');
@@ -132,15 +146,24 @@ export class GraphicElementInteractions {
       node.style.width = `${element.size.width}px`;
       node.style.height = `${element.size.height}px`;
       node.style.transform = `rotate(${element.rotation}deg)`;
-      node.textContent = element.data.label || 'Forma';
+      node.textContent = element.data.label || (element.kind === 'smartart' ? 'SmartArt' : 'Forma');
+
       if (element.id === this.selectedId) {
         node.dataset.selected = 'true';
-        const handle = this.root.ownerDocument.createElement('span');
-        handle.className = 'graphic-resize-handle';
-        handle.dataset.resizeHandle = element.id;
-        handle.setAttribute('aria-label', 'Redimensionar elemento');
-        node.appendChild(handle);
+
+        const resizeHandle = this.root.ownerDocument.createElement('span');
+        resizeHandle.className = 'graphic-resize-handle';
+        resizeHandle.dataset.resizeHandle = element.id;
+        resizeHandle.setAttribute('aria-label', 'Redimensionar elemento');
+        node.appendChild(resizeHandle);
+
+        const rotateHandle = this.root.ownerDocument.createElement('span');
+        rotateHandle.className = 'graphic-rotate-handle';
+        rotateHandle.dataset.rotateHandle = element.id;
+        rotateHandle.setAttribute('aria-label', 'Girar elemento');
+        node.appendChild(rotateHandle);
       }
+
       this.layer.appendChild(node);
     }
   }
@@ -170,6 +193,7 @@ export class GraphicElementInteractions {
     this.render();
 
     const resizing = Boolean(target.closest('[data-resize-handle]'));
+    const rotating = Boolean(target.closest('[data-rotate-handle]'));
     this.drag = {
       id,
       startX: event.clientX,
@@ -177,9 +201,12 @@ export class GraphicElementInteractions {
       originX: element.position.x,
       originY: element.position.y,
       resizing,
+      rotating,
       originWidth: element.size.width,
       originHeight: element.size.height,
+      originRotation: element.rotation,
     };
+
     this.root.ownerDocument.addEventListener('pointermove', this.handlePointerMove);
     this.root.ownerDocument.addEventListener('pointerup', this.handlePointerUp, { once: true });
   };
@@ -188,16 +215,26 @@ export class GraphicElementInteractions {
     if (!this.drag) return;
     const element = this.elements.find((item) => item.id === this.drag?.id);
     if (!element) return;
-    const dx = event.clientX - this.drag.startX;
-    const dy = event.clientY - this.drag.startY;
 
-    if (this.drag.resizing) {
-      element.size.width = Math.max(72, this.drag.originWidth + dx);
-      element.size.height = Math.max(48, this.drag.originHeight + dy);
+    if (this.drag.rotating) {
+      const rootRect = this.root.getBoundingClientRect();
+      const centerX = rootRect.left + this.drag.originX + this.drag.originWidth / 2;
+      const centerY = rootRect.top + this.drag.originY + this.drag.originHeight / 2;
+      const angle = Math.atan2(event.clientY - centerY, event.clientX - centerX) * 180 / Math.PI + 90;
+      element.rotation = normalizeRotation(angle);
     } else {
-      element.position.x = Math.max(0, this.drag.originX + dx);
-      element.position.y = Math.max(0, this.drag.originY + dy);
+      const dx = event.clientX - this.drag.startX;
+      const dy = event.clientY - this.drag.startY;
+
+      if (this.drag.resizing) {
+        element.size.width = Math.max(72, this.drag.originWidth + dx);
+        element.size.height = Math.max(48, this.drag.originHeight + dy);
+      } else {
+        element.position.x = Math.max(0, this.drag.originX + dx);
+        element.position.y = Math.max(0, this.drag.originY + dy);
+      }
     }
+
     this.render();
   };
 
@@ -206,27 +243,27 @@ export class GraphicElementInteractions {
     const drag = this.drag;
     const changed = this.elements.some((element) => {
       if (element.id !== drag.id) return false;
-      return element.position.x !== drag.originX || element.position.y !== drag.originY ||
-        element.size.width !== drag.originWidth || element.size.height !== drag.originHeight;
+      return element.position.x !== drag.originX ||
+        element.position.y !== drag.originY ||
+        element.size.width !== drag.originWidth ||
+        element.size.height !== drag.originHeight ||
+        element.rotation !== drag.originRotation;
     });
+
     if (changed) {
-      const previous = this.elements.map((element) => ({
-        ...element,
-        position: {
-          x: element.id === drag.id ? drag.originX : element.position.x,
-          y: element.id === drag.id ? drag.originY : element.position.y,
-        },
-        size: {
-          width: element.id === drag.id ? drag.originWidth : element.size.width,
-          height: element.id === drag.id ? drag.originHeight : element.size.height,
-        },
-        data: { ...element.data },
-      }));
+      const previous = cloneElements(this.elements);
+      const previousElement = previous.find((element) => element.id === drag.id);
+      if (previousElement) {
+        previousElement.position = { x: drag.originX, y: drag.originY };
+        previousElement.size = { width: drag.originWidth, height: drag.originHeight };
+        previousElement.rotation = drag.originRotation;
+      }
       this.undoStack.push(previous);
       if (this.undoStack.length > 50) this.undoStack.shift();
       this.redoStack = [];
       this.options.onChange(this.getElements());
     }
+
     this.drag = null;
   };
 
@@ -268,6 +305,11 @@ export class GraphicElementInteractions {
     moved.position.y = Math.max(0, moved.position.y + delta.y * step);
     this.commit(next, this.selectedId);
   };
+}
+
+function normalizeRotation(rotation: number): number {
+  const normalized = rotation % 360;
+  return normalized < 0 ? normalized + 360 : normalized;
 }
 
 function cloneElements(elements: GraphicElement[]): GraphicElement[] {
