@@ -105,8 +105,8 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   syncGraphicTools();
   syncConnectorTools();
   editor.setExternalHistoryHandlers(
-    () => connectors.hasSelection() ? connectors.undo() : graphics.hasSelection() ? graphics.undo() : editor.undo(),
-    () => connectors.hasSelection() ? connectors.redo() : graphics.hasSelection() ? graphics.redo() : editor.redo(),
+    () => connectors.hasSelection() ? connectors.undo() : graphics.hasSelection() ? graphics.undo() : false,
+    () => connectors.hasSelection() ? connectors.redo() : graphics.hasSelection() ? graphics.redo() : false,
   );
   const actions = createAppActions(
     state,
