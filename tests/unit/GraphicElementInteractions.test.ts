@@ -230,4 +230,82 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.redo()).toBe(true);
     expect(interactions.getElements()[0]?.size).toEqual({ width: 140, height: 110 });
   });
+
+  it('supports additive multi-selection and moves selected elements together', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({ id: 'multi-a', kind: 'shape', position: { x: 10, y: 10 } }),
+      createGraphicElement({ id: 'multi-b', kind: 'shape', position: { x: 120, y: 20 } }),
+    ]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="multi-a"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-graphic-id="multi-b"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 120, clientY: 20, ctrlKey: true }),
+    );
+
+    expect(interactions.getSelectedIds()).toEqual(['multi-a', 'multi-b']);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', shiftKey: true, bubbles: true }));
+
+    expect(interactions.getElements().find((element) => element.id === 'multi-a')?.position).toEqual({ x: 20, y: 10 });
+    expect(interactions.getElements().find((element) => element.id === 'multi-b')?.position).toEqual({ x: 130, y: 20 });
+  });
+
+  it('selects elements by marquee and supports group and ungroup undo/redo', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({ id: 'group-a', kind: 'shape', position: { x: 10, y: 10 }, size: { width: 50, height: 40 } }),
+      createGraphicElement({ id: 'group-b', kind: 'shape', position: { x: 90, y: 20 }, size: { width: 50, height: 40 } }),
+      createGraphicElement({ id: 'outside', kind: 'shape', position: { x: 220, y: 220 } }),
+    ]);
+
+    root.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 0, clientY: 0 }));
+    document.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 160, clientY: 100 }));
+    document.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 160, clientY: 100 }));
+
+    expect(interactions.getSelectedIds()).toEqual(['group-a', 'group-b']);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', ctrlKey: true, bubbles: true }));
+
+    const grouped = interactions.getElements().filter((element) => element.id.startsWith('group-'));
+    expect(grouped.every((element) => Boolean(element.groupId))).toBe(true);
+    expect(grouped[0]?.groupId).toBe(grouped[1]?.groupId);
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'g', ctrlKey: true, shiftKey: true, bubbles: true }));
+    expect(interactions.getElements().filter((element) => element.id.startsWith('group-')).every((element) => !element.groupId)).toBe(true);
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements().filter((element) => element.id.startsWith('group-')).every((element) => Boolean(element.groupId))).toBe(true);
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.getElements().filter((element) => element.id.startsWith('group-')).every((element) => !element.groupId)).toBe(true);
+  });
+
+  it('resizes multiple selected elements as one bounding box', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({ id: 'resize-a', kind: 'shape', position: { x: 10, y: 10 }, size: { width: 40, height: 40 } }),
+      createGraphicElement({ id: 'resize-b', kind: 'shape', position: { x: 90, y: 10 }, size: { width: 40, height: 40 } }),
+    ]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="resize-a"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-graphic-id="resize-b"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 90, clientY: 10, ctrlKey: true }),
+    );
+
+    const handle = root.querySelector<HTMLElement>('[data-resize-handle="resize-a"]');
+    expect(handle).not.toBeNull();
+    handle?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, clientX: 130, clientY: 50 }));
+    document.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 170, clientY: 70 }));
+    document.dispatchEvent(new MouseEvent('pointerup', { bubbles: true, clientX: 170, clientY: 70 }));
+
+    expect(interactions.getElements().find((element) => element.id === 'resize-a')?.size.width).toBe(56);
+    expect(interactions.getElements().find((element) => element.id === 'resize-b')?.position.x).toBe(106);
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements().find((element) => element.id === 'resize-a')?.size.width).toBe(40);
+  });
+
 });
