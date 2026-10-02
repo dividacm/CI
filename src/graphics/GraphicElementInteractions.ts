@@ -30,6 +30,7 @@ export class GraphicElementInteractions {
   private redoStack: GraphicElement[][] = [];
   private drag: GraphicDrag | null = null;
   private selectionRect: SelectionRect | null = null;
+  private selectedSmartArtNodeId: string | null = null;
 
   constructor(private readonly root: HTMLElement, private readonly options: GraphicElementInteractionsOptions) {
     root.style.position = root.style.position || 'relative';
@@ -45,6 +46,7 @@ export class GraphicElementInteractions {
     this.layer.appendChild(this.selectionBox);
 
     this.layer.addEventListener('pointerdown', this.handlePointerDown);
+    this.layer.addEventListener('dblclick', this.handleDoubleClick);
     root.addEventListener('pointerdown', this.handleRootPointerDown);
     root.addEventListener('click', this.handleRootClick);
     root.ownerDocument.addEventListener('keydown', this.handleKeyDown);
@@ -68,9 +70,14 @@ export class GraphicElementInteractions {
     return [...this.selectedIds];
   }
 
+  getSelectedSmartArtNodeId(): string | null {
+    return this.selectedSmartArtNodeId;
+  }
+
   clearSelection(): void {
     if (!this.selectedIds.size) return;
     this.selectedIds.clear();
+    this.selectedSmartArtNodeId = null;
     this.render();
   }
 
@@ -131,6 +138,76 @@ export class GraphicElementInteractions {
     }
     this.commit(next, this.getSelectedIds());
     return true;
+  }
+
+  editSelectedSmartArtNode(text: string): boolean {
+    const element = this.getSelectedSmartArt();
+    if (!element || !this.selectedSmartArtNodeId) return false;
+    const node = element.smartArt.nodes.find((item) => item.id === this.selectedSmartArtNodeId);
+    if (!node) return false;
+    const value = text.trim();
+    if (!value || value === node.text) return false;
+    const next = cloneElements(this.elements);
+    const target = next.find((item) => item.id === element.id);
+    const targetNode = target?.smartArt?.nodes.find((item) => item.id === this.selectedSmartArtNodeId);
+    if (!targetNode) return false;
+    targetNode.text = value;
+    this.commit(next, this.getSelectedIds());
+    return true;
+  }
+
+  addSmartArtNode(): boolean {
+    const element = this.getSelectedSmartArt();
+    if (!element?.smartArt) return false;
+    const parentId = element.smartArt.layout === 'hierarchy' ? this.selectedSmartArtNodeId ?? undefined : undefined;
+    const node = {
+      id: crypto.randomUUID(),
+      text: `Novo nó ${element.smartArt.nodes.length + 1}`,
+      ...(parentId ? { parentId } : {}),
+    };
+    const next = cloneElements(this.elements);
+    const target = next.find((item) => item.id === element.id);
+    if (!target?.smartArt) return false;
+    target.smartArt.nodes.push(node);
+    this.selectedSmartArtNodeId = node.id;
+    this.commit(next, this.getSelectedIds());
+    return true;
+  }
+
+  removeSelectedSmartArtNode(): boolean {
+    const element = this.getSelectedSmartArt();
+    if (!element?.smartArt || !this.selectedSmartArtNodeId) return false;
+    if (element.smartArt.nodes.length <= 1) return false;
+    const nodeId = this.selectedSmartArtNodeId;
+    const next = cloneElements(this.elements);
+    const target = next.find((item) => item.id === element.id);
+    if (!target?.smartArt) return false;
+    const removed = target.smartArt.nodes.find((node) => node.id === nodeId);
+    if (!removed) return false;
+    target.smartArt.nodes = target.smartArt.nodes
+      .filter((node) => node.id !== nodeId)
+      .map((node) => node.parentId === nodeId ? { id: node.id, text: node.text } : node);
+    this.selectedSmartArtNodeId = null;
+    this.commit(next, this.getSelectedIds());
+    return true;
+  }
+
+  setSelectedSmartArtLayout(layout: SmartArtData['layout']): boolean {
+    const element = this.getSelectedSmartArt();
+    if (!element?.smartArt || element.smartArt.layout === layout) return false;
+    const next = cloneElements(this.elements);
+    const target = next.find((item) => item.id === element.id);
+    if (!target?.smartArt) return false;
+    target.smartArt.layout = layout;
+    this.commit(next, this.getSelectedIds());
+    return true;
+  }
+
+  private getSelectedSmartArt(): GraphicElement | null {
+    if (this.selectedIds.size !== 1) return null;
+    const id = this.selectedIds.values().next().value;
+    const element = this.elements.find((item) => item.id === id);
+    return element?.kind === 'smartart' && element.smartArt ? element : null;
   }
 
   insertSmartArt(layout: SmartArtData['layout'] = 'process'): boolean {
@@ -233,7 +310,7 @@ export class GraphicElementInteractions {
       node.style.height = `${element.size.height}px`;
       node.style.transform = `rotate(${element.rotation}deg)`;
       if (element.kind === 'smartart' && element.smartArt) {
-        renderSmartArtNode(node, element.smartArt);
+        renderSmartArtNode(node, element.smartArt, this.selectedSmartArtNodeId);
       } else {
         node.textContent = element.data.label || 'Forma';
       }
@@ -296,6 +373,7 @@ export class GraphicElementInteractions {
       for (const itemId of ids) next.add(itemId);
     }
     this.selectedIds = next;
+    if (!this.selectedIds.size || !this.getSelectedSmartArt()) this.selectedSmartArtNodeId = null;
     this.render();
   }
 
@@ -348,17 +426,41 @@ export class GraphicElementInteractions {
     this.render();
   };
 
+  private handleDoubleClick = (event: MouseEvent): void => {
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const node = target.closest<HTMLElement>('.smartart-node');
+    if (!node) return;
+    const graphic = node.closest<HTMLElement>('.graphic-element');
+    const id = graphic?.dataset.graphicId;
+    const nodeId = node.dataset.smartartNodeId;
+    if (!id || !nodeId || !this.elements.some((item) => item.id === id && item.kind === 'smartart')) return;
+    this.selectedIds = new Set([id]);
+    this.selectedSmartArtNodeId = nodeId;
+    const current = node.textContent?.trim() ?? '';
+    const value = this.root.ownerDocument.defaultView?.prompt('Editar nó SmartArt', current);
+    if (value !== null && value !== undefined) this.editSelectedSmartArtNode(value);
+    this.render();
+  };
+
   private handlePointerDown = (event: PointerEvent): void => {
     const target = event.target;
     if (!(target instanceof HTMLElement)) return;
     const node = target.closest<HTMLElement>('.graphic-element');
     if (!node) return;
     const id = node.dataset.graphicId;
+    const smartArtNode = target.closest<HTMLElement>('.smartart-node');
     const element = this.elements.find((item) => item.id === id);
     if (!id || !element) return;
 
     event.preventDefault();
     event.stopPropagation();
+
+    if (smartArtNode && element.kind === 'smartart' && element.smartArt) {
+      this.selectedSmartArtNodeId = smartArtNode.dataset.smartartNodeId ?? null;
+    } else {
+      this.selectedSmartArtNodeId = null;
+    }
 
     const additive = event.ctrlKey || event.metaKey;
     const wasSelected = this.selectedIds.has(id);
@@ -561,7 +663,7 @@ function cloneSmartArt(smartArt: SmartArtData): SmartArtData {
   };
 }
 
-function renderSmartArtNode(container: HTMLElement, smartArt: SmartArtData): void {
+function renderSmartArtNode(container: HTMLElement, smartArt: SmartArtData, selectedNodeId: string | null): void {
   container.setAttribute('aria-label', `SmartArt ${smartArt.layout}`);
   const content = container.ownerDocument.createElement('div');
   content.className = `smartart-content smartart-${smartArt.layout}`;
@@ -569,6 +671,7 @@ function renderSmartArtNode(container: HTMLElement, smartArt: SmartArtData): voi
     const node = container.ownerDocument.createElement('div');
     node.className = 'smartart-node';
     node.dataset.smartartNodeId = item.id;
+    if (item.id === selectedNodeId) node.dataset.selected = 'true';
     node.textContent = item.text;
     content.appendChild(node);
   }
