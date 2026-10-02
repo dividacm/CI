@@ -415,4 +415,50 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.getElements()[0]?.smartArt?.layout).toBe('cycle');
   });
 
+  it('renders hierarchy nodes by semantic parent levels', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-render-hierarchy',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'hierarchy',
+        nodes: [
+          { id: 'root', text: 'Direção' },
+          { id: 'child-a', text: 'Equipe A', parentId: 'root' },
+          { id: 'child-b', text: 'Equipe B', parentId: 'root' },
+          { id: 'grandchild', text: 'Setor', parentId: 'child-a' },
+        ],
+      },
+    })]);
+
+    const levels = root.querySelectorAll('[data-smartart-level]');
+    expect(levels).toHaveLength(3);
+    expect(levels[0]?.querySelector('[data-smartart-node-id="root"]')?.textContent).toBe('Direção');
+    expect(levels[1]?.querySelectorAll('.smartart-node')).toHaveLength(2);
+    expect(levels[2]?.querySelector('[data-smartart-node-id="grandchild"]')?.textContent).toBe('Setor');
+  });
+
+  it('keeps process and cycle layouts as ordered semantic node collections', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-render-process',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'process',
+        nodes: [
+          { id: 'a', text: 'A' },
+          { id: 'b', text: 'B' },
+          { id: 'c', text: 'C' },
+        ],
+      },
+    })]);
+
+    expect([...root.querySelectorAll('.smartart-process .smartart-node')].map((node) => node.textContent)).toEqual(['A', 'B', 'C']);
+
+    expect(interactions.setSelectedSmartArtLayout('cycle')).toBe(true);
+    expect([...root.querySelectorAll('.smartart-cycle .smartart-node')].map((node) => node.textContent)).toEqual(['A', 'B', 'C']);
+  });
+
 });
