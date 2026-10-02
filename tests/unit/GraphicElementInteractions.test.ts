@@ -416,6 +416,101 @@ describe('GraphicElementInteractions', () => {
   });
 
 
+  it('preserves SmartArt content when duplicating the selected graphic', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-duplicate',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'hierarchy',
+        nodes: [
+          { id: 'root-node', text: 'Direção' },
+          { id: 'child-node', text: 'Equipe', parentId: 'root-node' },
+        ],
+      },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-duplicate"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+
+    expect(interactions.duplicateSelected()).toBe(true);
+    const duplicates = interactions.getElements().filter((element) => element.id !== 'smartart-duplicate');
+    expect(duplicates).toHaveLength(1);
+    expect(duplicates[0]?.kind).toBe('smartart');
+    expect(duplicates[0]?.smartArt?.layout).toBe('hierarchy');
+    expect(duplicates[0]?.smartArt?.nodes.map((node) => ({ text: node.text, parentId: node.parentId }))).toEqual([
+      { text: 'Direção', parentId: undefined },
+      { text: 'Equipe', parentId: 'root-node' },
+    ]);
+    expect(interactions.getSelectedIds()).toEqual([duplicates[0]!.id]);
+  });
+
+  it('preserves SmartArt node selection through layout and content history', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-history',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'hierarchy',
+        nodes: [{ id: 'root-node', text: 'Direção' }],
+      },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-history"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-smartart-node-id="root-node"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('root-node');
+    expect(interactions.setSelectedSmartArtLayout('cycle')).toBe(true);
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('root-node');
+    expect(interactions.editSelectedSmartArtNode('Direção atualizada')).toBe(true);
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('root-node');
+
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.nodes[0]?.text).toBe('Direção');
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('root-node');
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.layout).toBe('hierarchy');
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('root-node');
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.layout).toBe('cycle');
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('root-node');
+  });
+
+  it('keeps grouped SmartArt selected and editable after grouping and ungrouping', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({
+        id: 'smartart-group',
+        kind: 'smartart',
+        smartArt: { layout: 'process', nodes: [{ id: 'node', text: 'Etapa' }] },
+      }),
+      createGraphicElement({ id: 'shape-group', kind: 'shape', position: { x: 220, y: 20 } }),
+    ]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-group"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-group"] [data-smartart-node-id="node"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-graphic-id="shape-group"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 220, clientY: 20, ctrlKey: true }),
+    );
+
+    expect(interactions.groupSelected()).toBe(true);
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('node');
+    expect(interactions.ungroupSelected()).toBe(true);
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('node');
+  });
+
   it('renders hierarchy nodes by semantic parent levels', () => {
     const root = document.createElement('article');
     const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
