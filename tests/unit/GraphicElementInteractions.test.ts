@@ -368,6 +368,29 @@ describe('GraphicElementInteractions', () => {
     expect(nodes[1]?.parentId).toBe('root-node');
   });
 
+  it('handles SmartArt editing no-op and invalid-selection cases', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+
+    expect(interactions.editSelectedSmartArtNode('Texto')).toBe(false);
+    expect(interactions.addSmartArtNode()).toBe(false);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('cycle')).toBe(false);
+
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-single',
+      kind: 'smartart',
+      smartArt: { layout: 'process', nodes: [{ id: 'only', text: 'Único' }] },
+    })]);
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-single"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+
+    expect(interactions.editSelectedSmartArtNode('Único')).toBe(false);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('process')).toBe(false);
+  });
+
   it('changes the selected SmartArt layout and preserves the change through undo/redo', () => {
     const root = document.createElement('article');
     const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
