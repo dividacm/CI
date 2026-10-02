@@ -1,5 +1,5 @@
 import { createGraphicElement, type GraphicElement } from './GraphicElementModel';
-import type { SmartArtData } from './SmartArtModel';
+import { createSmartArt, type SmartArtData } from './SmartArtModel';
 
 interface GraphicElementInteractionsOptions {
   onChange: (elements: GraphicElement[]) => void;
@@ -133,6 +133,35 @@ export class GraphicElementInteractions {
     return true;
   }
 
+  insertSmartArt(layout: SmartArtData['layout'] = 'process'): boolean {
+    const smartArt = createSmartArt({
+      layout,
+      nodes: layout === 'hierarchy'
+        ? [
+            { text: 'Direção' },
+            { text: 'Equipe', parentId: '__ROOT__' },
+          ]
+        : [
+            { text: 'Etapa 1' },
+            { text: 'Etapa 2' },
+            { text: 'Etapa 3' },
+          ],
+    });
+    if (layout === 'hierarchy' && smartArt.nodes[1]) {
+      const rootNode = smartArt.nodes[0];
+      if (rootNode) smartArt.nodes[1].parentId = rootNode.id;
+    }
+    const element = createGraphicElement({
+      kind: 'smartart',
+      position: { x: 40, y: 40 + this.elements.length * 24 },
+      size: { width: 360, height: 150 },
+      data: { label: 'SmartArt' },
+      smartArt,
+    });
+    this.commit([...this.elements, element], [element.id]);
+    return true;
+  }
+
   insertShape(): boolean {
     const element = createGraphicElement({
       kind: 'shape',
@@ -203,7 +232,11 @@ export class GraphicElementInteractions {
       node.style.width = `${element.size.width}px`;
       node.style.height = `${element.size.height}px`;
       node.style.transform = `rotate(${element.rotation}deg)`;
-      node.textContent = element.data.label || (element.kind === 'smartart' ? 'SmartArt' : 'Forma');
+      if (element.kind === 'smartart' && element.smartArt) {
+        renderSmartArtNode(node, element.smartArt);
+      } else {
+        node.textContent = element.data.label || 'Forma';
+      }
 
       if (this.selectedIds.has(element.id)) {
         node.dataset.selected = 'true';
@@ -526,4 +559,18 @@ function cloneSmartArt(smartArt: SmartArtData): SmartArtData {
       ...(node.parentId ? { parentId: node.parentId } : {}),
     })),
   };
+}
+
+function renderSmartArtNode(container: HTMLElement, smartArt: SmartArtData): void {
+  container.setAttribute('aria-label', `SmartArt ${smartArt.layout}`);
+  const content = container.ownerDocument.createElement('div');
+  content.className = `smartart-content smartart-${smartArt.layout}`;
+  for (const item of smartArt.nodes) {
+    const node = container.ownerDocument.createElement('div');
+    node.className = 'smartart-node';
+    node.dataset.smartartNodeId = item.id;
+    node.textContent = item.text;
+    content.appendChild(node);
+  }
+  container.appendChild(content);
 }
