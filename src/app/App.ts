@@ -232,6 +232,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'list-ordered': editor.list('ol'); break;
         case 'table-insert': editor.insertTable(2, 3); break;
         case 'graphic-insert': graphics.insertShape(); break;
+        case 'smartart-insert': graphics.insertSmartArt('process'); break;
         case 'graphic-duplicate': graphics.duplicateSelected(); break;
         case 'graphic-front': graphics.bringSelectedToFront(); break;
         case 'graphic-back': graphics.sendSelectedToBack(); break;
