@@ -508,6 +508,7 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.groupSelected()).toBe(true);
     expect(interactions.getSelectedSmartArtNodeId()).toBe(null);
     expect(interactions.ungroupSelected()).toBe(true);
+    interactions.clearSelection();
 
     root.querySelector<HTMLElement>('[data-graphic-id="smartart-group"] [data-smartart-node-id="node"]')?.dispatchEvent(
       new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
