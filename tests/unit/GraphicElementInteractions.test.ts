@@ -506,9 +506,15 @@ describe('GraphicElementInteractions', () => {
     );
 
     expect(interactions.groupSelected()).toBe(true);
-    expect(interactions.getSelectedSmartArtNodeId()).toBe('node');
+    expect(interactions.getSelectedSmartArtNodeId()).toBe(null);
     expect(interactions.ungroupSelected()).toBe(true);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-group"] [data-smartart-node-id="node"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
     expect(interactions.getSelectedSmartArtNodeId()).toBe('node');
+    expect(interactions.editSelectedSmartArtNode('Etapa atualizada')).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.nodes[0]?.text).toBe('Etapa atualizada');
   });
 
   it('renders hierarchy nodes by semantic parent levels', () => {
