@@ -415,4 +415,41 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.getElements()[0]?.smartArt?.layout).toBe('cycle');
   });
 
+
+  it('renders hierarchy nodes by semantic parent levels', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-render-hierarchy', kind: 'smartart',
+      smartArt: { layout: 'hierarchy', nodes: [
+        { id: 'root', text: 'Root' },
+        { id: 'child-a', text: 'Child A', parentId: 'root' },
+        { id: 'child-b', text: 'Child B', parentId: 'root' },
+        { id: 'grandchild', text: 'Grandchild', parentId: 'child-a' },
+      ] },
+    })]);
+    const levels = [...root.querySelectorAll<HTMLElement>('[data-smartart-level]')];
+    expect(levels).toHaveLength(3);
+    expect([...levels[0]!.querySelectorAll('.smartart-node')].map((node) => node.textContent)).toEqual(['Root']);
+    expect([...levels[1]!.querySelectorAll('.smartart-node')].map((node) => node.textContent)).toEqual(['Child A', 'Child B']);
+    expect([...levels[2]!.querySelectorAll('.smartart-node')].map((node) => node.textContent)).toEqual(['Grandchild']);
+  });
+
+  it('keeps process and cycle layouts as ordered semantic node collections', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-render-process', kind: 'smartart',
+      smartArt: { layout: 'process', nodes: [
+        { id: 'a', text: 'A' }, { id: 'b', text: 'B' }, { id: 'c', text: 'C' },
+      ] },
+    })]);
+    expect([...root.querySelectorAll('.smartart-process .smartart-node')].map((node) => node.textContent)).toEqual(['A', 'B', 'C']);
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-render-process"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 0, clientY: 0 }),
+    );
+    expect(interactions.setSelectedSmartArtLayout('cycle')).toBe(true);
+    expect([...root.querySelectorAll('.smartart-cycle .smartart-node')].map((node) => node.textContent)).toEqual(['A', 'B', 'C']);
+  });
+
 });
