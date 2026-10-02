@@ -142,8 +142,9 @@ export class GraphicElementInteractions {
 
   editSelectedSmartArtNode(text: string): boolean {
     const element = this.getSelectedSmartArt();
-    if (!element || !this.selectedSmartArtNodeId) return false;
-    const node = element.smartArt.nodes.find((item) => item.id === this.selectedSmartArtNodeId);
+    const smartArt = element?.smartArt;
+    if (!smartArt || !this.selectedSmartArtNodeId) return false;
+    const node = smartArt.nodes.find((item) => item.id === this.selectedSmartArtNodeId);
     if (!node) return false;
     const value = text.trim();
     if (!value || value === node.text) return false;
