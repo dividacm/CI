@@ -669,13 +669,69 @@ function renderSmartArtNode(container: HTMLElement, smartArt: SmartArtData, sele
   container.setAttribute('aria-label', `SmartArt ${smartArt.layout}`);
   const content = container.ownerDocument.createElement('div');
   content.className = `smartart-content smartart-${smartArt.layout}`;
-  for (const item of smartArt.nodes) {
-    const node = container.ownerDocument.createElement('div');
-    node.className = 'smartart-node';
-    node.dataset.smartartNodeId = item.id;
-    if (item.id === selectedNodeId) node.dataset.selected = 'true';
-    node.textContent = item.text;
-    content.appendChild(node);
+  if (smartArt.layout === 'hierarchy') {
+    renderSmartArtHierarchy(content, smartArt, selectedNodeId);
+  } else {
+    for (const [index, item] of smartArt.nodes.entries()) {
+      content.appendChild(createSmartArtNodeElement(container.ownerDocument, item, selectedNodeId, index));
+    }
   }
   container.appendChild(content);
+}
+
+function createSmartArtNodeElement(
+  ownerDocument: Document,
+  item: SmartArtData['nodes'][number],
+  selectedNodeId: string | null,
+  index: number,
+): HTMLElement {
+  const node = ownerDocument.createElement('div');
+  node.className = 'smartart-node';
+  node.dataset.smartartNodeId = item.id;
+  node.dataset.smartartIndex = String(index);
+  if (item.id === selectedNodeId) node.dataset.selected = 'true';
+  node.textContent = item.text;
+  return node;
+}
+
+function renderSmartArtHierarchy(
+  content: HTMLElement,
+  smartArt: SmartArtData,
+  selectedNodeId: string | null,
+): void {
+  const childrenByParent = new Map<string | null, SmartArtData['nodes']>();
+  for (const node of smartArt.nodes) {
+    const parentId = node.parentId && smartArt.nodes.some((item) => item.id === node.parentId) ? node.parentId : null;
+    const children = childrenByParent.get(parentId) ?? [];
+    children.push(node);
+    childrenByParent.set(parentId, children);
+  }
+
+  const levels: SmartArtData['nodes'][] = [];
+  let current = childrenByParent.get(null) ?? [];
+  const visited = new Set<string>();
+  while (current.length) {
+    levels.push(current);
+    for (const node of current) visited.add(node.id);
+    const next: SmartArtData['nodes'] = [];
+    for (const node of current) {
+      for (const child of childrenByParent.get(node.id) ?? []) {
+        if (!visited.has(child.id)) next.push(child);
+      }
+    }
+    current = next;
+  }
+
+  const unplaced = smartArt.nodes.filter((node) => !visited.has(node.id));
+  if (unplaced.length) levels.push(unplaced);
+
+  for (const [levelIndex, nodes] of levels.entries()) {
+    const level = content.ownerDocument.createElement('div');
+    level.className = 'smartart-hierarchy-level';
+    level.dataset.smartartLevel = String(levelIndex);
+    for (const [nodeIndex, item] of nodes.entries()) {
+      level.appendChild(createSmartArtNodeElement(content.ownerDocument, item, selectedNodeId, nodeIndex));
+    }
+    content.appendChild(level);
+  }
 }
