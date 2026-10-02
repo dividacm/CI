@@ -60,6 +60,14 @@ describe('GraphicConnectorInteractions', () => {
     expect(interactions.getConnectors()).toHaveLength(1);
   });
 
+  it('prunes connectors when an endpoint graphic is removed', () => {
+    const { elements, interactions } = setup();
+    interactions.connect('from', 'to');
+    interactions.setElements([elements[0]!]);
+
+    expect(interactions.getConnectors()).toHaveLength(0);
+  });
+
   it('re-renders endpoints when graphic positions change', () => {
     const { root, elements, interactions } = setup();
     interactions.connect('from', 'to');
