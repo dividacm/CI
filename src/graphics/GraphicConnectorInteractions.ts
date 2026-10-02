@@ -26,7 +26,15 @@ export class GraphicConnectorInteractions {
   }
 
   setElements(elements: GraphicElement[]): void {
+    const elementIds = new Set(elements.map((element) => element.id));
+    const next = this.connectors.filter((connector) => elementIds.has(connector.fromId) && elementIds.has(connector.toId));
+    const changed = next.length !== this.connectors.length;
+    this.connectors = cloneConnectors(next);
+    if (this.selectedId && !this.connectors.some((connector) => connector.id === this.selectedId)) {
+      this.selectedId = null;
+    }
     this.render(elements);
+    if (changed) this.options.onSelectionChange?.();
   }
 
   setConnectors(connectors: GraphicConnector[]): void {

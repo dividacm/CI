@@ -148,7 +148,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   syncRuler();
 
-  const sync = (): void => { actions.sync(); syncView(); syncTableTools(); syncGraphicTools(); };
+  const sync = (): void => { connectors.setElements(graphics.getElements()); actions.sync(); syncView(); syncTableTools(); syncGraphicTools(); syncConnectorTools(); };
 
   editor.setSaveHandler(() => {
     sync();
