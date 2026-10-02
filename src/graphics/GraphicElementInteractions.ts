@@ -1,4 +1,5 @@
 import { createGraphicElement, type GraphicElement } from './GraphicElementModel';
+import type { SmartArtData } from './SmartArtModel';
 
 interface GraphicElementInteractionsOptions {
   onChange: (elements: GraphicElement[]) => void;
@@ -89,6 +90,7 @@ export class GraphicElementInteractions {
         rotation: source.rotation,
         groupId: source.groupId,
         data: { ...source.data },
+        ...(source.smartArt ? { smartArt: cloneSmartArt(source.smartArt) } : {}),
       });
     });
     const selectedIds = duplicates.map((element) => element.id);
@@ -511,5 +513,17 @@ function cloneElements(elements: GraphicElement[]): GraphicElement[] {
     size: { ...element.size },
     ...(element.groupId ? { groupId: element.groupId } : {}),
     data: { ...element.data },
+    ...(element.smartArt ? { smartArt: cloneSmartArt(element.smartArt) } : {}),
   }));
+}
+
+function cloneSmartArt(smartArt: SmartArtData): SmartArtData {
+  return {
+    layout: smartArt.layout,
+    nodes: smartArt.nodes.map((node) => ({
+      id: node.id,
+      text: node.text,
+      ...(node.parentId ? { parentId: node.parentId } : {}),
+    })),
+  };
 }
