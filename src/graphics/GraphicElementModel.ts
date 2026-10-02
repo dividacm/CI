@@ -1,3 +1,5 @@
+import { normalizeSmartArt, type SmartArtData } from './SmartArtModel';
+
 export type GraphicElementKind = 'shape' | 'smartart';
 
 export interface GraphicElementPosition {
@@ -18,6 +20,7 @@ export interface GraphicElement {
   rotation: number;
   groupId?: string;
   data: Record<string, string>;
+  smartArt?: SmartArtData;
 }
 
 export interface CreateGraphicElementInput {
@@ -28,6 +31,7 @@ export interface CreateGraphicElementInput {
   rotation?: number;
   groupId?: string;
   data?: Record<string, string>;
+  smartArt?: SmartArtData;
 }
 
 const DEFAULT_POSITION: GraphicElementPosition = { x: 0, y: 0 };
@@ -48,6 +52,7 @@ export function createGraphicElement(input: CreateGraphicElementInput): GraphicE
     rotation: input.rotation ?? 0,
     ...(input.groupId ? { groupId: input.groupId } : {}),
     data: { ...(input.data ?? {}) },
+    ...(input.smartArt ? { smartArt: cloneSmartArt(input.smartArt) } : {}),
   };
 }
 
@@ -59,6 +64,9 @@ export function normalizeGraphicElement(element: GraphicElement): GraphicElement
   if (element.size.width <= 0 || element.size.height <= 0) return null;
   if (!Number.isFinite(element.rotation)) return null;
 
+  const smartArt = element.kind === 'smartart' ? normalizeSmartArt(element.smartArt) : null;
+  if (element.kind === 'smartart' && !smartArt) return null;
+
   return {
     id: element.id,
     kind: element.kind,
@@ -69,6 +77,7 @@ export function normalizeGraphicElement(element: GraphicElement): GraphicElement
     data: Object.fromEntries(
       Object.entries(element.data ?? {}).filter(([, value]) => typeof value === 'string'),
     ),
+    ...(smartArt ? { smartArt: cloneSmartArt(smartArt) } : {}),
   };
 }
 
@@ -78,4 +87,15 @@ export function normalizeGraphicElements(elements: unknown): GraphicElement[] {
     const normalized = normalizeGraphicElement(element as GraphicElement);
     return normalized ? [normalized] : [];
   });
+}
+
+function cloneSmartArt(smartArt: SmartArtData): SmartArtData {
+  return {
+    layout: smartArt.layout,
+    nodes: smartArt.nodes.map((node) => ({
+      id: node.id,
+      text: node.text,
+      ...(node.parentId ? { parentId: node.parentId } : {}),
+    })),
+  };
 }
