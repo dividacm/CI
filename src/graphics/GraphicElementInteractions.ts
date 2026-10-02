@@ -289,6 +289,7 @@ export class GraphicElementInteractions {
     this.redoStack = [];
     this.elements = cloneElements(next);
     this.selectedIds = new Set(selectedIds);
+    if (!this.getSelectedSmartArt()) this.selectedSmartArtNodeId = null;
     this.render();
     this.options.onChange(this.getElements());
   }
