@@ -308,4 +308,111 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.getElements().find((element) => element.id === 'resize-a')?.size.width).toBe(40);
   });
 
+  it('edits, adds and removes SmartArt nodes with undo/redo', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-edit',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'process',
+        nodes: [
+          { id: 'node-a', text: 'Etapa A' },
+          { id: 'node-b', text: 'Etapa B' },
+        ],
+      },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-edit"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-smartart-node-id="node-a"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('node-a');
+    expect(interactions.editSelectedSmartArtNode('Etapa A atualizada')).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.nodes[0]?.text).toBe('Etapa A atualizada');
+    expect(interactions.addSmartArtNode()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.nodes).toHaveLength(3);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.nodes).toHaveLength(2);
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.nodes).toHaveLength(3);
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.nodes).toHaveLength(2);
+  });
+
+  it('adds hierarchy SmartArt nodes as children of the selected node', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-hierarchy',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'hierarchy',
+        nodes: [{ id: 'root-node', text: 'Direção' }],
+      },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-hierarchy"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-smartart-node-id="root-node"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+
+    expect(interactions.addSmartArtNode()).toBe(true);
+    const nodes = interactions.getElements()[0]?.smartArt?.nodes ?? [];
+    expect(nodes).toHaveLength(2);
+    expect(nodes[1]?.parentId).toBe('root-node');
+  });
+
+  it('handles SmartArt editing no-op and invalid-selection cases', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+
+    expect(interactions.editSelectedSmartArtNode('Texto')).toBe(false);
+    expect(interactions.addSmartArtNode()).toBe(false);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('cycle')).toBe(false);
+
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-single',
+      kind: 'smartart',
+      smartArt: { layout: 'process', nodes: [{ id: 'only', text: 'Único' }] },
+    })]);
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-single"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+
+    expect(interactions.editSelectedSmartArtNode('Único')).toBe(false);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('process')).toBe(false);
+  });
+
+  it('changes the selected SmartArt layout and preserves the change through undo/redo', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-layout',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'process',
+        nodes: [{ id: 'layout-node', text: 'Etapa' }],
+      },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-layout"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+
+    expect(interactions.setSelectedSmartArtLayout('cycle')).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.layout).toBe('cycle');
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.layout).toBe('process');
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.layout).toBe('cycle');
+  });
+
 });

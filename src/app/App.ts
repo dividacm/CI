@@ -54,6 +54,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   const tableTools = tableGroup;
   const graphicTools = root.querySelector<HTMLElement>('.graphic-tools');
   const connectorTools = root.querySelector<HTMLElement>('.connector-tools');
+  const smartArtTools = root.querySelector<HTMLElement>('.smartart-tools');
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
@@ -103,10 +104,15 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   const syncConnectorTools = (): void => {
     if (connectorTools) connectorTools.hidden = !connectors.hasSelection();
   };
+  const syncSmartArtTools = (): void => {
+    const selectedCount = graphics.getSelectedIds().length;
+    if (smartArtTools) smartArtTools.hidden = selectedCount !== 1 || !graphics.getElements().some((element) => element.id === graphics.getSelectedIds()[0] && element.kind === 'smartart');
+  };
   graphics.setElements(state.document.graphics ?? []);
   connectors.setConnectors(state.document.connectors ?? []);
   syncGraphicTools();
   syncConnectorTools();
+  syncSmartArtTools();
   editor.setExternalHistoryHandlers(
     () => connectors.hasSelection() ? connectors.undo() : graphics.hasSelection() ? graphics.undo() : false,
     () => connectors.hasSelection() ? connectors.redo() : graphics.hasSelection() ? graphics.redo() : false,
@@ -148,7 +154,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
 
   syncRuler();
 
-  const sync = (): void => { connectors.setElements(graphics.getElements()); actions.sync(); syncView(); syncTableTools(); syncGraphicTools(); syncConnectorTools(); };
+  const sync = (): void => { connectors.setElements(graphics.getElements()); actions.sync(); syncView(); syncTableTools(); syncGraphicTools(); syncConnectorTools(); syncSmartArtTools(); };
 
   editor.setSaveHandler(() => {
     sync();
@@ -162,7 +168,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   elements.editor.addEventListener('click', syncTableTools);
   elements.editor.addEventListener('keyup', syncTableTools);
   elements.editor.addEventListener('focus', syncTableTools);
-  graphicsRoot.addEventListener('pointerdown', () => queueMicrotask(() => { syncGraphicTools(); syncConnectorTools(); }));
+  graphicsRoot.addEventListener('pointerdown', () => queueMicrotask(() => { syncGraphicTools(); syncConnectorTools(); syncSmartArtTools(); }));
   document.addEventListener('selectionchange', syncTableTools);
 
   root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
@@ -186,6 +192,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         connectors.setConnectors(state.document.connectors ?? []);
         syncGraphicTools();
         syncConnectorTools();
+        syncSmartArtTools();
         updateIssueButton(elements.issueButton, state.document);
         autosave.saveNow();
         syncRuler();
@@ -233,6 +240,19 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         case 'table-insert': editor.insertTable(2, 3); break;
         case 'graphic-insert': graphics.insertShape(); break;
         case 'smartart-insert': graphics.insertSmartArt('process'); break;
+        case 'smartart-node-add': graphics.addSmartArtNode(); break;
+        case 'smartart-node-remove': graphics.removeSelectedSmartArtNode(); break;
+        case 'smartart-node-edit': {
+          const selectedNode = graphics.getSelectedSmartArtNodeId();
+          if (!selectedNode) break;
+          const current = graphics.getElements().find((element) => element.id === graphics.getSelectedIds()[0])?.smartArt?.nodes.find((node) => node.id === selectedNode)?.text ?? '';
+          const value = root.ownerDocument.defaultView?.prompt('Editar nó SmartArt', current);
+          if (value !== null && value !== undefined) graphics.editSelectedSmartArtNode(value);
+          break;
+        }
+        case 'smartart-layout-process': graphics.setSelectedSmartArtLayout('process'); break;
+        case 'smartart-layout-hierarchy': graphics.setSelectedSmartArtLayout('hierarchy'); break;
+        case 'smartart-layout-cycle': graphics.setSelectedSmartArtLayout('cycle'); break;
         case 'graphic-duplicate': graphics.duplicateSelected(); break;
         case 'graphic-front': graphics.bringSelectedToFront(); break;
         case 'graphic-back': graphics.sendSelectedToBack(); break;
