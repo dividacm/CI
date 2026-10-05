@@ -98,6 +98,59 @@ describe('GraphicElementInteractions', () => {
     expect(interactions.getElements()).toHaveLength(1);
   });
 
+  it('ignores graphic shortcuts while editing form controls', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'shape-editing-target',
+      kind: 'shape',
+      position: { x: 10, y: 20 },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="shape-editing-target"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 20 }),
+    );
+
+    const input = document.createElement('input');
+    root.appendChild(input);
+    input.focus();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', ctrlKey: true, bubbles: true }));
+
+    expect(interactions.getElements()).toHaveLength(1);
+    expect(interactions.getElements()[0]?.position).toEqual({ x: 10, y: 20 });
+  });
+
+  it('clears both graphic and SmartArt node selection with Escape', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-escape',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'process',
+        nodes: [{ id: 'node-escape', text: 'Etapa' }],
+      },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-escape"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-smartart-node-id="node-escape"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+
+    expect(interactions.getSelectedIds()).toEqual(['smartart-escape']);
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('node-escape');
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+    expect(interactions.getSelectedIds()).toEqual([]);
+    expect(interactions.getSelectedSmartArtNodeId()).toBe(null);
+  });
+
   it('duplicates the selected element with preserved content and selection', () => {
     const root = document.createElement('article');
     const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
