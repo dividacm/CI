@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createGraphicElement } from '../../src/graphics/GraphicElementModel';
 import { GraphicElementInteractions } from '../../src/graphics/GraphicElementInteractions';
+import { createGraphicElement } from '../../src/graphics/GraphicElementModel';
 
 describe('GraphicElementInteractions lifecycle', () => {
   it('disposes listeners and removes its interaction layer', () => {
