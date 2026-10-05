@@ -115,9 +115,9 @@ describe('GraphicElementInteractions', () => {
     root.appendChild(input);
     input.focus();
 
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
-    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', ctrlKey: true, bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Delete', bubbles: true }));
+    input.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', ctrlKey: true, bubbles: true }));
 
     expect(interactions.getElements()).toHaveLength(1);
     expect(interactions.getElements()[0]?.position).toEqual({ x: 10, y: 20 });
