@@ -596,6 +596,7 @@ export class GraphicElementInteractions {
     if (!this.selectedIds.size) return;
     const target = event.target;
     if (target instanceof HTMLElement && target !== this.root && !this.root.contains(target)) return;
+    if (this.isEditingTarget(target)) return;
 
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') {
       event.preventDefault();
@@ -612,6 +613,7 @@ export class GraphicElementInteractions {
 
     if (event.key === 'Escape') {
       this.selectedIds.clear();
+      this.selectedSmartArtNodeId = null;
       this.render();
       return;
     }
@@ -642,6 +644,12 @@ export class GraphicElementInteractions {
     }
     this.commit(next, this.getSelectedIds());
   };
+
+  private isEditingTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    if (target === this.root) return false;
+    return Boolean(target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]'));
+  }
 }
 
 function intersects(x: number, y: number, width: number, height: number, left: number, top: number, right: number, bottom: number): boolean {
