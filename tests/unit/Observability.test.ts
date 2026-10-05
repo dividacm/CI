@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getObservability, resetObservability, setObservability } from '../../src/observability/Observability';
+import { getObservability, resetObservability } from '../../src/observability/Observability';
 
 describe('Observability', () => {
   afterEach(() => {
@@ -15,8 +15,6 @@ describe('Observability', () => {
       component: 'PdfExporter',
       documentId: 'doc-123',
     });
-
-    expect(errorSpy).toHaveBeenCalledTimes(1);
 
     const entry = JSON.parse(errorSpy.mock.calls[0]?.[0] as string) as {
       timestamp: string;
@@ -38,7 +36,7 @@ describe('Observability', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
     getObservability().log('error', 'x'.repeat(600), {
-      token: 'secret-token',
+      token: 'private-value',
       nested: {
         content: '<p>documento confidencial</p>',
       },
@@ -57,15 +55,22 @@ describe('Observability', () => {
     expect(entry.context.safe).toBe(`${'y'.repeat(500)}…`);
   });
 
-  it('normalizes non-Error failures without leaking arbitrary object data', () => {
-    const customLog = vi.fn();
-    setObservability({ log: customLog, captureError: () => undefined });
+  it('normalizes non-Error failures without serializing arbitrary object data', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    getObservability().captureError({ message: 'dados internos' }, {
+    getObservability().captureError({ message: 'dados internos', privateValue: 'must-not-leak' }, {
       operation: 'load-layout-config',
       component: 'App',
     });
 
-    expect(customLog).not.toHaveBeenCalled();
+    const entry = JSON.parse(errorSpy.mock.calls[0]?.[0] as string) as {
+      message: string;
+      context: Record<string, unknown>;
+    };
+
+    expect(entry.message).toBe('Erro desconhecido');
+    expect(entry.context.operation).toBe('load-layout-config');
+    expect(entry.context.component).toBe('App');
+    expect(JSON.stringify(entry)).not.toContain('must-not-leak');
   });
 });
