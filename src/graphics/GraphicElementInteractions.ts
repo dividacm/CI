@@ -31,6 +31,7 @@ export class GraphicElementInteractions {
   private drag: GraphicDrag | null = null;
   private selectionRect: SelectionRect | null = null;
   private selectedSmartArtNodeId: string | null = null;
+  private disposed = false;
 
   constructor(private readonly root: HTMLElement, private readonly options: GraphicElementInteractionsOptions) {
     root.style.position = root.style.position || 'relative';
@@ -50,6 +51,23 @@ export class GraphicElementInteractions {
     root.addEventListener('pointerdown', this.handleRootPointerDown);
     root.addEventListener('click', this.handleRootClick);
     root.ownerDocument.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.root.ownerDocument.removeEventListener('keydown', this.handleKeyDown);
+    this.root.removeEventListener('pointerdown', this.handleRootPointerDown);
+    this.root.removeEventListener('click', this.handleRootClick);
+    this.layer.removeEventListener('pointerdown', this.handlePointerDown);
+    this.layer.removeEventListener('dblclick', this.handleDoubleClick);
+    this.root.ownerDocument.removeEventListener('pointermove', this.handlePointerMove);
+    this.root.ownerDocument.removeEventListener('pointermove', this.handleSelectionMove);
+    this.root.ownerDocument.removeEventListener('pointerup', this.handlePointerUp);
+    this.root.ownerDocument.removeEventListener('pointerup', this.handleSelectionUp);
+    this.drag = null;
+    this.selectionRect = null;
+    this.layer.remove();
   }
 
   setElements(elements: GraphicElement[]): void {
