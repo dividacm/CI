@@ -12,7 +12,7 @@ import type { OrganizationConfig, TemplateConfig } from '../types/configuration'
 import type { CommunicationDocument, DocumentStatus } from '../types/document';
 import { createAppActions } from './AppActions';
 import type { AppState } from './AppState';
-import { getAppElements, getFieldValue, renderDocument, renderPreview, renderShell, updateIssueButton, updatePdfButton } from './AppView';
+import { getAppElements, getFieldValue, renderDocument, renderPreview, renderShell, setPreviewZoom, updateIssueButton, updatePdfButton } from './AppView';
 
 const ACTIVE_DOCUMENT_KEY = 'ci:active-document';
 const LAYOUT_CONFIG_KEY = 'ci:layout-config';
@@ -52,6 +52,11 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
   const elements = getAppElements(root);
   const tableTools = tableGroup;
+  let previewZoom = 100;
+  const updatePreviewZoom = (value: number): void => {
+    previewZoom = Math.min(150, Math.max(50, Math.round(value / 10) * 10));
+    setPreviewZoom(root, previewZoom);
+  };
   const graphicTools = root.querySelector<HTMLElement>('.graphic-tools');
   const connectorTools = root.querySelector<HTMLElement>('.connector-tools');
   const smartArtTools = root.querySelector<HTMLElement>('.smartart-tools');
@@ -153,6 +158,7 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
   };
 
   syncRuler();
+  updatePreviewZoom(previewZoom);
 
   const sync = (): void => { connectors.setElements(graphics.getElements()); actions.sync(); syncView(); syncTableTools(); syncGraphicTools(); syncConnectorTools(); syncSmartArtTools(); };
 
@@ -207,6 +213,9 @@ export function renderApp(root: HTMLElement, organization: OrganizationConfig): 
         syncRuler();
         return;
       }
+      if (action === 'zoom-out') { updatePreviewZoom(previewZoom - 10); return; }
+      if (action === 'zoom-reset') { updatePreviewZoom(100); return; }
+      if (action === 'zoom-in') { updatePreviewZoom(previewZoom + 10); return; }
       if (action === 'pdf') {
         if (!organization.features.pdfExport) return;
         sync(); elements.pdfButton.disabled = true;
