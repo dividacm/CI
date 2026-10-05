@@ -49,7 +49,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
             </div></section>
           </div>
         </details>
-      </div>      <div class="workspace"><div class="editor-canvas"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article></div><div class="preview-column"><div id="horizontal-ruler" class="horizontal-ruler"></div><div class="preview-wrap"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div></div>
+      </div>      <div class="workspace"><div class="editor-canvas"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article></div><div class="preview-column"><div class="preview-controls" role="toolbar" aria-label="Controles de visualização"><button type="button" data-action="zoom-out" aria-label="Reduzir zoom">−</button><output id="preview-zoom" aria-live="polite">100%</output><button type="button" data-action="zoom-reset" aria-label="Redefinir zoom">100%</button><button type="button" data-action="zoom-in" aria-label="Aumentar zoom">+</button></div><div id="horizontal-ruler" class="horizontal-ruler"></div><div class="preview-wrap" style="--preview-zoom:1"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div></div>
     </section>
   </main>`;
 }
@@ -400,3 +400,14 @@ function renderNumberSetting(label: string, id: string, value: number): string {
 function formatDate(date: Date): string { return new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' }).format(date); }
 function escapeSelector(value: string): string { return value.replace(/(["\\])/g, '\\$1'); }
 function escapeHtml(value: string): string { return value.replace(/[&<>"']/g, (character) => { const entities: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }; return entities[character] ?? character; }); }
+
+export function setPreviewZoom(root: HTMLElement, zoomPercent: number): void {
+  const zoom = Math.min(150, Math.max(50, Math.round(zoomPercent / 10) * 10));
+  const previewWrap = root.querySelector<HTMLElement>('.preview-wrap');
+  const output = root.querySelector<HTMLOutputElement>('#preview-zoom');
+  if (!previewWrap || !output) return;
+  previewWrap.style.setProperty('--preview-zoom', String(zoom / 100));
+  output.value = `${zoom}%`;
+  output.textContent = `${zoom}%`;
+  previewWrap.dataset.zoom = String(zoom);
+}
