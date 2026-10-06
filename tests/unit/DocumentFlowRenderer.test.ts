@@ -31,6 +31,6 @@ describe('DocumentFlowRenderer', () => {
   it('derives A4 content metrics from the configured margins', () => {
     const metrics = getPageMetrics({ marginLeftMm: 10, marginRightMm: 10, marginTopMm: 10, marginBottomMm: 10 });
     expect(metrics.contentWidthPx).toBeCloseTo((210 - 20) * 96 / 25.4, 5);
-    expect(metrics.contentHeightPx).toBeCloseTo((297 - 55) * 96 / 25.4, 5);
+    expect(metrics.contentHeightPx).toBeCloseTo((297 - 30 - 25 - 20) * 96 / 25.4, 5);
   });
 });
