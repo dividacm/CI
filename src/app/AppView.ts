@@ -1,6 +1,7 @@
 import { FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS } from '../editor/TypographyModel';
 import { renderHorizontalRuler } from '../layout/RulerView';
 import { appendBodyAcrossPages, createPage, getPageContent, removeEmptyPages } from '../pagination/PaginationEngine';
+import { getPageMetrics, renderGraphicFlow } from '../pagination/DocumentFlowRenderer';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
@@ -92,6 +93,14 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   const firstContent = getPageContent(firstPage);
   firstContent.insertAdjacentHTML('beforeend', `<div class="paper-title">${escapeHtml(template.name)} <span>${document.number > 0 ? `Nº ${document.number}/${document.year}` : ''}</span></div>${fields}`);
   appendBodyAcrossPages(root, pages, firstContent, body, { layout: organization.layout, header, footer });
+
+  const graphicMetrics = getPageMetrics(organization.layout);
+  pages.forEach((page, index) => renderGraphicFlow(getPageContent(page), {
+    elements: document.graphics ?? [],
+    connectors: document.connectors ?? [],
+    pageIndex: index,
+    metrics: graphicMetrics,
+  }));
 
   const lastPage = pages[pages.length - 1];
   if (!lastPage) return;
