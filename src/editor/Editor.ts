@@ -1,4 +1,5 @@
 import { ClipboardService } from '../clipboard/ClipboardService';
+import { getKeyboardCommand, type KeyboardCommand } from '../app/KeyboardShortcutMap';
 import { FormattingEngine, type ListType, type TextAlignment } from './FormattingEngine';
 import { HistoryManager } from './HistoryManager';
 import { RangeEngine } from './RangeEngine';
@@ -26,24 +27,13 @@ export class Editor {
     this.bindSelection();
   }
 
-  getHtml(): string {
-    return this.root.innerHTML;
-  }
-
-  setHtml(html: string): void {
-    this.root.innerHTML = html;
-    this.savedSelection = null;
-    this.tables.syncSelection();
-  }
-
-  focus(): void {
-    this.root.focus();
-  }
+  getHtml(): string { return this.root.innerHTML; }
+  setHtml(html: string): void { this.root.innerHTML = html; this.savedSelection = null; this.tables.syncSelection(); }
+  focus(): void { this.root.focus(); }
 
   rememberSelection(): void {
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
-
     const range = selection.getRangeAt(0);
     if (!this.root.contains(range.commonAncestorContainer)) return;
     this.savedSelection = range.cloneRange();
@@ -54,143 +44,63 @@ export class Editor {
     this.externalRedo = redo;
   }
 
-  setSaveHandler(handler: (() => void) | null): void {
-    this.saveHandler = handler;
-  }
+  setSaveHandler(handler: (() => void) | null): void { this.saveHandler = handler; }
 
-  async copy(): Promise<boolean> {
-    this.focus();
-    this.restoreSavedSelection();
-    return this.clipboard.copy();
-  }
+  async copy(): Promise<boolean> { this.focus(); this.restoreSavedSelection(); return this.clipboard.copy(); }
 
   async cut(): Promise<boolean> {
-    this.focus();
-    this.restoreSavedSelection();
+    this.focus(); this.restoreSavedSelection();
     const before = this.root.innerHTML;
     const changed = await this.clipboard.cut();
-    if (changed && this.root.innerHTML !== before) {
-      this.history.captureSnapshot(before);
-      this.rememberSelection();
-    }
+    if (changed && this.root.innerHTML !== before) { this.history.captureSnapshot(before); this.rememberSelection(); }
     return changed;
   }
 
   async pastePlainText(): Promise<boolean> {
-    this.focus();
-    this.restoreSavedSelection();
+    this.focus(); this.restoreSavedSelection();
     const before = this.root.innerHTML;
     const changed = await this.clipboard.pastePlainText();
-    if (changed && this.root.innerHTML !== before) {
-      this.history.captureSnapshot(before);
-      this.rememberSelection();
-    }
+    if (changed && this.root.innerHTML !== before) { this.history.captureSnapshot(before); this.rememberSelection(); }
     return changed;
   }
 
-  bold(): boolean {
-    return this.apply(() => this.formatting.bold());
-  }
-
-  italic(): boolean {
-    return this.apply(() => this.formatting.italic());
-  }
-
-  underline(): boolean {
-    return this.apply(() => this.formatting.underline());
-  }
-
-  align(alignment: TextAlignment): boolean {
-    return this.apply(() => this.formatting.align(alignment));
-  }
-
-  list(type: ListType): boolean {
-    return this.apply(() => this.formatting.insertList(type));
-  }
-
-  insertTable(rows = 2, columns = 3): boolean {
-    return this.apply(() => this.formatting.insertTable(rows, columns));
-  }
-
-  selectTableRow(): boolean {
-    return this.apply(() => this.tables.selectRow());
-  }
-
-  selectTableColumn(): boolean {
-    return this.apply(() => this.tables.selectColumn());
-  }
-
-  insertTableRow(): boolean {
-    return this.apply(() => this.tables.insertRow());
-  }
-
-  deleteTableRow(): boolean {
-    return this.apply(() => this.tables.deleteRow());
-  }
-
-  insertTableColumn(): boolean {
-    return this.apply(() => this.tables.insertColumn());
-  }
-
-  deleteTableColumn(): boolean {
-    return this.apply(() => this.tables.deleteColumn());
-  }
-
-  resizeTableColumn(deltaPx: number): boolean {
-    return this.apply(() => this.tables.resizeSelectedColumn(deltaPx));
-  }
-
-  hasActiveTableCell(): boolean {
-    return this.tables.hasActiveCell();
-  }
-
-  fontFamily(value: string): boolean {
-    return this.apply(() => this.formatting.setFontFamily(value));
-  }
-
-  fontSize(value: string): boolean {
-    return this.apply(() => this.formatting.setFontSize(value));
-  }
-
-  color(value: string): boolean {
-    return this.apply(() => this.formatting.setColor(value));
-  }
-
-  toggleCase(upper: boolean): boolean {
-    return this.apply(() => this.formatting.toggleCase(upper));
-  }
-
-  clearFormatting(): boolean {
-    return this.apply(() => this.formatting.clearFormatting());
-  }
+  bold(): boolean { return this.apply(() => this.formatting.bold()); }
+  italic(): boolean { return this.apply(() => this.formatting.italic()); }
+  underline(): boolean { return this.apply(() => this.formatting.underline()); }
+  align(alignment: TextAlignment): boolean { return this.apply(() => this.formatting.align(alignment)); }
+  list(type: ListType): boolean { return this.apply(() => this.formatting.insertList(type)); }
+  insertTable(rows = 2, columns = 3): boolean { return this.apply(() => this.formatting.insertTable(rows, columns)); }
+  selectTableRow(): boolean { return this.apply(() => this.tables.selectRow()); }
+  selectTableColumn(): boolean { return this.apply(() => this.tables.selectColumn()); }
+  insertTableRow(): boolean { return this.apply(() => this.tables.insertRow()); }
+  deleteTableRow(): boolean { return this.apply(() => this.tables.deleteRow()); }
+  insertTableColumn(): boolean { return this.apply(() => this.tables.insertColumn()); }
+  deleteTableColumn(): boolean { return this.apply(() => this.tables.deleteColumn()); }
+  resizeTableColumn(deltaPx: number): boolean { return this.apply(() => this.tables.resizeSelectedColumn(deltaPx)); }
+  hasActiveTableCell(): boolean { return this.tables.hasActiveCell(); }
+  fontFamily(value: string): boolean { return this.apply(() => this.formatting.setFontFamily(value)); }
+  fontSize(value: string): boolean { return this.apply(() => this.formatting.setFontSize(value)); }
+  color(value: string): boolean { return this.apply(() => this.formatting.setColor(value)); }
+  toggleCase(upper: boolean): boolean { return this.apply(() => this.formatting.toggleCase(upper)); }
+  clearFormatting(): boolean { return this.apply(() => this.formatting.clearFormatting()); }
 
   undo(): boolean {
     const changed = this.history.undo(this.root);
-    if (changed) {
-      this.rememberSelection();
-      this.tables.syncSelection();
-    }
+    if (changed) { this.rememberSelection(); this.tables.syncSelection(); }
     return changed;
   }
 
   redo(): boolean {
     const changed = this.history.redo(this.root);
-    if (changed) {
-      this.rememberSelection();
-      this.tables.syncSelection();
-    }
+    if (changed) { this.rememberSelection(); this.tables.syncSelection(); }
     return changed;
   }
 
   private apply(operation: () => boolean): boolean {
-    this.focus();
-    this.restoreSavedSelection();
+    this.focus(); this.restoreSavedSelection();
     const before = this.root.innerHTML;
     const changed = operation();
-    if (changed && this.root.innerHTML !== before) {
-      this.history.captureSnapshot(before);
-      this.rememberSelection();
-    }
+    if (changed && this.root.innerHTML !== before) { this.history.captureSnapshot(before); this.rememberSelection(); }
     return changed;
   }
 
@@ -199,9 +109,7 @@ export class Editor {
     this.root.addEventListener('mouseup', () => this.rememberSelection());
     this.root.ownerDocument.addEventListener('selectionchange', () => {
       const selection = window.getSelection();
-      if (selection && selection.rangeCount > 0 && this.root.contains(selection.anchorNode)) {
-        this.rememberSelection();
-      }
+      if (selection && selection.rangeCount > 0 && this.root.contains(selection.anchorNode)) this.rememberSelection();
     });
   }
 
@@ -210,19 +118,9 @@ export class Editor {
       this.rememberSelection();
       this.history.capture(this.root);
     });
-
     this.root.addEventListener('keydown', (event) => {
       if (this.handleTableNavigation(event)) return;
-      if (this.handleShortcut(event)) return;
-
-      if (!(event.ctrlKey || event.metaKey)) return;
-      const key = event.key.toLowerCase();
-      if (key !== 'z' && key !== 'y') return;
-
-      event.preventDefault();
-      if (key === 'y' || event.shiftKey) this.redo();
-      else this.undo();
-      this.notifyChange();
+      this.handleShortcut(event);
     });
   }
 
@@ -231,7 +129,6 @@ export class Editor {
     const target = event.target;
     if (!(target instanceof Node) || !this.root.contains(target)) return false;
     if (!this.tables.hasActiveCell()) return false;
-
     event.preventDefault();
     const changed = this.apply(() => this.tables.moveByTab(event.shiftKey));
     if (changed) this.notifyChange();
@@ -239,70 +136,60 @@ export class Editor {
   }
 
   private handleShortcut(event: KeyboardEvent): boolean {
-    if (!(event.ctrlKey || event.metaKey) || event.altKey) return false;
+    const command = getKeyboardCommand(event);
+    if (!command) return false;
+    event.preventDefault();
 
-    const key = event.key.toLowerCase();
-    const code = event.code;
-
-    if (key === 's') {
-      event.preventDefault();
+    if (command === 'save') {
       this.saveHandler?.();
       return true;
     }
-
-    if (key === 'z' || key === 'y') {
-      event.preventDefault();
-      const externalUndo = this.externalUndo;
-      const externalRedo = this.externalRedo;
-      const changed = externalUndo && externalRedo && key === 'z' && !event.shiftKey ? externalUndo() : externalUndo && externalRedo && (key === 'y' || event.shiftKey) ? externalRedo() : key === 'y' || event.shiftKey ? this.redo() : this.undo();
+    if (command === 'undo' || command === 'redo') {
+      const changed = command === 'undo' ? this.externalUndo?.() ?? this.undo() : this.externalRedo?.() ?? this.redo();
       if (changed) this.notifyChange();
       return true;
     }
-
-    if (key === 'c' || key === 'x' || key === 'v') {
-      event.preventDefault();
-      void this.handleClipboardShortcut(key);
+    if (command === 'copy' || command === 'cut' || command === 'paste') {
+      void this.handleClipboardShortcut(command);
       return true;
     }
 
-    let changed = false;
-    switch (true) {
-      case key === 'b': event.preventDefault(); changed = this.bold(); break;
-      case key === 'i': event.preventDefault(); changed = this.italic(); break;
-      case key === 'u': event.preventDefault(); changed = this.underline(); break;
-      case key === 'l' && !event.shiftKey: event.preventDefault(); changed = this.align('left'); break;
-      case key === 'e' && !event.shiftKey: event.preventDefault(); changed = this.align('center'); break;
-      case key === 'r' && !event.shiftKey: event.preventDefault(); changed = this.align('right'); break;
-      case key === 'j' && !event.shiftKey: event.preventDefault(); changed = this.align('justify'); break;
-      case code === 'Digit7' && event.shiftKey: event.preventDefault(); changed = this.list('ol'); break;
-      case code === 'Digit8' && event.shiftKey: event.preventDefault(); changed = this.list('ul'); break;
-      default: return false;
-    }
-
+    const changed = this.executeFormattingShortcut(command);
     if (changed) this.notifyChange();
     return true;
   }
 
-  private async handleClipboardShortcut(key: string): Promise<void> {
-    const changed = key === 'c' ? await this.copy() : key === 'x' ? await this.cut() : await this.pastePlainText();
-    if (changed && key !== 'c') this.notifyChange();
+  private executeFormattingShortcut(command: KeyboardCommand): boolean {
+    switch (command) {
+      case 'bold': return this.bold();
+      case 'italic': return this.italic();
+      case 'underline': return this.underline();
+      case 'align-left': return this.align('left');
+      case 'align-center': return this.align('center');
+      case 'align-right': return this.align('right');
+      case 'align-justify': return this.align('justify');
+      case 'list-ordered': return this.list('ol');
+      case 'list-unordered': return this.list('ul');
+      default: return false;
+    }
+  }
+
+  private async handleClipboardShortcut(command: KeyboardCommand): Promise<void> {
+    const changed = command === 'copy' ? await this.copy() : command === 'cut' ? await this.cut() : await this.pastePlainText();
+    if (changed && command !== 'copy') this.notifyChange();
   }
 
   private restoreSavedSelection(): void {
     if (!this.savedSelection) return;
-
     if (!this.root.contains(this.savedSelection.startContainer) || !this.root.contains(this.savedSelection.endContainer)) {
       this.savedSelection = null;
       return;
     }
-
     const selection = window.getSelection();
     if (!selection) return;
     selection.removeAllRanges();
     selection.addRange(this.savedSelection);
   }
 
-  private notifyChange(): void {
-    this.root.dispatchEvent(new Event('input', { bubbles: true }));
-  }
+  private notifyChange(): void { this.root.dispatchEvent(new Event('input', { bubbles: true })); }
 }
