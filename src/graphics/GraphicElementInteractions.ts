@@ -1,3 +1,4 @@
+import { getKeyboardCommand } from '../app/KeyboardShortcutMap';
 import { createGraphicElement, type GraphicElement } from './GraphicElementModel';
 import { createSmartArt, type SmartArtData } from './SmartArtModel';
 
@@ -598,49 +599,52 @@ export class GraphicElementInteractions {
     if (target instanceof HTMLElement && target !== this.root && !this.root.contains(target)) return;
     if (this.isEditingTarget(target)) return;
 
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') {
-      event.preventDefault();
-      this.duplicateSelected();
-      return;
-    }
-
-    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'g') {
-      event.preventDefault();
-      if (event.shiftKey) this.ungroupSelected();
-      else this.groupSelected();
-      return;
-    }
-
-    if (event.key === 'Escape') {
-      this.selectedIds.clear();
-      this.selectedSmartArtNodeId = null;
-      this.render();
-      return;
-    }
-
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      event.preventDefault();
-      this.commit(this.elements.filter((element) => !this.selectedIds.has(element.id)), []);
-      return;
-    }
-
-    const deltas: Record<string, { x: number; y: number }> = {
-      ArrowLeft: { x: -1, y: 0 },
-      ArrowRight: { x: 1, y: 0 },
-      ArrowUp: { x: 0, y: -1 },
-      ArrowDown: { x: 0, y: 1 },
-    };
-    const delta = deltas[event.key];
-    if (!delta || event.altKey || event.ctrlKey || event.metaKey) return;
-
+    const command = getKeyboardCommand(event, 'graphics');
+    if (!command) return;
     event.preventDefault();
-    const step = event.shiftKey ? 10 : 1;
+
+    switch (command) {
+      case 'graphic-duplicate':
+        this.duplicateSelected();
+        return;
+      case 'graphic-group':
+        this.groupSelected();
+        return;
+      case 'graphic-ungroup':
+        this.ungroupSelected();
+        return;
+      case 'graphic-delete':
+        this.commit(this.elements.filter((element) => !this.selectedIds.has(element.id)), []);
+        return;
+      case 'graphic-escape':
+        this.selectedIds.clear();
+        this.selectedSmartArtNodeId = null;
+        this.render();
+        return;
+      case 'graphic-move-left':
+        this.moveSelectedBy(-1, 0, event.shiftKey ? 10 : 1);
+        return;
+      case 'graphic-move-right':
+        this.moveSelectedBy(1, 0, event.shiftKey ? 10 : 1);
+        return;
+      case 'graphic-move-up':
+        this.moveSelectedBy(0, -1, event.shiftKey ? 10 : 1);
+        return;
+      case 'graphic-move-down':
+        this.moveSelectedBy(0, 1, event.shiftKey ? 10 : 1);
+        return;
+      default:
+        return;
+    }
+  };
+
+  private moveSelectedBy(dx: number, dy: number, step: number): void {
     const next = cloneElements(this.elements);
     for (const id of this.selectedIds) {
       const element = next.find((item) => item.id === id);
       if (!element) continue;
-      element.position.x = Math.max(0, element.position.x + delta.x * step);
-      element.position.y = Math.max(0, element.position.y + delta.y * step);
+      element.position.x = Math.max(0, element.position.x + dx * step);
+      element.position.y = Math.max(0, element.position.y + dy * step);
     }
     this.commit(next, this.getSelectedIds());
   };
