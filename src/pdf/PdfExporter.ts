@@ -20,6 +20,11 @@ export class PdfExporter {
         backgroundColor: '#ffffff',
         useCORS: true,
         logging: false,
+        onclone: (clonedDocument) => {
+          clonedDocument.querySelectorAll<HTMLElement>('.preview-wrap').forEach((preview) => {
+            preview.style.zoom = '1';
+          });
+        },
       });
       const image = canvas.toDataURL('image/png');
       const width = pdf.internal.pageSize.getWidth();
