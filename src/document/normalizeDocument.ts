@@ -14,8 +14,12 @@ export function normalizeCommunicationDocument(value: unknown): CommunicationDoc
 
   const document = value as LegacyDocument;
   if (typeof document.id !== 'string' || !document.id.trim()) return null;
-  if (!Number.isInteger(document.number) || document.number < 0) return null;
-  if (!Number.isInteger(document.year) || document.year < 1) return null;
+  if (typeof document.number !== 'number' || !Number.isInteger(document.number) || document.number < 0) {
+    return null;
+  }
+  if (typeof document.year !== 'number' || !Number.isInteger(document.year) || document.year < 1) {
+    return null;
+  }
   if (typeof document.templateId !== 'string' || !document.templateId.trim()) return null;
   if (typeof document.createdAt !== 'string' || !document.createdAt) return null;
   if (typeof document.updatedAt !== 'string' || !document.updatedAt) return null;
