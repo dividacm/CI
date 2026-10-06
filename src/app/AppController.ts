@@ -66,7 +66,7 @@ export class AppController {
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
-  const state: AppState = { document: loadActiveDocument(template, storage), template, this.organization };
+  const state: AppState = { document: loadActiveDocument(template, storage), template, organization: this.organization };
 
   renderDocument(state.document, elements, this.organization, template);
   const setStatus = (status: DocumentStatus): void => {
