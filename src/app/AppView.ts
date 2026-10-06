@@ -87,7 +87,7 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   const pages: HTMLElement[] = [];
   root.innerHTML = '';
 
-  const firstPage = createPage(root, organization.layout, header, footer, pages);
+  const firstPage = createPage(root, { layout: organization.layout, header, footer }, pages);
   const firstContent = getPageContent(firstPage);
   firstContent.insertAdjacentHTML('beforeend', `<div class="paper-title">${escapeHtml(template.name)} <span>${document.number > 0 ? `Nº ${document.number}/${document.year}` : ''}</span></div>${fields}`);
   appendBodyAcrossPages(root, pages, firstContent, body, { layout: organization.layout, header, footer });
@@ -101,7 +101,7 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   lastContent.appendChild(signature);
   if (lastContent.scrollHeight > lastContent.clientHeight) {
     lastContent.removeChild(signature);
-    lastContent = getPageContent(createPage(root, organization.layout, header, footer, pages));
+    lastContent = getPageContent(createPage(root, { layout: organization.layout, header, footer }, pages));
     lastContent.appendChild(signature);
   }
 
