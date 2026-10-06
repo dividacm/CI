@@ -136,7 +136,7 @@ export class AppController {
   );
 
   const syncRuler = (): void => {
-    const ruler = elements.this.root.querySelector<HTMLElement>('#horizontal-ruler');
+    const ruler = elements.root.querySelector<HTMLElement>('#horizontal-ruler');
     if (!ruler) return;
     renderHorizontalRuler(
       ruler,
