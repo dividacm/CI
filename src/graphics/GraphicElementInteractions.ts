@@ -31,6 +31,7 @@ export class GraphicElementInteractions {
   private drag: GraphicDrag | null = null;
   private selectionRect: SelectionRect | null = null;
   private selectedSmartArtNodeId: string | null = null;
+  private disposed = false;
 
   constructor(private readonly root: HTMLElement, private readonly options: GraphicElementInteractionsOptions) {
     root.style.position = root.style.position || 'relative';
@@ -50,6 +51,23 @@ export class GraphicElementInteractions {
     root.addEventListener('pointerdown', this.handleRootPointerDown);
     root.addEventListener('click', this.handleRootClick);
     root.ownerDocument.addEventListener('keydown', this.handleKeyDown);
+  }
+
+  dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.root.ownerDocument.removeEventListener('keydown', this.handleKeyDown);
+    this.root.removeEventListener('pointerdown', this.handleRootPointerDown);
+    this.root.removeEventListener('click', this.handleRootClick);
+    this.layer.removeEventListener('pointerdown', this.handlePointerDown);
+    this.layer.removeEventListener('dblclick', this.handleDoubleClick);
+    this.root.ownerDocument.removeEventListener('pointermove', this.handlePointerMove);
+    this.root.ownerDocument.removeEventListener('pointermove', this.handleSelectionMove);
+    this.root.ownerDocument.removeEventListener('pointerup', this.handlePointerUp);
+    this.root.ownerDocument.removeEventListener('pointerup', this.handleSelectionUp);
+    this.drag = null;
+    this.selectionRect = null;
+    this.layer.remove();
   }
 
   setElements(elements: GraphicElement[]): void {
@@ -578,6 +596,7 @@ export class GraphicElementInteractions {
     if (!this.selectedIds.size) return;
     const target = event.target;
     if (target instanceof HTMLElement && target !== this.root && !this.root.contains(target)) return;
+    if (this.isEditingTarget(target)) return;
 
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') {
       event.preventDefault();
@@ -594,6 +613,7 @@ export class GraphicElementInteractions {
 
     if (event.key === 'Escape') {
       this.selectedIds.clear();
+      this.selectedSmartArtNodeId = null;
       this.render();
       return;
     }
@@ -624,6 +644,12 @@ export class GraphicElementInteractions {
     }
     this.commit(next, this.getSelectedIds());
   };
+
+  private isEditingTarget(target: EventTarget | null): boolean {
+    if (!(target instanceof HTMLElement)) return false;
+    if (target === this.root) return false;
+    return Boolean(target.closest('input, textarea, select, [contenteditable="true"], [contenteditable=""]'));
+  }
 }
 
 function intersects(x: number, y: number, width: number, height: number, left: number, top: number, right: number, bottom: number): boolean {
