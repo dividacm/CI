@@ -1,4 +1,5 @@
 import { normalizeCommunicationDocument } from '../document/normalizeDocument';
+import { getObservability } from '../observability/Observability';
 import type { CommunicationDocument } from '../types/document';
 import type { DocumentStorage } from './DocumentStorage';
 
@@ -14,7 +15,11 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
     try {
       return normalizeCommunicationDocument(JSON.parse(raw));
     } catch (error) {
-      console.error(error);
+      getObservability().captureError(error, {
+        operation: 'load',
+        component: 'LocalStorageDocumentStorage',
+        documentId: id,
+      });
       return null;
     }
   }
