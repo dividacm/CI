@@ -43,6 +43,28 @@ describe('PaginationEngine', () => {
     expect(page.querySelector('.paper-page-content')?.getAttribute('style')).toContain('10mm');
   });
 
+  it('repeats the configured header and footer on every generated page', () => {
+    const root = document.createElement('div');
+    const pages: HTMLElement[] = [];
+
+    for (let index = 0; index < 3; index += 1) {
+      createPage(root, {
+        layout,
+        header: '/cab.png',
+        footer: '/rodape.png',
+      }, pages);
+    }
+
+    expect(pages).toHaveLength(3);
+    for (const page of pages) {
+      expect(page.querySelector('.paper-header img')?.getAttribute('src')).toBe('/cab.png');
+      expect(page.querySelector('.paper-footer img')?.getAttribute('src')).toBe('/rodape.png');
+      expect(page.querySelector('.paper-page-content')?.getAttribute('style')).toBe(
+        'padding: 10mm 10mm 10mm 10mm;',
+      );
+    }
+  });
+
   it('creates pages without optional assets', () => {
     const root = document.createElement('div');
     const pages: HTMLElement[] = [];
