@@ -13,7 +13,7 @@ import type { OrganizationConfig } from '../types/configuration';
 import type { DocumentStatus } from '../types/document';
 import { createAppActions } from './AppActions';
 import type { AppState } from './AppState';
-import { getAppElements, getFieldValue, renderDocument, renderPreview, renderShell, setPreviewZoom, updateIssueButton, updatePdfButton } from './AppView';
+import { getAppElements, getFieldValue, navigatePreviewPage, renderDocument, renderPreview, renderShell, setPreviewZoom, updateIssueButton, updatePdfButton } from './AppView';
 import { CommandRegistry } from './CommandRegistry';
 
 const LAYOUT_CONFIG_KEY = 'ci:layout-config';
@@ -186,6 +186,15 @@ export class AppController {
     field.addEventListener('input', sync);
   });
   elements.editor.addEventListener('input', sync);
+  elements.paper.addEventListener('keydown', (event) => {
+    if (event.key === 'PageUp') {
+      event.preventDefault();
+      navigatePreviewPage(elements.paper, -1);
+    } else if (event.key === 'PageDown') {
+      event.preventDefault();
+      navigatePreviewPage(elements.paper, 1);
+    }
+  });
 
   this.root.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
     button.addEventListener('click', async () => {
@@ -218,6 +227,8 @@ export class AppController {
         syncRuler();
         return;
       }
+      if (action === 'page-prev') { navigatePreviewPage(elements.paper, -1); return; }
+      if (action === 'page-next') { navigatePreviewPage(elements.paper, 1); return; }
       if (action === 'zoom-out') { updatePreviewZoom(previewZoom - 10); return; }
       if (action === 'zoom-reset') { updatePreviewZoom(100); return; }
       if (action === 'zoom-in') { updatePreviewZoom(previewZoom + 10); return; }
