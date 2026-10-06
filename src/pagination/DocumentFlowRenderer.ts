@@ -1,6 +1,6 @@
 import type { GraphicConnector } from '../graphics/GraphicConnectorModel';
 import type { GraphicElement } from '../graphics/GraphicElementModel';
-import { getConnectorsForPage, placeGraphicElement, type FlowPageMetrics } from './DocumentFlow';
+import { type FlowPageMetrics, getConnectorsForPage, placeGraphicElement } from './DocumentFlow';
 
 export interface RenderGraphicFlowOptions { elements: GraphicElement[]; connectors: GraphicConnector[]; pageIndex: number; metrics: FlowPageMetrics; }
 
