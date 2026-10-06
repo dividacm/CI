@@ -1,5 +1,5 @@
-import { ClipboardService } from '../clipboard/ClipboardService';
 import { getKeyboardCommand, type KeyboardCommand } from '../app/KeyboardShortcutMap';
+import { ClipboardService } from '../clipboard/ClipboardService';
 import { FormattingEngine, type ListType, type TextAlignment } from './FormattingEngine';
 import { HistoryManager } from './HistoryManager';
 import { RangeEngine } from './RangeEngine';
