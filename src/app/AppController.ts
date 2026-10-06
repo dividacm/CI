@@ -11,9 +11,9 @@ import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStor
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument, DocumentStatus } from '../types/document';
 import { createAppActions } from './AppActions';
-import { CommandRegistry } from './CommandRegistry';
 import type { AppState } from './AppState';
 import { getAppElements, getFieldValue, renderDocument, renderPreview, renderShell, setPreviewZoom, updateIssueButton, updatePdfButton } from './AppView';
+import { CommandRegistry } from './CommandRegistry';
 
 const ACTIVE_DOCUMENT_KEY = 'ci:active-document';
 const LAYOUT_CONFIG_KEY = 'ci:layout-config';
