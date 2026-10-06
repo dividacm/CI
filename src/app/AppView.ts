@@ -1,5 +1,7 @@
 import { FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS } from '../editor/TypographyModel';
 import { renderHorizontalRuler } from '../layout/RulerView';
+import { getGraphicPageIndex } from '../pagination/DocumentFlow';
+import { getPageMetrics, renderGraphicFlow } from '../pagination/DocumentFlowRenderer';
 import { appendBodyAcrossPages, createPage, getPageContent, removeEmptyPages } from '../pagination/PaginationEngine';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
@@ -92,6 +94,24 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   const firstContent = getPageContent(firstPage);
   firstContent.insertAdjacentHTML('beforeend', `<div class="paper-title">${escapeHtml(template.name)} <span>${document.number > 0 ? `Nº ${document.number}/${document.year}` : ''}</span></div>${fields}`);
   appendBodyAcrossPages(root, pages, firstContent, body, { layout: organization.layout, header, footer });
+
+  const graphicMetrics = getPageMetrics(organization.layout);
+  const graphics = document.graphics ?? [];
+  const requiredGraphicPages = graphics.reduce(
+    (max, element) => Math.max(max, getGraphicPageIndex(element, graphicMetrics) + 1),
+    1,
+  );
+  while (pages.length < requiredGraphicPages) {
+    createPage(root, { layout: organization.layout, header, footer }, pages);
+  }
+  pages.forEach((page, index) => {
+    renderGraphicFlow(getPageContent(page), {
+      elements: graphics,
+      connectors: document.connectors ?? [],
+      pageIndex: index,
+      metrics: graphicMetrics,
+    });
+  });
 
   const lastPage = pages[pages.length - 1];
   if (!lastPage) return;
