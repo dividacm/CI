@@ -343,7 +343,8 @@ export class AppController {
   root.querySelector<HTMLInputElement>('#font-color')?.addEventListener('input', (event) => { editor.color((event.currentTarget as HTMLInputElement).value); sync(); });
   }
 }
-(template: TemplateConfig, storage: LocalStorageDocumentStorage): CommunicationDocument {
+
+function loadActiveDocument(template: TemplateConfig, storage: LocalStorageDocumentStorage): CommunicationDocument {
   const activeId = localStorage.getItem(ACTIVE_DOCUMENT_KEY);
   if (activeId) {
     const loaded = storage.load(activeId);
