@@ -60,7 +60,7 @@ describe('PaginationEngine', () => {
       expect(page.querySelector('.paper-header img')?.getAttribute('src')).toBe('/cab.png');
       expect(page.querySelector('.paper-footer img')?.getAttribute('src')).toBe('/rodape.png');
       expect(page.querySelector('.paper-page-content')?.getAttribute('style')).toBe(
-        'padding: 10mm 10mm 10mm 10mm;',
+        'padding:10mm 10mm 10mm 10mm',
       );
     }
   });
