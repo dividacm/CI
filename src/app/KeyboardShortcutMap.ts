@@ -13,7 +13,16 @@ export type KeyboardCommand =
   | 'align-right'
   | 'align-justify'
   | 'list-ordered'
-  | 'list-unordered';
+  | 'list-unordered'
+  | 'graphic-duplicate'
+  | 'graphic-group'
+  | 'graphic-ungroup'
+  | 'graphic-delete'
+  | 'graphic-escape'
+  | 'graphic-move-left'
+  | 'graphic-move-right'
+  | 'graphic-move-up'
+  | 'graphic-move-down';
 
 export interface KeyboardShortcutInput {
   key: string;
@@ -38,6 +47,8 @@ export function getKeyboardCommand(event: KeyboardShortcutInput): KeyboardComman
   if (key === 'x' && !event.shiftKey) return 'cut';
   if (key === 'v' && !event.shiftKey) return 'paste';
   if (key === 's' && !event.shiftKey) return 'save';
+  if (key === 'd' && !event.shiftKey) return 'graphic-duplicate';
+  if (key === 'g') return event.shiftKey ? 'graphic-ungroup' : 'graphic-group';
   if (key === 'l' && !event.shiftKey) return 'align-left';
   if (key === 'e' && !event.shiftKey) return 'align-center';
   if (key === 'r' && !event.shiftKey) return 'align-right';
@@ -45,5 +56,13 @@ export function getKeyboardCommand(event: KeyboardShortcutInput): KeyboardComman
   if (event.code === 'Digit7' && event.shiftKey) return 'list-ordered';
   if (event.code === 'Digit8' && event.shiftKey) return 'list-unordered';
 
+  if (key === 'delete' || key === 'backspace') return 'graphic-delete';
+  if (key === 'escape' && !event.shiftKey) return 'graphic-escape';
+  if (!event.ctrlKey && !event.metaKey && !event.altKey) {
+    if (key === 'arrowleft') return event.shiftKey ? 'graphic-move-left' : 'graphic-move-left';
+    if (key === 'arrowright') return 'graphic-move-right';
+    if (key === 'arrowup') return 'graphic-move-up';
+    if (key === 'arrowdown') return 'graphic-move-down';
+  }
   return null;
 }
