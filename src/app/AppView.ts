@@ -1,5 +1,5 @@
 import { FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS } from '../editor/TypographyModel';
-import { appendBodyAcrossPages } from '../pagination/PaginationEngine';
+import { appendBodyAcrossPages, createPage, getPageContent, removeEmptyPages } from '../pagination/PaginationEngine';
 import { renderHorizontalRuler } from '../layout/RulerView';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
