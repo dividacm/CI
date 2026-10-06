@@ -21,12 +21,12 @@ export class AppController {
   public constructor(private readonly root: HTMLElement, private readonly organization: OrganizationConfig) {}
 
   public render(): void {
-  applySavedLayoutConfig(organization);
-  const template = organization.templates.find((item) => item.id === organization.defaultTemplateId);
-  if (!template) throw new Error(`Template não encontrado: ${organization.defaultTemplateId}`);
+  applySavedLayoutConfig(this.organization);
+  const template = this.organization.templates.find((item) => item.id === this.organization.defaultTemplateId);
+  if (!template) throw new Error(`Template não encontrado: ${this.organization.defaultTemplateId}`);
 
-  root.innerHTML = renderShell(organization, template);
-  const tableButton = root.ownerDocument.createElement('button');
+  this.root.innerHTML = renderShell(this.organization, template);
+  const tableButton = this.root.ownerDocument.createElement('button');
   tableButton.type = 'button';
   tableButton.dataset.action = 'table-insert';
   tableButton.textContent = 'Tabela 2×3';
@@ -41,34 +41,34 @@ export class AppController {
     ['table-column-widen', 'Col +', 'Aumentar largura da coluna'],
     ['table-column-narrow', 'Col −', 'Reduzir largura da coluna'],
   ];
-  const tableGroup = root.ownerDocument.createElement('div');
+  const tableGroup = this.root.ownerDocument.createElement('div');
   tableGroup.className = 'toolbar-group table-tools';
   tableGroup.appendChild(tableButton);
   for (const [action, label, ariaLabel] of tableActions) {
-    const button = root.ownerDocument.createElement('button');
+    const button = this.root.ownerDocument.createElement('button');
     button.type = 'button';
     button.dataset.action = action;
     button.textContent = label;
     button.setAttribute('aria-label', ariaLabel);
     tableGroup.appendChild(button);
   }
-  root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
-  const elements = getAppElements(root);
+  this.root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
+  const elements = getAppElements(this.root);
   const tableTools = tableGroup;
   let previewZoom = 100;
   const updatePreviewZoom = (value: number): void => {
     previewZoom = Math.min(150, Math.max(50, Math.round(value / 10) * 10));
-    setPreviewZoom(root, previewZoom);
+    setPreviewZoom(this.root, previewZoom);
   };
-  const graphicTools = root.querySelector<HTMLElement>('.graphic-tools');
-  const connectorTools = root.querySelector<HTMLElement>('.connector-tools');
-  const smartArtTools = root.querySelector<HTMLElement>('.smartart-tools');
+  const graphicTools = this.root.querySelector<HTMLElement>('.graphic-tools');
+  const connectorTools = this.root.querySelector<HTMLElement>('.connector-tools');
+  const smartArtTools = this.root.querySelector<HTMLElement>('.smartart-tools');
   const storage = new LocalStorageDocumentStorage();
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
-  const state: AppState = { document: loadActiveDocument(template, storage), template, organization };
+  const state: AppState = { document: loadActiveDocument(template, storage), template, this.organization };
 
-  renderDocument(state.document, elements, organization, template);
+  renderDocument(state.document, elements, this.organization, template);
   const setStatus = (status: DocumentStatus): void => {
     const labels: Record<DocumentStatus, string> = {
       saved: 'Salvo localmente.',
@@ -84,7 +84,7 @@ export class AppController {
   autosave.attach(state.document);
   setStatus('saved');
   updateIssueButton(elements.issueButton, state.document);
-  updatePdfButton(elements.pdfButton, organization.features.pdfExport);
+  updatePdfButton(elements.pdfButton, this.organization.features.pdfExport);
   const editor = new Editor(elements.editor);
   const syncTableTools = (): void => {
     tableTools.hidden = !editor.hasActiveTableCell();
@@ -106,7 +106,7 @@ export class AppController {
   const syncGraphicTools = (): void => {
     const selectedCount = graphics.getSelectedIds().length;
     if (graphicTools) graphicTools.hidden = selectedCount === 0;
-    const connectButton = root.querySelector<HTMLButtonElement>('[data-action="graphic-connect"]');
+    const connectButton = this.root.querySelector<HTMLButtonElement>('[data-action="graphic-connect"]');
     if (connectButton) connectButton.disabled = selectedCount !== 2;
   };
   const syncConnectorTools = (): void => {
@@ -130,25 +130,25 @@ export class AppController {
     editor,
     autosave,
     issuer,
-    (name) => getFieldValue(root, name),
+    (name) => getFieldValue(this.root, name),
     () => graphics.getElements(),
     () => connectors.getConnectors(),
   );
 
   const syncRuler = (): void => {
-    const ruler = elements.root.querySelector<HTMLElement>('#horizontal-ruler');
+    const ruler = elements.this.root.querySelector<HTMLElement>('#horizontal-ruler');
     if (!ruler) return;
     renderHorizontalRuler(
       ruler,
       {
         pageWidthMm: 210,
-        marginLeftMm: organization.layout.marginLeftMm,
-        marginRightMm: organization.layout.marginRightMm,
+        marginLeftMm: this.organization.layout.marginLeftMm,
+        marginRightMm: this.organization.layout.marginRightMm,
       },
       (side, valueMm) => {
         const key = side === 'left' ? 'marginLeftMm' : 'marginRightMm';
-        organization.layout[key] = valueMm;
-        persistLayoutConfig(organization);
+        this.organization.layout[key] = valueMm;
+        persistLayoutConfig(this.organization);
         syncView();
       },
     );
@@ -156,7 +156,7 @@ export class AppController {
 
   const syncView = (): void => {
     updateIssueButton(elements.issueButton, state.document);
-    renderPreview(elements.paper, organization, template, state.document);
+    renderPreview(elements.paper, this.organization, template, state.document);
     syncRuler();
   };
 
@@ -170,7 +170,7 @@ export class AppController {
     autosave.saveNow();
   });
 
-  root.querySelector<HTMLElement>('.toolbar')?.addEventListener('pointerdown', () => {
+  this.root.querySelector<HTMLElement>('.toolbar')?.addEventListener('pointerdown', () => {
     editor.rememberSelection();
   });
 
@@ -180,12 +180,12 @@ export class AppController {
   graphicsRoot.addEventListener('pointerdown', () => queueMicrotask(() => { syncGraphicTools(); syncConnectorTools(); syncSmartArtTools(); }));
   document.addEventListener('selectionchange', syncTableTools);
 
-  root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
+  this.root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
     field.addEventListener('input', sync);
   });
   elements.editor.addEventListener('input', sync);
 
-  root.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
+  this.root.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
     button.addEventListener('click', async () => {
       const action = button.dataset.action;
       if (action === 'save') { sync(); autosave.saveNow(); return; }
@@ -196,7 +196,7 @@ export class AppController {
         state.document = freshDocument;
         localStorage.setItem(ACTIVE_DOCUMENT_KEY, freshDocument.id);
         autosave.attach(freshDocument);
-        renderDocument(state.document, elements, organization, template);
+        renderDocument(state.document, elements, this.organization, template);
         graphics.setElements(state.document.graphics ?? []);
         connectors.setConnectors(state.document.connectors ?? []);
         syncGraphicTools();
@@ -209,7 +209,7 @@ export class AppController {
       }
       if (action === 'issue') {
         if (!(await actions.issue())) return;
-        renderDocument(state.document, elements, organization, template);
+        renderDocument(state.document, elements, this.organization, template);
         updateIssueButton(elements.issueButton, state.document);
         elements.status.textContent = `Documento nº ${state.document.number}/${state.document.year} emitido.`;
         elements.status.dataset.status = 'saved';
@@ -220,7 +220,7 @@ export class AppController {
       if (action === 'zoom-reset') { updatePreviewZoom(100); return; }
       if (action === 'zoom-in') { updatePreviewZoom(previewZoom + 10); return; }
       if (action === 'pdf') {
-        if (!organization.features.pdfExport) return;
+        if (!this.organization.features.pdfExport) return;
         sync(); elements.pdfButton.disabled = true;
         const previous = elements.pdfButton.textContent;
         elements.pdfButton.textContent = 'Gerando PDF…';
@@ -258,7 +258,7 @@ export class AppController {
           const selectedNode = graphics.getSelectedSmartArtNodeId();
           if (!selectedNode) break;
           const current = graphics.getElements().find((element) => element.id === graphics.getSelectedIds()[0])?.smartArt?.nodes.find((node) => node.id === selectedNode)?.text ?? '';
-          const value = root.ownerDocument.defaultView?.prompt('Editar nó SmartArt', current);
+          const value = this.root.ownerDocument.defaultView?.prompt('Editar nó SmartArt', current);
           if (value !== null && value !== undefined) graphics.editSelectedSmartArtNode(value);
           break;
         }
@@ -308,7 +308,7 @@ export class AppController {
     });
   });
 
-  root.querySelectorAll<HTMLInputElement>('[id^="margin-"]').forEach((input) => {
+  this.root.querySelectorAll<HTMLInputElement>('[id^="margin-"]').forEach((input) => {
     input.addEventListener('change', () => {
       const marginKeys: Record<string, 'marginTopMm' | 'marginRightMm' | 'marginBottomMm' | 'marginLeftMm'> = {
         'margin-top': 'marginTopMm',
@@ -319,28 +319,28 @@ export class AppController {
       const key = marginKeys[input.id];
       if (!key) return;
       const value = clampMargin(Number(input.value));
-      organization.layout[key] = value;
+      this.organization.layout[key] = value;
       input.value = String(value);
-      persistLayoutConfig(organization);
+      persistLayoutConfig(this.organization);
       syncView();
     });
   });
 
-  root.querySelector<HTMLInputElement>('#header-asset')?.addEventListener('change', (event) => {
-    organization.branding.headerAsset = (event.currentTarget as HTMLInputElement).value.trim() || undefined;
-    persistLayoutConfig(organization);
+  this.root.querySelector<HTMLInputElement>('#header-asset')?.addEventListener('change', (event) => {
+    this.organization.branding.headerAsset = (event.currentTarget as HTMLInputElement).value.trim() || undefined;
+    persistLayoutConfig(this.organization);
     syncView();
   });
 
-  root.querySelector<HTMLInputElement>('#footer-asset')?.addEventListener('change', (event) => {
-    organization.branding.footerAsset = (event.currentTarget as HTMLInputElement).value.trim() || undefined;
-    persistLayoutConfig(organization);
+  this.root.querySelector<HTMLInputElement>('#footer-asset')?.addEventListener('change', (event) => {
+    this.organization.branding.footerAsset = (event.currentTarget as HTMLInputElement).value.trim() || undefined;
+    persistLayoutConfig(this.organization);
     syncView();
   });
 
-  root.querySelector<HTMLSelectElement>('#font-family')?.addEventListener('change', (event) => { editor.fontFamily((event.currentTarget as HTMLSelectElement).value); sync(); });
-  root.querySelector<HTMLSelectElement>('#font-size')?.addEventListener('change', (event) => { editor.fontSize((event.currentTarget as HTMLSelectElement).value); sync(); });
-  root.querySelector<HTMLInputElement>('#font-color')?.addEventListener('input', (event) => { editor.color((event.currentTarget as HTMLInputElement).value); sync(); });
+  this.root.querySelector<HTMLSelectElement>('#font-family')?.addEventListener('change', (event) => { editor.fontFamily((event.currentTarget as HTMLSelectElement).value); sync(); });
+  this.root.querySelector<HTMLSelectElement>('#font-size')?.addEventListener('change', (event) => { editor.fontSize((event.currentTarget as HTMLSelectElement).value); sync(); });
+  this.root.querySelector<HTMLInputElement>('#font-color')?.addEventListener('input', (event) => { editor.color((event.currentTarget as HTMLInputElement).value); sync(); });
   }
 }
 
