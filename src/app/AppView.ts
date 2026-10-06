@@ -2,7 +2,7 @@ import { FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS } from '../editor/TypographyMode
 import { appendBodyAcrossPages } from '../pagination/PaginationEngine';
 import { renderHorizontalRuler } from '../layout/RulerView';
 import { sanitizeHtml } from '../security/sanitizer';
-import type { OrganizationConfig, PageLayoutConfig, TemplateConfig } from '../types/configuration';
+import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
 
 export interface AppElements {
@@ -90,7 +90,7 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   const firstPage = createPage(root, organization.layout, header, footer, pages);
   const firstContent = getPageContent(firstPage);
   firstContent.insertAdjacentHTML('beforeend', `<div class="paper-title">${escapeHtml(template.name)} <span>${document.number > 0 ? `Nº ${document.number}/${document.year}` : ''}</span></div>${fields}`);
-  appendBodyAcrossPages(root, pages, firstContent, body, organization.layout, header, footer);
+  appendBodyAcrossPages(root, pages, firstContent, body, { layout: organization.layout, header, footer });
 
   const lastPage = pages[pages.length - 1];
   if (!lastPage) return;
