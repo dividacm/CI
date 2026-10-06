@@ -340,11 +340,10 @@ export class AppController {
 
   root.querySelector<HTMLSelectElement>('#font-family')?.addEventListener('change', (event) => { editor.fontFamily((event.currentTarget as HTMLSelectElement).value); sync(); });
   root.querySelector<HTMLSelectElement>('#font-size')?.addEventListener('change', (event) => { editor.fontSize((event.currentTarget as HTMLSelectElement).value); sync(); });
-  root.querySelector<HTMLInputElement>('#font-color')?.addEventListener('input', (event) =
+  root.querySelector<HTMLInputElement>('#font-color')?.addEventListener('input', (event) => { editor.color((event.currentTarget as HTMLInputElement).value); sync(); });
   }
 }
-
-function loadActiveDocument(template: TemplateConfig, storage: LocalStorageDocumentStorage): CommunicationDocument {
+(template: TemplateConfig, storage: LocalStorageDocumentStorage): CommunicationDocument {
   const activeId = localStorage.getItem(ACTIVE_DOCUMENT_KEY);
   if (activeId) {
     const loaded = storage.load(activeId);
