@@ -1,17 +1,9 @@
-import { normalizeGraphicConnectors } from '../graphics/GraphicConnectorModel';
-import { normalizeGraphicElements } from '../graphics/GraphicElementModel';
+import { normalizeCommunicationDocument } from '../document/normalizeDocument';
 import { getObservability } from '../observability/Observability';
-import { sanitizeHtml } from '../security/sanitizer';
 import type { CommunicationDocument } from '../types/document';
 import type { DocumentStorage } from './DocumentStorage';
 
 const PREFIX = 'ci:document:';
-
-type StoredDocument = CommunicationDocument & {
-  from?: string;
-  to?: string;
-  subject?: string;
-};
 
 export class LocalStorageDocumentStorage implements DocumentStorage {
   public load(id: string): CommunicationDocument | null {
@@ -21,21 +13,7 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
     }
 
     try {
-      const parsed = JSON.parse(raw) as StoredDocument;
-      const graphics = normalizeGraphicElements(parsed.graphics);
-      const elementIds = new Set(graphics.map((element) => element.id));
-      return {
-        id: parsed.id,
-        number: parsed.number,
-        year: parsed.year,
-        fields: normalizeFields(parsed),
-        bodyHtml: sanitizeHtml(parsed.bodyHtml),
-        graphics,
-        connectors: normalizeGraphicConnectors(parsed.connectors, elementIds),
-        templateId: parsed.templateId,
-        createdAt: parsed.createdAt,
-        updatedAt: parsed.updatedAt,
-      };
+      return normalizeCommunicationDocument(JSON.parse(raw));
     } catch (error) {
       getObservability().captureError(error, {
         operation: 'load',
@@ -47,33 +25,18 @@ export class LocalStorageDocumentStorage implements DocumentStorage {
   }
 
   public save(document: CommunicationDocument): void {
-    const normalized: CommunicationDocument = {
-      ...document,
-      fields: { ...document.fields },
-      bodyHtml: sanitizeHtml(document.bodyHtml),
-      graphics: normalizeGraphicElements(document.graphics),
-      connectors: normalizeGraphicConnectors(document.connectors, new Set(normalizeGraphicElements(document.graphics).map((element) => element.id))),
-      updatedAt: new Date().toISOString(),
-    };
+    const normalized = normalizeCommunicationDocument(document);
+    if (!normalized) {
+      throw new Error('Documento inválido para persistência.');
+    }
 
-    localStorage.setItem(`${PREFIX}${document.id}`, JSON.stringify(normalized));
+    localStorage.setItem(`${PREFIX}${document.id}`, JSON.stringify({
+      ...normalized,
+      updatedAt: new Date().toISOString(),
+    }));
   }
 
   public remove(id: string): void {
     localStorage.removeItem(`${PREFIX}${id}`);
   }
-}
-
-function normalizeFields(document: StoredDocument): Record<string, string> {
-  if (document.fields && typeof document.fields === 'object') {
-    return Object.fromEntries(
-      Object.entries(document.fields).filter(([, value]) => typeof value === 'string'),
-    ) as Record<string, string>;
-  }
-
-  return {
-    ...(document.from !== undefined ? { from: document.from } : {}),
-    ...(document.to !== undefined ? { to: document.to } : {}),
-    ...(document.subject !== undefined ? { subject: document.subject } : {}),
-  };
 }
