@@ -7,6 +7,7 @@ import { renderHorizontalRuler } from '../layout/RulerView';
 import { getObservability } from '../observability/Observability';
 import { PdfExporter } from '../pdf/PdfExporter';
 import { AutosaveController } from '../storage/AutosaveController';
+import { DocumentRepository } from '../storage/DocumentRepository';
 import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument, DocumentStatus } from '../types/document';
@@ -15,7 +16,6 @@ import type { AppState } from './AppState';
 import { getAppElements, getFieldValue, renderDocument, renderPreview, renderShell, setPreviewZoom, updateIssueButton, updatePdfButton } from './AppView';
 import { CommandRegistry } from './CommandRegistry';
 
-const ACTIVE_DOCUMENT_KEY = 'ci:active-document';
 const LAYOUT_CONFIG_KEY = 'ci:layout-config';
 
 export class AppController {
@@ -65,9 +65,10 @@ export class AppController {
   const connectorTools = this.root.querySelector<HTMLElement>('.connector-tools');
   const smartArtTools = this.root.querySelector<HTMLElement>('.smartart-tools');
   const storage = new LocalStorageDocumentStorage();
+  const repository = new DocumentRepository(storage);
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
-  const state: AppState = { document: loadActiveDocument(template, storage), template, organization: this.organization };
+  const state: AppState = { document: repository.loadActive(template), template, organization: this.organization };
 
   renderDocument(state.document, elements, this.organization, template);
   const setStatus = (status: DocumentStatus): void => {
@@ -191,11 +192,11 @@ export class AppController {
       const action = button.dataset.action;
       if (action === 'save') { sync(); autosave.saveNow(); return; }
       if (action === 'clear') {
-        localStorage.removeItem(ACTIVE_DOCUMENT_KEY);
+        repository.clearActive();
         actions.clear();
         const freshDocument = createDocument({ template, year: new Date().getFullYear(), number: 0 });
         state.document = freshDocument;
-        localStorage.setItem(ACTIVE_DOCUMENT_KEY, freshDocument.id);
+        repository.setActive(freshDocument);
         autosave.attach(freshDocument);
         renderDocument(state.document, elements, this.organization, template);
         graphics.setElements(state.document.graphics ?? []);
@@ -338,17 +339,6 @@ export class AppController {
   this.root.querySelector<HTMLSelectElement>('#font-size')?.addEventListener('change', (event) => { editor.fontSize((event.currentTarget as HTMLSelectElement).value); sync(); });
   this.root.querySelector<HTMLInputElement>('#font-color')?.addEventListener('input', (event) => { editor.color((event.currentTarget as HTMLInputElement).value); sync(); });
   }
-}
-
-function loadActiveDocument(template: TemplateConfig, storage: LocalStorageDocumentStorage): CommunicationDocument {
-  const activeId = localStorage.getItem(ACTIVE_DOCUMENT_KEY);
-  if (activeId) {
-    const loaded = storage.load(activeId);
-    if (loaded && loaded.templateId === template.id) return loaded;
-  }
-  const document = createDocument({ template, year: new Date().getFullYear(), number: 0 });
-  localStorage.setItem(ACTIVE_DOCUMENT_KEY, document.id);
-  return document;
 }
 
 function applySavedLayoutConfig(organization: OrganizationConfig): void {
