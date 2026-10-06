@@ -50,7 +50,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
             </div></section>
           </div>
         </details>
-      </div>      <div class="workspace"><div class="editor-canvas"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article></div><div class="preview-column"><div class="preview-controls" role="toolbar" aria-label="Controles de visualização"><button type="button" data-action="zoom-out" aria-label="Reduzir zoom">−</button><output id="preview-zoom" aria-live="polite">100%</output><button type="button" data-action="zoom-reset" aria-label="Redefinir zoom">100%</button><button type="button" data-action="zoom-in" aria-label="Aumentar zoom">+</button></div><div id="horizontal-ruler" class="horizontal-ruler"></div><div class="preview-wrap" style="--preview-zoom:1"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div></div>
+      </div>      <div class="workspace"><div class="editor-canvas"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article></div><div class="preview-column"><div class="preview-controls" role="toolbar" aria-label="Controles de visualização"><div class="page-navigation" role="group" aria-label="Navegação de páginas"><button type="button" data-action="page-prev" aria-label="Página anterior">‹</button><output id="page-indicator" aria-live="polite">Página 1 de 1</output><button type="button" data-action="page-next" aria-label="Próxima página">›</button></div><div class="zoom-navigation" role="group" aria-label="Zoom"><button type="button" data-action="zoom-out" aria-label="Reduzir zoom">−</button><output id="preview-zoom" aria-live="polite">100%</output><button type="button" data-action="zoom-reset" aria-label="Redefinir zoom">100%</button><button type="button" data-action="zoom-in" aria-label="Aumentar zoom">+</button></div></div><div id="horizontal-ruler" class="horizontal-ruler"></div><div class="preview-wrap" style="--preview-zoom:1"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4 multi-página" tabindex="0"></div></div></div></div>
     </section>
   </main>`;
 }
@@ -85,6 +85,7 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   const fields = template.fields.map((field) => renderPreviewField(field.label, getDocumentField(document, field.id))).join('');
   const body = sanitizeHtml(document.bodyHtml);
   const pages: HTMLElement[] = [];
+  const activePage = Number(root.dataset.activePage) || 1;
   root.innerHTML = '';
 
   const firstPage = createPage(root, { layout: organization.layout, header, footer }, pages);
@@ -106,6 +107,7 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   }
 
   removeEmptyPages(pages);
+  setActivePreviewPage(root, Math.min(activePage, pages.length));
 }
 
 export function populateField(root: HTMLElement, name: string, value: string): void {
@@ -148,4 +150,35 @@ export function setPreviewZoom(root: HTMLElement, zoomPercent: number): void {
   output.value = `${zoom}%`;
   output.textContent = `${zoom}%`;
   previewWrap.dataset.zoom = String(zoom);
+}
+
+export function setActivePreviewPage(root: HTMLElement, pageNumber: number): void {
+  const pages = Array.from(root.querySelectorAll<HTMLElement>('.paper-page'));
+  if (!pages.length) return;
+  const page = Math.min(pages.length, Math.max(1, Math.round(pageNumber)));
+  root.dataset.activePage = String(page);
+  pages.forEach((item, index) => {
+    const active = index + 1 === page;
+    item.dataset.pageNumber = String(index + 1);
+    item.dataset.active = String(active);
+    item.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+  const indicator = root.parentElement?.parentElement?.querySelector<HTMLOutputElement>('#page-indicator');
+  if (indicator) {
+    indicator.value = `Página ${page} de ${pages.length}`;
+    indicator.textContent = `Página ${page} de ${pages.length}`;
+  }
+  const previous = root.parentElement?.parentElement?.querySelector<HTMLButtonElement>('[data-action="page-prev"]');
+  const next = root.parentElement?.parentElement?.querySelector<HTMLButtonElement>('[data-action="page-next"]');
+  if (previous) previous.disabled = page <= 1;
+  if (next) next.disabled = page >= pages.length;
+}
+
+export function navigatePreviewPage(root: HTMLElement, direction: -1 | 1): void {
+  const pages = Array.from(root.querySelectorAll<HTMLElement>('.paper-page'));
+  if (!pages.length) return;
+  const current = Number(root.dataset.activePage) || 1;
+  const target = Math.min(pages.length, Math.max(1, current + direction));
+  setActivePreviewPage(root, target);
+  pages[target - 1]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
