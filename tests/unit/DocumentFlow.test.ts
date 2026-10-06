@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { getConnectorsForPage, getGraphicPageIndex, placeGraphicElement } from '../../src/pagination/DocumentFlow';
 import type { GraphicConnector } from '../../src/graphics/GraphicConnectorModel';
 import type { GraphicElement } from '../../src/graphics/GraphicElementModel';
+import { getConnectorsForPage, getGraphicPageIndex, placeGraphicElement } from '../../src/pagination/DocumentFlow';
 
 const metrics = {
   contentWidthPx: 700,
