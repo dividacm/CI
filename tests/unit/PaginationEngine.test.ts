@@ -58,7 +58,7 @@ describe('PaginationEngine', () => {
 
     const clone = cloneTextRange(source, 0, 8) as HTMLElement;
 
-    expect(clone.textContent).toBe('Olá mundo');
+    expect(clone.textContent).toBe('Olá mund');
     expect(clone.querySelector('strong')?.textContent).toBe('Olá mund');
   });
 
