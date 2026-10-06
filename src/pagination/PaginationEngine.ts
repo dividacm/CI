@@ -233,7 +233,24 @@ export function createPage(
   return page;
 }
 
-function getPageContent(page: HTMLElement): HTMLElement {
+export function removeEmptyPages(pages: HTMLElement[]): void {
+  for (let index = pages.length - 1; index >= 0; index -= 1) {
+    if (pages.length === 1) break;
+    const page = pages[index];
+    if (!page) continue;
+    const content = getPageContent(page);
+    if (hasRenderableContent(content)) continue;
+    page.remove();
+    pages.splice(index, 1);
+  }
+}
+
+function hasRenderableContent(content: HTMLElement): boolean {
+  if (content.textContent?.trim()) return true;
+  return Boolean(content.querySelector('img, svg, table, ul, ol, hr, iframe, video, audio'));
+}
+
+export function getPageContent(page: HTMLElement): HTMLElement {
   const content = page.querySelector<HTMLElement>('.paper-page-content');
   if (!content) throw new Error('Área de conteúdo da página não encontrada.');
   return content;
