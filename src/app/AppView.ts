@@ -1,8 +1,8 @@
 import { FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS } from '../editor/TypographyModel';
 import { renderHorizontalRuler } from '../layout/RulerView';
-import { appendBodyAcrossPages, createPage, getPageContent, removeEmptyPages } from '../pagination/PaginationEngine';
-import { getPageMetrics, renderGraphicFlow } from '../pagination/DocumentFlowRenderer';
 import { getGraphicPageIndex } from '../pagination/DocumentFlow';
+import { getPageMetrics, renderGraphicFlow } from '../pagination/DocumentFlowRenderer';
+import { appendBodyAcrossPages, createPage, getPageContent, removeEmptyPages } from '../pagination/PaginationEngine';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
@@ -104,12 +104,14 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   while (pages.length < requiredGraphicPages) {
     createPage(root, { layout: organization.layout, header, footer }, pages);
   }
-  pages.forEach((page, index) => renderGraphicFlow(getPageContent(page), {
-    elements: graphics,
-    connectors: document.connectors ?? [],
-    pageIndex: index,
-    metrics: graphicMetrics,
-  }));
+  pages.forEach((page, index) => {
+    renderGraphicFlow(getPageContent(page), {
+      elements: graphics,
+      connectors: document.connectors ?? [],
+      pageIndex: index,
+      metrics: graphicMetrics,
+    });
+  });
 
   const lastPage = pages[pages.length - 1];
   if (!lastPage) return;
