@@ -1,0 +1,49 @@
+export type KeyboardCommand =
+  | 'bold'
+  | 'italic'
+  | 'underline'
+  | 'undo'
+  | 'redo'
+  | 'copy'
+  | 'cut'
+  | 'paste'
+  | 'save'
+  | 'align-left'
+  | 'align-center'
+  | 'align-right'
+  | 'align-justify'
+  | 'list-ordered'
+  | 'list-unordered';
+
+export interface KeyboardShortcutInput {
+  key: string;
+  code?: string;
+  ctrlKey?: boolean;
+  metaKey?: boolean;
+  shiftKey?: boolean;
+  altKey?: boolean;
+}
+
+export function getKeyboardCommand(event: KeyboardShortcutInput): KeyboardCommand | null {
+  if (!(event.ctrlKey || event.metaKey) || event.altKey) return null;
+
+  const key = event.key.toLowerCase();
+
+  if (key === 'b' && !event.shiftKey) return 'bold';
+  if (key === 'i' && !event.shiftKey) return 'italic';
+  if (key === 'u' && !event.shiftKey) return 'underline';
+  if (key === 'z') return event.shiftKey ? 'redo' : 'undo';
+  if (key === 'y' && !event.shiftKey) return 'redo';
+  if (key === 'c' && !event.shiftKey) return 'copy';
+  if (key === 'x' && !event.shiftKey) return 'cut';
+  if (key === 'v' && !event.shiftKey) return 'paste';
+  if (key === 's' && !event.shiftKey) return 'save';
+  if (key === 'l' && !event.shiftKey) return 'align-left';
+  if (key === 'e' && !event.shiftKey) return 'align-center';
+  if (key === 'r' && !event.shiftKey) return 'align-right';
+  if (key === 'j' && !event.shiftKey) return 'align-justify';
+  if (event.code === 'Digit7' && event.shiftKey) return 'list-ordered';
+  if (event.code === 'Digit8' && event.shiftKey) return 'list-unordered';
+
+  return null;
+}
