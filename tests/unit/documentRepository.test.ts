@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { DocumentRepository, type KeyValueStorage } from '../../src/storage/DocumentRepository';
-import type { CommunicationDocument } from '../../src/types/document';
 import type { DocumentStorage } from '../../src/storage/DocumentStorage';
 import type { TemplateConfig } from '../../src/types/configuration';
+import type { CommunicationDocument } from '../../src/types/document';
 
 const template: TemplateConfig = {
   id: 'default',
