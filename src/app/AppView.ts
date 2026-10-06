@@ -2,6 +2,7 @@ import { FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS } from '../editor/TypographyMode
 import { renderHorizontalRuler } from '../layout/RulerView';
 import { appendBodyAcrossPages, createPage, getPageContent, removeEmptyPages } from '../pagination/PaginationEngine';
 import { getPageMetrics, renderGraphicFlow } from '../pagination/DocumentFlowRenderer';
+import { getGraphicPageIndex } from '../pagination/DocumentFlow';
 import { sanitizeHtml } from '../security/sanitizer';
 import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
@@ -95,8 +96,16 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   appendBodyAcrossPages(root, pages, firstContent, body, { layout: organization.layout, header, footer });
 
   const graphicMetrics = getPageMetrics(organization.layout);
+  const graphics = document.graphics ?? [];
+  const requiredGraphicPages = graphics.reduce(
+    (max, element) => Math.max(max, getGraphicPageIndex(element, graphicMetrics) + 1),
+    1,
+  );
+  while (pages.length < requiredGraphicPages) {
+    createPage(root, { layout: organization.layout, header, footer }, pages);
+  }
   pages.forEach((page, index) => renderGraphicFlow(getPageContent(page), {
-    elements: document.graphics ?? [],
+    elements: graphics,
     connectors: document.connectors ?? [],
     pageIndex: index,
     metrics: graphicMetrics,
