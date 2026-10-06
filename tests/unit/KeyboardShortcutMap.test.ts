@@ -24,6 +24,16 @@ describe('KeyboardShortcutMap', () => {
     expect(getKeyboardCommand({ key: '8', metaKey: true, shiftKey: true, code: 'Digit8' })).toBe('list-unordered');
   });
 
+  it('maps graphic shortcuts only in graphics context', () => {
+    expect(getKeyboardCommand({ key: 'd', ctrlKey: true }, 'graphics')).toBe('graphic-duplicate');
+    expect(getKeyboardCommand({ key: 'g', ctrlKey: true }, 'graphics')).toBe('graphic-group');
+    expect(getKeyboardCommand({ key: 'g', ctrlKey: true, shiftKey: true }, 'graphics')).toBe('graphic-ungroup');
+    expect(getKeyboardCommand({ key: 'Delete' }, 'graphics')).toBe('graphic-delete');
+    expect(getKeyboardCommand({ key: 'Escape' }, 'graphics')).toBe('graphic-escape');
+    expect(getKeyboardCommand({ key: 'ArrowRight', shiftKey: true }, 'graphics')).toBe('graphic-move-right');
+    expect(getKeyboardCommand({ key: 'Delete' })).toBeNull();
+  });
+
   it('rejects Alt combinations and unsupported or conflicting variants', () => {
     expect(getKeyboardCommand({ key: 'b', ctrlKey: true, altKey: true })).toBeNull();
     expect(getKeyboardCommand({ key: 'q', ctrlKey: true })).toBeNull();
