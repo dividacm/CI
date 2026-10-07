@@ -78,10 +78,12 @@ export class AppController {
       dirty: 'Alterações pendentes.',
       error: 'Falha ao salvar. O conteúdo permanece nesta tela.',
     };
+    const hasRetry = status === 'error';
     elements.status.textContent = labels[status];
     elements.status.dataset.status = status;
-    elements.retrySaveButton.hidden = status !== 'error';
-    elements.retrySaveButton.setAttribute('aria-hidden', status === 'error' ? 'false' : 'true');
+    elements.retrySaveButton.hidden = !hasRetry;
+    elements.retrySaveButton.classList.toggle('hidden', !hasRetry);
+    elements.retrySaveButton.setAttribute('aria-hidden', hasRetry ? 'false' : 'true');
   };
 
   const autosave = new AutosaveController({ storage, delayMs: 300, onStatusChange: setStatus });
@@ -245,6 +247,7 @@ export class AppController {
           elements.status.textContent = 'PDF gerado com sucesso.';
           elements.status.dataset.status = 'saved';
           elements.retrySaveButton.hidden = true;
+          elements.retrySaveButton.classList.add('hidden');
           elements.retrySaveButton.setAttribute('aria-hidden', 'true');
         } catch (error) {
           getObservability().captureError(error, {
@@ -258,65 +261,65 @@ export class AppController {
         } finally { elements.pdfButton.disabled = false; elements.pdfButton.textContent = previous; }
         return;
       }
-  const commands = new CommandRegistry();
-  commands.register('bold', async () => { editor.bold(); });
-  commands.register('italic', async () => { editor.italic(); });
-  commands.register('underline', async () => { editor.underline(); });
-  commands.register('align-left', async () => { editor.align('left'); });
-  commands.register('align-center', async () => { editor.align('center'); });
-  commands.register('align-right', async () => { editor.align('right'); });
-  commands.register('align-justify', async () => { editor.align('justify'); });
-  commands.register('list-unordered', async () => { editor.list('ul'); });
-  commands.register('list-ordered', async () => { editor.list('ol'); });
-  commands.register('table-insert', async () => { editor.insertTable(2, 3); });
-  commands.register('graphic-insert', async () => { graphics.insertShape(); });
-  commands.register('smartart-insert', async () => { graphics.insertSmartArt('process'); });
-  commands.register('smartart-node-add', async () => { graphics.addSmartArtNode(); });
-  commands.register('smartart-node-remove', async () => { graphics.removeSelectedSmartArtNode(); });
-  commands.register('smartart-layout-process', async () => { graphics.setSelectedSmartArtLayout('process'); });
-  commands.register('smartart-layout-hierarchy', async () => { graphics.setSelectedSmartArtLayout('hierarchy'); });
-  commands.register('smartart-layout-cycle', async () => { graphics.setSelectedSmartArtLayout('cycle'); });
-  commands.register('graphic-duplicate', async () => { graphics.duplicateSelected(); });
-  commands.register('graphic-front', async () => { graphics.bringSelectedToFront(); });
-  commands.register('graphic-back', async () => { graphics.sendSelectedToBack(); });
-  commands.register('connector-delete', async () => { connectors.deleteSelected(); });
-  commands.register('table-row-select', async () => { editor.selectTableRow(); });
-  commands.register('table-column-select', async () => { editor.selectTableColumn(); });
-  commands.register('table-row-add', async () => { editor.insertTableRow(); });
-  commands.register('table-row-delete', async () => { editor.deleteTableRow(); });
-  commands.register('table-column-add', async () => { editor.insertTableColumn(); });
-  commands.register('table-column-delete', async () => { editor.deleteTableColumn(); });
-  commands.register('table-column-widen', async () => { editor.resizeTableColumn(24); });
-  commands.register('table-column-narrow', async () => { editor.resizeTableColumn(-24); });
-  commands.register('font-inc', async () => { editor.fontSize('16px'); });
-  commands.register('font-dec', async () => { editor.fontSize('12px'); });
-  commands.register('upper', async () => { editor.toggleCase(true); });
-  commands.register('lower', async () => { editor.toggleCase(false); });
-  commands.register('copy', async () => { await editor.copy(); });
-  commands.register('cut', async () => { await editor.cut(); });
-  commands.register('paste', async () => { await editor.pastePlainText(); });
-  commands.register('clear-formatting', async () => { editor.clearFormatting(); });
-  commands.register('smartart-node-edit', () => {
-    const selectedNode = graphics.getSelectedSmartArtNodeId();
-    if (!selectedNode) return;
-    const current = graphics.getElements().find((element) => element.id === graphics.getSelectedIds()[0])?.smartArt?.nodes.find((node) => node.id === selectedNode)?.text ?? '';
-    const value = this.root.ownerDocument.defaultView?.prompt('Editar nó SmartArt', current);
-    if (value !== null && value !== undefined) graphics.editSelectedSmartArtNode(value);
-  });
-  commands.register('graphic-connect', () => {
-    const ids = graphics.getSelectedIds();
-    if (ids.length === 2) connectors.connect(ids[0]!, ids[1]!);
-  });
-  commands.register('undo', () => {
-    if (connectors.hasSelection()) connectors.undo();
-    else if (graphics.hasSelection()) graphics.undo();
-    else editor.undo();
-  });
-  commands.register('redo', () => {
-    if (connectors.hasSelection()) connectors.redo();
-    else if (graphics.hasSelection()) graphics.redo();
-    else editor.redo();
-  });
+      const commands = new CommandRegistry();
+      commands.register('bold', async () => { editor.bold(); });
+      commands.register('italic', async () => { editor.italic(); });
+      commands.register('underline', async () => { editor.underline(); });
+      commands.register('align-left', async () => { editor.align('left'); });
+      commands.register('align-center', async () => { editor.align('center'); });
+      commands.register('align-right', async () => { editor.align('right'); });
+      commands.register('align-justify', async () => { editor.align('justify'); });
+      commands.register('list-unordered', async () => { editor.list('ul'); });
+      commands.register('list-ordered', async () => { editor.list('ol'); });
+      commands.register('table-insert', async () => { editor.insertTable(2, 3); });
+      commands.register('graphic-insert', async () => { graphics.insertShape(); });
+      commands.register('smartart-insert', async () => { graphics.insertSmartArt('process'); });
+      commands.register('smartart-node-add', async () => { graphics.addSmartArtNode(); });
+      commands.register('smartart-node-remove', async () => { graphics.removeSelectedSmartArtNode(); });
+      commands.register('smartart-layout-process', async () => { graphics.setSelectedSmartArtLayout('process'); });
+      commands.register('smartart-layout-hierarchy', async () => { graphics.setSelectedSmartArtLayout('hierarchy'); });
+      commands.register('smartart-layout-cycle', async () => { graphics.setSelectedSmartArtLayout('cycle'); });
+      commands.register('graphic-duplicate', async () => { graphics.duplicateSelected(); });
+      commands.register('graphic-front', async () => { graphics.bringSelectedToFront(); });
+      commands.register('graphic-back', async () => { graphics.sendSelectedToBack(); });
+      commands.register('connector-delete', async () => { connectors.deleteSelected(); });
+      commands.register('table-row-select', async () => { editor.selectTableRow(); });
+      commands.register('table-column-select', async () => { editor.selectTableColumn(); });
+      commands.register('table-row-add', async () => { editor.insertTableRow(); });
+      commands.register('table-row-delete', async () => { editor.deleteTableRow(); });
+      commands.register('table-column-add', async () => { editor.insertTableColumn(); });
+      commands.register('table-column-delete', async () => { editor.deleteTableColumn(); });
+      commands.register('table-column-widen', async () => { editor.resizeTableColumn(24); });
+      commands.register('table-column-narrow', async () => { editor.resizeTableColumn(-24); });
+      commands.register('font-inc', async () => { editor.fontSize('16px'); });
+      commands.register('font-dec', async () => { editor.fontSize('12px'); });
+      commands.register('upper', async () => { editor.toggleCase(true); });
+      commands.register('lower', async () => { editor.toggleCase(false); });
+      commands.register('copy', async () => { await editor.copy(); });
+      commands.register('cut', async () => { await editor.cut(); });
+      commands.register('paste', async () => { await editor.pastePlainText(); });
+      commands.register('clear-formatting', async () => { editor.clearFormatting(); });
+      commands.register('smartart-node-edit', () => {
+        const selectedNode = graphics.getSelectedSmartArtNodeId();
+        if (!selectedNode) return;
+        const current = graphics.getElements().find((element) => element.id === graphics.getSelectedIds()[0])?.smartArt?.nodes.find((node) => node.id === selectedNode)?.text ?? '';
+        const value = this.root.ownerDocument.defaultView?.prompt('Editar nó SmartArt', current);
+        if (value !== null && value !== undefined) graphics.editSelectedSmartArtNode(value);
+      });
+      commands.register('graphic-connect', () => {
+        const ids = graphics.getSelectedIds();
+        if (ids.length === 2) connectors.connect(ids[0]!, ids[1]!);
+      });
+      commands.register('undo', () => {
+        if (connectors.hasSelection()) connectors.undo();
+        else if (graphics.hasSelection()) graphics.undo();
+        else editor.undo();
+      });
+      commands.register('redo', () => {
+        if (connectors.hasSelection()) connectors.redo();
+        else if (graphics.hasSelection()) graphics.redo();
+        else editor.redo();
+      });
       if (!(await commands.execute(action))) return;
       sync();
     });
