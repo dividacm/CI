@@ -47,10 +47,10 @@ test.describe('Comunicação Interna editor', () => {
     await page.locator('summary', { hasText: 'Ferramentas' }).click();
     await expect(editor).toContainText('Texto para histórico');
 
-    await page.getByRole('button', { name: '↶' }).click();
+    await page.getByRole('button', { name: 'Desfazer' }).click();
     await expect(editor).not.toContainText('Texto para histórico');
 
-    await page.getByRole('button', { name: '↷' }).click();
+    await page.getByRole('button', { name: 'Refazer' }).click();
     await expect(editor).toContainText('Texto para histórico');
   });
 

@@ -45,6 +45,26 @@ test.describe('Acessibilidade do editor', () => {
     await expect(page.locator('#editor')).toBeFocused();
   });
 
+  test('expõe recuperação acessível quando o salvamento falha', async ({ page }) => {
+    await page.evaluate(() => {
+      Storage.prototype.setItem = () => {
+        throw new Error('storage unavailable');
+      };
+    });
+
+    const saveButton = page.getByRole('button', { name: 'Salvar' });
+    const retryButton = page.getByRole('button', { name: 'Tentar salvar novamente' });
+    await saveButton.click();
+
+    await expect(page.locator('#save-status')).toHaveText('Falha ao salvar. O conteúdo permanece nesta tela.', {
+      timeout: 5_000,
+    });
+    await expect(retryButton).toBeVisible();
+    await expect(retryButton).toHaveAttribute('aria-hidden', 'false');
+    await retryButton.focus();
+    await expect(retryButton).toBeFocused();
+  });
+
   test('respeita prefers-reduced-motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.reload();
