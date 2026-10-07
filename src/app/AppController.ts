@@ -160,16 +160,34 @@ export class AppController {
     );
   };
 
+  let scheduledViewSync = false;
   const syncView = (): void => {
     updateIssueButton(elements.issueButton, state.document);
     renderPreview(elements.paper, this.organization, template, state.document);
     syncRuler();
   };
+  const scheduleViewSync = (): void => {
+    if (scheduledViewSync) return;
+    scheduledViewSync = true;
+    window.requestAnimationFrame(() => {
+      scheduledViewSync = false;
+      syncView();
+    });
+  };
 
   syncRuler();
   updatePreviewZoom(previewZoom);
 
-  const sync = (): void => { connectors.setElements(graphics.getElements()); actions.sync(); syncView(); syncTableTools(); syncGraphicTools(); syncConnectorTools(); syncSmartArtTools(); };
+  const sync = (renderImmediately = true): void => {
+    connectors.setElements(graphics.getElements());
+    actions.sync();
+    if (renderImmediately) syncView();
+    else scheduleViewSync();
+    syncTableTools();
+    syncGraphicTools();
+    syncConnectorTools();
+    syncSmartArtTools();
+  };
 
   editor.setSaveHandler(() => {
     sync();
@@ -187,9 +205,9 @@ export class AppController {
   document.addEventListener('selectionchange', syncTableTools);
 
   this.root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
-    field.addEventListener('input', sync);
+    field.addEventListener('input', () => sync(false));
   });
-  elements.editor.addEventListener('input', sync);
+  elements.editor.addEventListener('input', () => sync(false));
   elements.paper.addEventListener('keydown', (event) => {
     if (event.key === 'PageUp') {
       event.preventDefault();
