@@ -12,7 +12,6 @@ export interface AppElements {
   editor: HTMLElement;
   paper: HTMLElement;
   status: HTMLOutputElement;
-  number: HTMLOutputElement;
   issueButton: HTMLButtonElement;
   pdfButton: HTMLButtonElement;
   retrySaveButton: HTMLButtonElement;
@@ -27,7 +26,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
   const footer = template.footerAsset ?? organization.branding.footerAsset ?? '';
 
   return `<main class="app-shell" style="--primary:${escapeHtml(organization.branding.primaryColor)};--secondary:${escapeHtml(organization.branding.secondaryColor)};--body-font:${escapeHtml(organization.branding.fontFamily)}">
-    <header class="app-header"><div><p class="eyebrow">${escapeHtml(organization.name)}</p><h1>${escapeHtml(template.name)}</h1><output id="document-number" class="document-number">Rascunho</output></div><div class="save-status-group"><output id="save-status" class="save-status" aria-live="polite" aria-atomic="true" tabindex="-1">Carregando…</output><button id="retry-save" type="button" class="retry-save hidden" data-action="retry-save" aria-label="Tentar salvar novamente">Tentar salvar</button></div></header>
+    <header class="app-header"><div><p class="eyebrow">${escapeHtml(organization.name)}</p><h1>${escapeHtml(template.name)}</h1></div><div class="save-status-group"><output id="save-status" class="save-status" aria-live="polite" aria-atomic="true" tabindex="-1">Carregando…</output><button id="retry-save" type="button" class="retry-save hidden" data-action="retry-save" aria-label="Tentar salvar novamente">Tentar salvar</button></div></header>
     <section class="editor-panel" aria-label="Editor de comunicação">
       <div class="field-grid">${fields}</div>
       <div class="toolbar" role="toolbar" aria-label="Ferramentas do editor">
@@ -62,18 +61,16 @@ export function getAppElements(root: HTMLElement): AppElements {
   const editor = root.querySelector<HTMLElement>('#editor');
   const paper = root.querySelector<HTMLElement>('#paper');
   const status = root.querySelector<HTMLOutputElement>('#save-status');
-  const number = root.querySelector<HTMLOutputElement>('#document-number');
   const issueButton = root.querySelector<HTMLButtonElement>('[data-action="issue"]');
   const pdfButton = root.querySelector<HTMLButtonElement>('[data-action="pdf"]');
   const retrySaveButton = root.querySelector<HTMLButtonElement>('[data-action="retry-save"]');
-  if (!editor || !paper || !status || !number || !issueButton || !pdfButton || !retrySaveButton) throw new Error('Estrutura do editor não encontrada.');
-  return { root, editor, paper, status, number, issueButton, pdfButton, retrySaveButton };
+  if (!editor || !paper || !status || !issueButton || !pdfButton || !retrySaveButton) throw new Error('Estrutura do editor não encontrada.');
+  return { root, editor, paper, status, issueButton, pdfButton, retrySaveButton };
 }
 
 export function renderDocument(document: CommunicationDocument, elements: AppElements, organization: OrganizationConfig, template: TemplateConfig): void {
   elements.editor.innerHTML = sanitizeHtml(document.bodyHtml);
   for (const field of template.fields) populateField(elements.root, field.id, getDocumentField(document, field.id));
-  renderDocumentNumber(elements.number, document);
   renderPreview(elements.paper, organization, template, document);
   const ruler = elements.root.querySelector<HTMLElement>('#horizontal-ruler');
   if (ruler) renderHorizontalRuler(ruler, { pageWidthMm: 210, marginLeftMm: organization.layout.marginLeftMm, marginRightMm: organization.layout.marginRightMm });
@@ -139,10 +136,6 @@ export function populateField(root: HTMLElement, name: string, value: string): v
 
 export function getFieldValue(root: HTMLElement, name: string): string {
   return root.querySelector<HTMLInputElement>(`[data-field="${escapeSelector(name)}"]`)?.value ?? '';
-}
-
-export function renderDocumentNumber(root: HTMLOutputElement, document: CommunicationDocument): void {
-  root.textContent = document.number > 0 ? `Documento nº ${document.number}/${document.year}` : 'Rascunho';
 }
 
 export function updateIssueButton(button: HTMLButtonElement, document: CommunicationDocument): void {
