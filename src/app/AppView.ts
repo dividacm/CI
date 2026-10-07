@@ -27,7 +27,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
   const footer = template.footerAsset ?? organization.branding.footerAsset ?? '';
 
   return `<main class="app-shell" style="--primary:${escapeHtml(organization.branding.primaryColor)};--secondary:${escapeHtml(organization.branding.secondaryColor)};--body-font:${escapeHtml(organization.branding.fontFamily)}">
-    <header class="app-header"><div><p class="eyebrow">${escapeHtml(organization.name)}</p><h1>${escapeHtml(template.name)}</h1><output id="document-number" class="document-number">Rascunho</output></div><div class="save-status-group"><output id="save-status" class="save-status" aria-live="polite" aria-atomic="true">Carregando…</output><button id="retry-save" type="button" class="retry-save hidden" data-action="retry-save" aria-label="Tentar salvar novamente">Tentar salvar</button></div></header>
+    <header class="app-header"><div><p class="eyebrow">${escapeHtml(organization.name)}</p><h1>${escapeHtml(template.name)}</h1><output id="document-number" class="document-number">Rascunho</output></div><div class="save-status-group"><output id="save-status" class="save-status" aria-live="polite" aria-atomic="true" tabindex="-1">Carregando…</output><button id="retry-save" type="button" class="retry-save hidden" data-action="retry-save" aria-label="Tentar salvar novamente">Tentar salvar</button></div></header>
     <section class="editor-panel" aria-label="Editor de comunicação">
       <div class="field-grid">${fields}</div>
       <div class="toolbar" role="toolbar" aria-label="Ferramentas do editor">
