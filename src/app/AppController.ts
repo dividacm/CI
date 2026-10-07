@@ -80,6 +80,8 @@ export class AppController {
     };
     elements.status.textContent = labels[status];
     elements.status.dataset.status = status;
+    elements.retrySaveButton.hidden = status !== 'error';
+    elements.retrySaveButton.setAttribute('aria-hidden', status === 'error' ? 'false' : 'true');
   };
 
   const autosave = new AutosaveController({ storage, delayMs: 300, onStatusChange: setStatus });
@@ -200,6 +202,7 @@ export class AppController {
     button.addEventListener('click', async () => {
       const action = button.dataset.action;
       if (action === 'save') { sync(); autosave.saveNow(); return; }
+      if (action === 'retry-save') { sync(); autosave.saveNow(); return; }
       if (action === 'clear') {
         repository.clearActive();
         actions.clear();
@@ -241,14 +244,17 @@ export class AppController {
           await pdfExporter.export(elements.paper, { filename: state.document.number > 0 ? `comunicacao_interna_${state.document.number}_${state.document.year}.pdf` : 'comunicacao_interna.pdf' });
           elements.status.textContent = 'PDF gerado com sucesso.';
           elements.status.dataset.status = 'saved';
+          elements.retrySaveButton.hidden = true;
+          elements.retrySaveButton.setAttribute('aria-hidden', 'true');
         } catch (error) {
           getObservability().captureError(error, {
             operation: 'export',
             component: 'PdfExporter',
             documentId: state.document.id,
           });
-          elements.status.textContent = 'Falha ao gerar PDF.';
+          elements.status.textContent = 'Falha ao gerar PDF. Tente novamente.';
           elements.status.dataset.status = 'error';
+          elements.status.focus({ preventScroll: true });
         } finally { elements.pdfButton.disabled = false; elements.pdfButton.textContent = previous; }
         return;
       }
