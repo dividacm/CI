@@ -1,7 +1,10 @@
 import { FONT_FAMILY_OPTIONS, FONT_SIZE_OPTIONS } from '../editor/TypographyModel';
 import { renderHorizontalRuler } from '../layout/RulerView';
+import { getGraphicPageIndex } from '../pagination/DocumentFlow';
+import { getPageMetrics, renderGraphicFlow } from '../pagination/DocumentFlowRenderer';
+import { appendBodyAcrossPages, createPage, getPageContent, removeEmptyPages } from '../pagination/PaginationEngine';
 import { sanitizeHtml } from '../security/sanitizer';
-import type { OrganizationConfig, PageLayoutConfig, TemplateConfig } from '../types/configuration';
+import type { OrganizationConfig, TemplateConfig } from '../types/configuration';
 import type { CommunicationDocument } from '../types/document';
 
 export interface AppElements {
@@ -49,7 +52,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
             </div></section>
           </div>
         </details>
-      </div>      <div class="workspace"><div class="editor-canvas"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article></div><div class="preview-column"><div class="preview-controls" role="toolbar" aria-label="Controles de visualização"><button type="button" data-action="zoom-out" aria-label="Reduzir zoom">−</button><output id="preview-zoom" aria-live="polite">100%</output><button type="button" data-action="zoom-reset" aria-label="Redefinir zoom">100%</button><button type="button" data-action="zoom-in" aria-label="Aumentar zoom">+</button></div><div id="horizontal-ruler" class="horizontal-ruler"></div><div class="preview-wrap" style="--preview-zoom:1"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4"></div></div></div></div>
+      </div>      <div class="workspace"><div class="editor-canvas"><article id="editor" class="editor-surface" contenteditable="true" role="textbox" aria-multiline="true" spellcheck="true"></article></div><div class="preview-column"><div class="preview-controls" role="toolbar" aria-label="Controles de visualização"><div class="page-navigation" role="group" aria-label="Navegação de páginas"><button type="button" data-action="page-prev" aria-label="Página anterior">‹</button><output id="page-indicator" aria-live="polite">Página 1 de 1</output><button type="button" data-action="page-next" aria-label="Próxima página">›</button></div><div class="zoom-navigation" role="group" aria-label="Zoom"><button type="button" data-action="zoom-out" aria-label="Reduzir zoom">−</button><output id="preview-zoom" aria-live="polite">100%</output><button type="button" data-action="zoom-reset" aria-label="Redefinir zoom">100%</button><button type="button" data-action="zoom-in" aria-label="Aumentar zoom">+</button></div></div><div id="horizontal-ruler" class="horizontal-ruler"></div><div class="preview-wrap" style="--preview-zoom:1"><div id="paper" class="paper" role="document" aria-label="Pré-visualização A4 multi-página" tabindex="0"></div></div></div></div>
     </section>
   </main>`;
 }
@@ -84,12 +87,31 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   const fields = template.fields.map((field) => renderPreviewField(field.label, getDocumentField(document, field.id))).join('');
   const body = sanitizeHtml(document.bodyHtml);
   const pages: HTMLElement[] = [];
+  const activePage = Number(root.dataset.activePage) || 1;
   root.innerHTML = '';
 
-  const firstPage = createPage(root, organization.layout, header, footer, pages);
+  const firstPage = createPage(root, { layout: organization.layout, header, footer }, pages);
   const firstContent = getPageContent(firstPage);
   firstContent.insertAdjacentHTML('beforeend', `<div class="paper-title">${escapeHtml(template.name)} <span>${document.number > 0 ? `Nº ${document.number}/${document.year}` : ''}</span></div>${fields}`);
-  appendBodyAcrossPages(root, pages, firstContent, body, organization.layout, header, footer);
+  appendBodyAcrossPages(root, pages, firstContent, body, { layout: organization.layout, header, footer });
+
+  const graphicMetrics = getPageMetrics(organization.layout);
+  const graphics = document.graphics ?? [];
+  const requiredGraphicPages = graphics.reduce(
+    (max, element) => Math.max(max, getGraphicPageIndex(element, graphicMetrics) + 1),
+    1,
+  );
+  while (pages.length < requiredGraphicPages) {
+    createPage(root, { layout: organization.layout, header, footer }, pages);
+  }
+  pages.forEach((page, index) => {
+    renderGraphicFlow(getPageContent(page), {
+      elements: graphics,
+      connectors: document.connectors ?? [],
+      pageIndex: index,
+      metrics: graphicMetrics,
+    });
+  });
 
   const lastPage = pages[pages.length - 1];
   if (!lastPage) return;
@@ -100,274 +122,12 @@ export function renderPreview(root: HTMLElement, organization: OrganizationConfi
   lastContent.appendChild(signature);
   if (lastContent.scrollHeight > lastContent.clientHeight) {
     lastContent.removeChild(signature);
-    lastContent = getPageContent(createPage(root, organization.layout, header, footer, pages));
+    lastContent = getPageContent(createPage(root, { layout: organization.layout, header, footer }, pages));
     lastContent.appendChild(signature);
   }
 
   removeEmptyPages(pages);
-}
-
-function removeEmptyPages(pages: HTMLElement[]): void {
-  for (let index = pages.length - 1; index >= 0; index -= 1) {
-    if (pages.length === 1) break;
-    const page = pages[index];
-    if (!page) continue;
-    const content = getPageContent(page);
-    if (hasRenderableContent(content)) continue;
-    page.remove();
-    pages.splice(index, 1);
-  }
-}
-
-function hasRenderableContent(content: HTMLElement): boolean {
-  if (content.textContent?.trim()) return true;
-  return Boolean(content.querySelector('img, svg, table, ul, ol, hr, iframe, video, audio'));
-}
-
-function appendBodyAcrossPages(
-  root: HTMLElement,
-  pages: HTMLElement[],
-  current: HTMLElement,
-  html: string,
-  layout: PageLayoutConfig,
-  header?: string,
-  footer?: string,
-): void {
-  const holder = root.ownerDocument.createElement('div');
-  holder.innerHTML = html || '<p><br></p>';
-
-  for (const source of Array.from(holder.childNodes)) {
-    const node = source.nodeType === Node.ELEMENT_NODE
-      ? (source.cloneNode(true) as HTMLElement)
-      : wrapTextNode(source, root.ownerDocument);
-    if (!node) continue;
-    current = appendNodeAcrossPages(root, pages, current, node, layout, header, footer);
-  }
-}
-
-function wrapTextNode(source: Node, ownerDocument: Document): HTMLElement | null {
-  const text = source.textContent ?? '';
-  if (!text.trim()) return null;
-  const paragraph = ownerDocument.createElement('p');
-  paragraph.textContent = text;
-  return paragraph;
-}
-
-function appendNodeAcrossPages(
-  root: HTMLElement,
-  pages: HTMLElement[],
-  current: HTMLElement,
-  node: HTMLElement,
-  layout: PageLayoutConfig,
-  header?: string,
-  footer?: string,
-): HTMLElement {
-  current.appendChild(node);
-  if (!isOverflowing(current)) return current;
-
-  current.removeChild(node);
-
-  return appendSplittableBlockAcrossPages(root, pages, current, node, layout, header, footer);
-}
-
-function appendSplittableBlockAcrossPages(
-  root: HTMLElement,
-  pages: HTMLElement[],
-  current: HTMLElement,
-  node: HTMLElement,
-  layout: PageLayoutConfig,
-  header?: string,
-  footer?: string,
-): HTMLElement {
-  if (node.tagName === 'UL' || node.tagName === 'OL') {
-    return appendListAcrossPages(root, pages, current, node, layout, header, footer);
-  }
-
-  const totalTextLength = node.textContent?.length ?? 0;
-  if (!totalTextLength || !canSplitTextBlock(node)) {
-    if (current.childElementCount > 0) {
-      current = getPageContent(createPage(root, layout, header, footer, pages));
-    }
-    current.appendChild(node);
-    return current;
-  }
-
-  let low = 1;
-  let high = totalTextLength;
-  let best = 0;
-
-  while (low <= high) {
-    const middle = Math.floor((low + high) / 2);
-    const candidate = cloneTextRange(node, 0, middle);
-    if (!candidate) {
-      low = middle + 1;
-      continue;
-    }
-
-    current.appendChild(candidate);
-    const overflowing = isOverflowing(current);
-    current.removeChild(candidate);
-
-    if (overflowing) high = middle - 1;
-    else {
-      best = middle;
-      low = middle + 1;
-    }
-  }
-
-  best = findPreferredBreak(node, best);
-
-  if (best <= 0) {
-    if (current.childElementCount > 0) {
-      current = getPageContent(createPage(root, layout, header, footer, pages));
-    }
-    current.appendChild(node);
-    return current;
-  }
-
-  const firstPart = cloneTextRange(node, 0, best);
-  const remainder = cloneTextRange(node, best, totalTextLength);
-  if (!firstPart) {
-    current = getPageContent(createPage(root, layout, header, footer, pages));
-    current.appendChild(node);
-    return current;
-  }
-
-  current.appendChild(firstPart);
-  if (!remainder || !(remainder.textContent ?? '').trim()) return current;
-
-  current = getPageContent(createPage(root, layout, header, footer, pages));
-  current.appendChild(remainder);
-  if (isOverflowing(current)) {
-    return appendSplittableBlockAcrossPages(root, pages, current, remainder as HTMLElement, layout, header, footer);
-  }
-  return current;
-}
-
-function canSplitTextBlock(node: HTMLElement): boolean {
-  return !['TABLE', 'THEAD', 'TBODY', 'TFOOT', 'TR', 'UL', 'OL'].includes(node.tagName);
-}
-
-function appendListAcrossPages(
-  root: HTMLElement,
-  pages: HTMLElement[],
-  current: HTMLElement,
-  list: HTMLElement,
-  layout: PageLayoutConfig,
-  header?: string,
-  footer?: string,
-): HTMLElement {
-  const items = Array.from(list.children);
-  if (!items.length) {
-    if (current.childElementCount > 0) current = getPageContent(createPage(root, layout, header, footer, pages));
-    current.appendChild(list);
-    return current;
-  }
-
-  const listPage = (): HTMLElement => {
-    const pageList = list.cloneNode(false) as HTMLElement;
-    current.appendChild(pageList);
-    return pageList;
-  };
-
-  let target = listPage();
-  for (const item of items) {
-    const clone = item.cloneNode(true) as HTMLElement;
-    target.appendChild(clone);
-
-    if (!isOverflowing(current)) continue;
-
-    target.removeChild(clone);
-    if (target.childElementCount === 0) {
-      current.removeChild(target);
-      current.appendChild(clone);
-      if (isOverflowing(current)) {
-        current.removeChild(clone);
-        current = getPageContent(createPage(root, layout, header, footer, pages));
-        target = listPage();
-        target.appendChild(clone);
-      }
-      continue;
-    }
-
-    current = getPageContent(createPage(root, layout, header, footer, pages));
-    target = listPage();
-    target.appendChild(clone);
-  }
-
-  return current;
-}
-
-function cloneTextRange(node: Node, start: number, end: number): Node | null {
-  const textLength = node.textContent?.length ?? 0;
-  if (end <= 0 || start >= textLength || start >= end) return null;
-
-  let offset = 0;
-
-  const cloneRange = (source: Node): Node | null => {
-    if (source.nodeType === Node.TEXT_NODE) {
-      const value = source.textContent ?? '';
-      const nodeStart = offset;
-      const nodeEnd = offset + value.length;
-      offset = nodeEnd;
-      const overlapStart = Math.max(start, nodeStart) - nodeStart;
-      const overlapEnd = Math.min(end, nodeEnd) - nodeStart;
-      if (overlapStart >= overlapEnd) return null;
-      const ownerDocument = source.ownerDocument;
-      if (!ownerDocument) throw new Error('Documento do nó de texto não encontrado.');
-      return ownerDocument.createTextNode(value.slice(overlapStart, overlapEnd));
-    }
-
-    if (source.nodeType !== Node.ELEMENT_NODE) return null;
-
-    const element = source as HTMLElement;
-    const clone = element.cloneNode(false) as HTMLElement;
-    if (element.tagName === 'BR') return clone;
-
-    for (const child of Array.from(element.childNodes)) {
-      const childClone = cloneRange(child);
-      if (childClone) clone.appendChild(childClone);
-    }
-    return clone.childNodes.length ? clone : null;
-  };
-
-  return cloneRange(node);
-}
-
-function findPreferredBreak(node: HTMLElement, best: number): number {
-  if (best <= 0) return 0;
-  const text = node.textContent ?? '';
-  const windowStart = Math.max(0, best - 80);
-  const segment = text.slice(windowStart, best);
-  const breakOffset = Math.max(segment.lastIndexOf(' '), segment.lastIndexOf('\n'), segment.lastIndexOf('\t'));
-  if (breakOffset < 0) return best;
-  const preferred = windowStart + breakOffset + 1;
-  return preferred > 0 && preferred <= best ? preferred : best;
-}
-
-function createPage(
-  root: HTMLElement,
-  layout: PageLayoutConfig,
-  header: string | undefined,
-  footer: string | undefined,
-  pages: HTMLElement[],
-): HTMLElement {
-  const page = document.createElement('section');
-  page.className = 'paper-page';
-  page.innerHTML = `<div class="paper-header">${header ? `<img src="${escapeHtml(header)}" alt="Cabeçalho">` : ''}</div><div class="paper-page-content" style="padding:${layout.marginTopMm}mm ${layout.marginRightMm}mm ${layout.marginBottomMm}mm ${layout.marginLeftMm}mm"></div><div class="paper-footer">${footer ? `<img src="${escapeHtml(footer)}" alt="Rodapé">` : ''}</div>`;
-  root.appendChild(page);
-  pages.push(page);
-  return page;
-}
-
-function getPageContent(page: HTMLElement): HTMLElement {
-  const content = page.querySelector<HTMLElement>('.paper-page-content');
-  if (!content) throw new Error('Área de conteúdo da página não encontrada.');
-  return content;
-}
-
-function isOverflowing(content: HTMLElement): boolean {
-  return content.scrollHeight > content.clientHeight;
+  setActivePreviewPage(root, Math.min(activePage, pages.length));
 }
 
 export function populateField(root: HTMLElement, name: string, value: string): void {
@@ -410,4 +170,35 @@ export function setPreviewZoom(root: HTMLElement, zoomPercent: number): void {
   output.value = `${zoom}%`;
   output.textContent = `${zoom}%`;
   previewWrap.dataset.zoom = String(zoom);
+}
+
+export function setActivePreviewPage(root: HTMLElement, pageNumber: number): void {
+  const pages = Array.from(root.querySelectorAll<HTMLElement>('.paper-page'));
+  if (!pages.length) return;
+  const page = Math.min(pages.length, Math.max(1, Math.round(pageNumber)));
+  root.dataset.activePage = String(page);
+  pages.forEach((item, index) => {
+    const active = index + 1 === page;
+    item.dataset.pageNumber = String(index + 1);
+    item.dataset.active = String(active);
+    item.setAttribute('aria-current', active ? 'page' : 'false');
+  });
+  const indicator = root.parentElement?.parentElement?.querySelector<HTMLOutputElement>('#page-indicator');
+  if (indicator) {
+    indicator.value = `Página ${page} de ${pages.length}`;
+    indicator.textContent = `Página ${page} de ${pages.length}`;
+  }
+  const previous = root.parentElement?.parentElement?.querySelector<HTMLButtonElement>('[data-action="page-prev"]');
+  const next = root.parentElement?.parentElement?.querySelector<HTMLButtonElement>('[data-action="page-next"]');
+  if (previous) previous.disabled = page <= 1;
+  if (next) next.disabled = page >= pages.length;
+}
+
+export function navigatePreviewPage(root: HTMLElement, direction: -1 | 1): void {
+  const pages = Array.from(root.querySelectorAll<HTMLElement>('.paper-page'));
+  if (!pages.length) return;
+  const current = Number(root.dataset.activePage) || 1;
+  const target = Math.min(pages.length, Math.max(1, current + direction));
+  setActivePreviewPage(root, target);
+  pages[target - 1]?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
