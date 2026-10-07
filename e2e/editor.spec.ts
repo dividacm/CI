@@ -61,6 +61,34 @@ test.describe('Comunicação Interna editor', () => {
     });
   });
 
+  test('coalesces preview repagination during a burst of editor input', async ({ page }) => {
+    const mutationBatches = await page.evaluate(() => {
+      const paper = document.querySelector<HTMLElement>('#paper');
+      const editor = document.querySelector<HTMLElement>('#editor');
+      if (!paper || !editor) throw new Error('Editor ou preview não encontrado.');
+
+      let batches = 0;
+      const observer = new MutationObserver(() => {
+        batches += 1;
+      });
+      observer.observe(paper, { childList: true, subtree: true });
+
+      editor.innerHTML = '<p>Documento de desempenho.</p>';
+      for (let index = 0; index < 40; index += 1) {
+        editor.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText' }));
+      }
+
+      return new Promise<number>((resolve) => {
+        requestAnimationFrame(() => {
+          observer.disconnect();
+          resolve(batches);
+        });
+      });
+    });
+
+    expect(mutationBatches).toBe(1);
+  });
+
   test('has no console errors during the main editor flow', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', (message) => {
