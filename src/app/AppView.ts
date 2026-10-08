@@ -96,11 +96,18 @@ export function renderDocument(document: CommunicationDocument, elements: AppEle
 }
 
 export function renderPreview(root: HTMLElement, organization: OrganizationConfig, template: TemplateConfig, document: CommunicationDocument): void {
-  const header = template.headerAsset ?? organization.branding.headerAsset;
-  const footer = template.footerAsset ?? organization.branding.footerAsset;
-  const signatureName = organization.branding.signatureName ?? '';
-  const signatureRole = organization.branding.signatureRole ?? '';
-  const location = organization.branding.signatureLocation ?? '';
+  const composition = document.composition ?? {
+    headerAsset: template.headerAsset ?? organization.branding.headerAsset,
+    footerAsset: template.footerAsset ?? organization.branding.footerAsset,
+    signatureName: organization.branding.signatureName,
+    signatureRole: organization.branding.signatureRole,
+    signatureLocation: organization.branding.signatureLocation,
+  };
+  const header = composition.headerAsset;
+  const footer = composition.footerAsset;
+  const signatureName = composition.signatureName ?? '';
+  const signatureRole = composition.signatureRole ?? '';
+  const location = composition.signatureLocation ?? '';
   const date = formatDate(new Date());
   const fields = template.fields.map((field) => renderPreviewField(field.label, getDocumentField(document, field.id))).join('');
   const body = sanitizeHtml(document.bodyHtml);
