@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { OrganizationConfigStorage } from '../../src/configuration/OrganizationConfigStorage';
 import { defaultOrganization } from '../../src/configuration/defaultOrganization';
+import { OrganizationConfigStorage } from '../../src/configuration/OrganizationConfigStorage';
 
 class MemoryStorage implements Storage {
   private readonly data = new Map<string, string>();
