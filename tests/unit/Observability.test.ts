@@ -74,3 +74,22 @@ describe('Observability', () => {
     expect(JSON.stringify(entry)).not.toContain('must-not-leak');
   });
 });
+  it('sanitizes sensitive data embedded in error stacks', () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const error = new Error('Falha token=segredo <p>conteúdo</p>');
+    error.stack = 'Error: Falha token=segredo <p>conteúdo</p>\\n    at exportDocument (app.ts:10:2)';
+
+    getObservability().captureError(error, {
+      operation: 'export',
+      component: 'PdfExporter',
+    });
+
+    const entry = JSON.parse(errorSpy.mock.calls[0]?.[0] as string) as {
+      context: { stack: string };
+    };
+    expect(entry.context.stack).not.toContain('segredo');
+    expect(entry.context.stack).not.toContain('<p>');
+    expect(entry.context.stack).toContain('[REDACTED]');
+    expect(entry.context.stack).toContain('at exportDocument');
+  });
+

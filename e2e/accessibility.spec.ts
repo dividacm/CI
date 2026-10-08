@@ -14,8 +14,11 @@ test.describe('Acessibilidade do editor', () => {
     await expect(page.locator('#editor')).toHaveAttribute('aria-multiline', 'true');
 
     const saveButton = page.getByRole('button', { name: 'Salvar' });
-    await page.locator('input[data-field]').last().focus();
-    await page.keyboard.press('Tab');
+    const metadataFields = page.locator('.editor-metadata input[data-field]');
+    await expect(metadataFields).toHaveCount(3);
+    await expect(page.locator('.editor-page')).toBeVisible();
+
+    await saveButton.focus();
     await expect(saveButton).toBeFocused();
 
     const focusRing = await saveButton.evaluate((element) => {
@@ -43,6 +46,26 @@ test.describe('Acessibilidade do editor', () => {
     await expect(boldButton).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page.locator('#editor')).toBeFocused();
+  });
+
+  test('expõe recuperação acessível quando o salvamento falha', async ({ page }) => {
+    await page.evaluate(() => {
+      Storage.prototype.setItem = () => {
+        throw new Error('storage unavailable');
+      };
+    });
+
+    const saveButton = page.getByRole('button', { name: 'Salvar' });
+    const retryButton = page.getByRole('button', { name: 'Tentar salvar novamente' });
+    await saveButton.click();
+
+    await expect(page.locator('#save-status')).toHaveText('Falha ao salvar. O conteúdo permanece nesta tela.', {
+      timeout: 5_000,
+    });
+    await expect(retryButton).toBeVisible();
+    await expect(retryButton).toHaveAttribute('aria-hidden', 'false');
+    await retryButton.focus();
+    await expect(retryButton).toBeFocused();
   });
 
   test('respeita prefers-reduced-motion', async ({ page }) => {

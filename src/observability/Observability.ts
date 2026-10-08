@@ -34,7 +34,7 @@ const defaultObservability: Observability = {
     this.log('error', normalized.message, {
       ...context,
       errorName: normalized.name,
-      stack: normalized.stack,
+      stack: normalized.stack ? sanitizeStack(normalized.stack) : undefined,
     });
   },
 };
@@ -88,6 +88,17 @@ function normalizeError(error: unknown): { name: string; message: string; stack?
     name: 'UnknownError',
     message: sanitizeErrorMessage(typeof error === 'string' ? error : 'Erro desconhecido'),
   };
+}
+
+function sanitizeStack(value: string): string {
+  return sanitizeString(
+    value
+      .replace(/<[^>]*>/g, '[REDACTED]')
+      .replace(
+        /(?:token|password|authorization|cookie)\s*[=:]\s*[^\s,;]+/gi,
+        '[REDACTED]',
+      ),
+  );
 }
 
 function sanitizeErrorMessage(value: string): string {
