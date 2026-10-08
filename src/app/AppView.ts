@@ -23,10 +23,11 @@ export function renderShell(organization: OrganizationConfig, template: Template
     .join('');
   const layout = organization.layout;
   const header = template.headerAsset ?? organization.branding.headerAsset ?? '';
+  const templateOptions = organization.templates.map((item) => '<option value="' + escapeHtml(item.id) + '"' + (item.id === template.id ? ' selected' : '') + '>' + escapeHtml(item.name) + '</option>').join('');
   const footer = template.footerAsset ?? organization.branding.footerAsset ?? '';
 
   return `<main class="app-shell" style="--primary:${escapeHtml(organization.branding.primaryColor)};--secondary:${escapeHtml(organization.branding.secondaryColor)};--body-font:${escapeHtml(organization.branding.fontFamily)};--document-margin-top:${layout.marginTopMm}mm;--document-margin-right:${layout.marginRightMm}mm;--document-margin-bottom:${layout.marginBottomMm}mm;--document-margin-left:${layout.marginLeftMm}mm">
-    <header class="app-header"><div><p class="eyebrow">${escapeHtml(organization.name)}</p><h1>${escapeHtml(template.name)}</h1></div><div class="save-status-group"><output id="save-status" class="save-status" aria-live="polite" aria-atomic="true" tabindex="-1">Carregando…</output><button id="retry-save" type="button" class="retry-save hidden" data-action="retry-save" aria-label="Tentar salvar novamente">Tentar salvar</button></div></header>
+    <header class="app-header"><div><p class="eyebrow">${escapeHtml(organization.name)}</p><label class="template-selector"><span>Modelo</span><select id="template-selector" aria-label="Selecionar modelo de documento">${templateOptions}</select></label><h1>${escapeHtml(template.name)}</h1></div><div class="save-status-group"><output id="save-status" class="save-status" aria-live="polite" aria-atomic="true" tabindex="-1">Carregando…</output><button id="retry-save" type="button" class="retry-save hidden" data-action="retry-save" aria-label="Tentar salvar novamente">Tentar salvar</button></div></header>
     <section class="editor-panel" aria-label="Editor de comunicação">
       <div class="toolbar" role="toolbar" aria-label="Ferramentas do editor">
         <div class="toolbar-actions toolbar-primary-actions"><button type="button" data-action="save" class="action-green">Salvar</button><button type="button" data-action="clear" class="action-gray">Limpar</button><button type="button" data-action="issue" class="action-primary">Emitir documento</button><button type="button" data-action="pdf" class="action-orange">Baixar PDF</button></div>
@@ -69,7 +70,19 @@ export function getAppElements(root: HTMLElement): AppElements {
 
 export function renderDocument(document: CommunicationDocument, elements: AppElements, organization: OrganizationConfig, template: TemplateConfig): void {
   elements.editor.innerHTML = sanitizeHtml(document.bodyHtml);
+  const metadata = elements.root.querySelector<HTMLElement>('.editor-metadata');
+  if (metadata) metadata.innerHTML = template.fields.map((field) => renderField(field.id, field.label, '', field.placeholder, field.required)).join('');
   for (const field of template.fields) populateField(elements.root, field.id, getDocumentField(document, field.id));
+  const header = template.headerAsset ?? organization.branding.headerAsset ?? '';
+  const footer = template.footerAsset ?? organization.branding.footerAsset ?? '';
+  const pageHeader = elements.root.querySelector<HTMLElement>('.editor-page-header');
+  const pageFooter = elements.root.querySelector<HTMLElement>('.editor-page-footer');
+  if (pageHeader) pageHeader.innerHTML = header ? `<img src="${escapeHtml(header)}" alt="" />` : '';
+  if (pageFooter) pageFooter.innerHTML = footer ? `<img src="${escapeHtml(footer)}" alt="" />` : '';
+  const documentTitle = elements.root.querySelector<HTMLElement>('.editor-document-title');
+  if (documentTitle) documentTitle.innerHTML = `${escapeHtml(template.name)} <output id="editor-document-number"></output>`;
+  const appTitle = elements.root.querySelector<HTMLElement>('.app-header h1');
+  if (appTitle) appTitle.textContent = template.name;
   const numberOutput = elements.root.querySelector<HTMLOutputElement>('#editor-document-number');
   if (numberOutput) numberOutput.textContent = document.number > 0 ? `Nº ${document.number}/${document.year}` : 'Rascunho';
   const dateOutput = elements.root.querySelector<HTMLElement>('#editor-document-date');
