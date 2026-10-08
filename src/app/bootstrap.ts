@@ -1,7 +1,7 @@
-import { renderApp } from './App';
 import { validateOrganizationConfig } from '../configuration/validateOrganizationConfig';
 import { getObservability } from '../observability/Observability';
 import type { OrganizationConfig } from '../types/configuration';
+import { renderApp } from './App';
 
 export function bootstrapApp(
   root: HTMLElement,
