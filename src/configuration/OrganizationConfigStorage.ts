@@ -64,8 +64,9 @@ function migratePersistedConfig(value: unknown): OrganizationConfig | null {
   if (!isRecord(value)) return null;
 
   if (value.schemaVersion === CURRENT_SCHEMA_VERSION) {
-    return isRecord(value.organization)
-      ? (value.organization as OrganizationConfig)
+    return isRecord(value.organization) &&
+      validateOrganizationConfig(value.organization)
+      ? value.organization
       : null;
   }
 
