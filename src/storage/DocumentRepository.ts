@@ -48,10 +48,19 @@ export class DocumentRepository {
 
   public setActive(document: CommunicationDocument): void {
     this.activeStore.setItem(getActiveDocumentKey(document.templateId), document.id);
+    this.activeStore.setItem(LEGACY_ACTIVE_DOCUMENT_KEY, document.id);
   }
 
-  public clearActive(template: TemplateConfig): void {
-    this.activeStore.removeItem(getActiveDocumentKey(template.id));
+  public clearActive(template?: TemplateConfig): void {
+    if (template) {
+      this.activeStore.removeItem(getActiveDocumentKey(template.id));
+      if (this.activeStore.getItem(LEGACY_ACTIVE_DOCUMENT_KEY) === this.activeStore.getItem(getActiveDocumentKey(template.id))) {
+        this.activeStore.removeItem(LEGACY_ACTIVE_DOCUMENT_KEY);
+      }
+      return;
+    }
+
+    this.activeStore.removeItem(LEGACY_ACTIVE_DOCUMENT_KEY);
   }
 }
 
