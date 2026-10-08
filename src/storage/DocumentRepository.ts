@@ -9,7 +9,8 @@ export interface KeyValueStorage {
   removeItem(key: string): void;
 }
 
-const ACTIVE_DOCUMENT_KEY = 'ci:active-document';
+const ACTIVE_DOCUMENT_KEY_PREFIX = 'ci:active-document:';
+const LEGACY_ACTIVE_DOCUMENT_KEY = 'ci:active-document';
 
 export class DocumentRepository {
   public constructor(
@@ -18,10 +19,22 @@ export class DocumentRepository {
   ) {}
 
   public loadActive(template: TemplateConfig): CommunicationDocument {
-    const activeId = this.activeStore.getItem(ACTIVE_DOCUMENT_KEY);
+    const key = getActiveDocumentKey(template.id);
+    const activeId = this.activeStore.getItem(key);
     if (activeId) {
       const loaded = this.storage.load(activeId);
-      if (loaded && loaded.templateId === template.id) return loaded;
+      if (loaded?.templateId === template.id) return loaded;
+      this.activeStore.removeItem(key);
+    }
+
+    const legacyId = this.activeStore.getItem(LEGACY_ACTIVE_DOCUMENT_KEY);
+    if (legacyId) {
+      const legacyDocument = this.storage.load(legacyId);
+      if (legacyDocument?.templateId === template.id) {
+        this.activeStore.setItem(key, legacyDocument.id);
+        this.activeStore.removeItem(LEGACY_ACTIVE_DOCUMENT_KEY);
+        return legacyDocument;
+      }
     }
 
     const document = createDocument({
@@ -34,10 +47,14 @@ export class DocumentRepository {
   }
 
   public setActive(document: CommunicationDocument): void {
-    this.activeStore.setItem(ACTIVE_DOCUMENT_KEY, document.id);
+    this.activeStore.setItem(getActiveDocumentKey(document.templateId), document.id);
   }
 
-  public clearActive(): void {
-    this.activeStore.removeItem(ACTIVE_DOCUMENT_KEY);
+  public clearActive(template: TemplateConfig): void {
+    this.activeStore.removeItem(getActiveDocumentKey(template.id));
   }
+}
+
+function getActiveDocumentKey(templateId: string): string {
+  return `${ACTIVE_DOCUMENT_KEY_PREFIX}${templateId}`;
 }
