@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { defaultOrganization } from '../../src/configuration/defaultOrganization';
 import { createDocument } from '../../src/document/createDocument';
 import { createDocumentComposition, ensureDocumentComposition } from '../../src/document/documentComposition';
-import { defaultOrganization } from '../../src/configuration/defaultOrganization';
 import type { TemplateConfig } from '../../src/types/configuration';
 
 describe('document composition', () => {
