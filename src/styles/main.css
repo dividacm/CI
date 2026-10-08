@@ -47,3 +47,22 @@ html,body,#app{min-height:100%;margin:0}body{min-height:100vh;background:var(--c
 .smartart-node[data-selected="true"]{outline:2px solid var(--color-primary);outline-offset:2px}
 
 .paper-graphics-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}.paper-graphic-connectors{position:absolute;inset:0;width:100%;height:100%;overflow:visible}.paper-graphic-connector{fill:none;stroke:var(--color-muted);stroke-width:2}.paper-graphic-element{position:absolute;display:flex;align-items:center;justify-content:center;padding:8px;border:2px solid var(--color-primary);border-radius:8px;background:color-mix(in srgb,var(--color-primary) 8%,#fff);box-shadow:0 3px 10px rgb(15 23 42 / 12%);font-weight:700;overflow:hidden}.paper-graphic-element .smartart-content{width:100%;height:100%;overflow:hidden}.paper-graphic-element .smartart-node{pointer-events:none}
+
+.app-error {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 2rem;
+  background: var(--color-background, #f5f7fa);
+  color: var(--color-text, #1f2937);
+  text-align: center;
+}
+
+.app-error h1 {
+  margin: 0 0 0.75rem;
+}
+
+.app-error p {
+  max-width: 42rem;
+  margin: 0;
+}
