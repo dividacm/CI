@@ -73,8 +73,15 @@ export function renderDocument(document: CommunicationDocument, elements: AppEle
   const metadata = elements.root.querySelector<HTMLElement>('.editor-metadata');
   if (metadata) metadata.innerHTML = template.fields.map((field) => renderField(field.id, field.label, '', field.placeholder, field.required)).join('');
   for (const field of template.fields) populateField(elements.root, field.id, getDocumentField(document, field.id));
-  const header = template.headerAsset ?? organization.branding.headerAsset ?? '';
-  const footer = template.footerAsset ?? organization.branding.footerAsset ?? '';
+  const composition = document.composition ?? {
+    headerAsset: template.headerAsset ?? organization.branding.headerAsset,
+    footerAsset: template.footerAsset ?? organization.branding.footerAsset,
+    signatureName: organization.branding.signatureName,
+    signatureRole: organization.branding.signatureRole,
+    signatureLocation: organization.branding.signatureLocation,
+  };
+  const header = composition.headerAsset ?? '';
+  const footer = composition.footerAsset ?? '';
   const pageHeader = elements.root.querySelector<HTMLElement>('.editor-page-header');
   const pageFooter = elements.root.querySelector<HTMLElement>('.editor-page-footer');
   if (pageHeader) pageHeader.innerHTML = header ? `<img src="${escapeHtml(header)}" alt="" />` : '';
@@ -90,17 +97,30 @@ export function renderDocument(document: CommunicationDocument, elements: AppEle
   const formattedDate = formatDate(new Date());
   if (dateOutput) dateOutput.textContent = formattedDate;
   if (signatureDate) signatureDate.textContent = formattedDate;
+  const signature = elements.root.querySelector<HTMLElement>('.editor-signature');
+  if (signature) {
+    signature.innerHTML = `<div>${composition.signatureLocation ? `${escapeHtml(composition.signatureLocation)}, ` : ''}<span id="editor-signature-date"></span>.</div><strong>${escapeHtml(composition.signatureName ?? '')}</strong><div>${escapeHtml(composition.signatureRole ?? '')}</div>`;
+    const updatedSignatureDate = signature.querySelector<HTMLElement>('#editor-signature-date');
+    if (updatedSignatureDate) updatedSignatureDate.textContent = formattedDate;
+  }
   renderPreview(elements.paper, organization, template, document);
   const ruler = elements.root.querySelector<HTMLElement>('#horizontal-ruler');
   if (ruler) renderHorizontalRuler(ruler, { pageWidthMm: 210, marginLeftMm: organization.layout.marginLeftMm, marginRightMm: organization.layout.marginRightMm });
 }
 
 export function renderPreview(root: HTMLElement, organization: OrganizationConfig, template: TemplateConfig, document: CommunicationDocument): void {
-  const header = template.headerAsset ?? organization.branding.headerAsset;
-  const footer = template.footerAsset ?? organization.branding.footerAsset;
-  const signatureName = organization.branding.signatureName ?? '';
-  const signatureRole = organization.branding.signatureRole ?? '';
-  const location = organization.branding.signatureLocation ?? '';
+  const composition = document.composition ?? {
+    headerAsset: template.headerAsset ?? organization.branding.headerAsset,
+    footerAsset: template.footerAsset ?? organization.branding.footerAsset,
+    signatureName: organization.branding.signatureName,
+    signatureRole: organization.branding.signatureRole,
+    signatureLocation: organization.branding.signatureLocation,
+  };
+  const header = composition.headerAsset;
+  const footer = composition.footerAsset;
+  const signatureName = composition.signatureName ?? '';
+  const signatureRole = composition.signatureRole ?? '';
+  const location = composition.signatureLocation ?? '';
   const date = formatDate(new Date());
   const fields = template.fields.map((field) => renderPreviewField(field.label, getDocumentField(document, field.id))).join('');
   const body = sanitizeHtml(document.bodyHtml);

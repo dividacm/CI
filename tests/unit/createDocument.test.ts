@@ -22,8 +22,22 @@ describe('createDocument', () => {
     expect(document.fields).toEqual({ from: 'Origem', to: 'Destino', subject: 'Assunto padrão' });
     expect(document.bodyHtml).toBe('');
     expect(document.templateId).toBe(template.id);
+    expect(document.composition).toBeUndefined();
     expect(document.createdAt).toEqual(expect.any(String));
     expect(document.updatedAt).toEqual(expect.any(String));
+  });
+
+  it('preserva a composição fornecida ao criar o documento', () => {
+    const composition = {
+      headerAsset: '/assets/header-a.png',
+      footerAsset: '/assets/footer-a.png',
+      signatureName: 'Pessoa A',
+      signatureRole: 'Cargo A',
+      signatureLocation: 'Campo Mourão',
+    };
+    const document = createDocument({ template, number: 0, year: 2026, composition });
+
+    expect(document.composition).toEqual(composition);
   });
 
   it('permite sobrescrever defaults ao criar o documento', () => {
