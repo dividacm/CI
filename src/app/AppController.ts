@@ -1,7 +1,7 @@
 import { resolveTemplate } from '../configuration/resolveTemplate';
 import { createDocument } from '../document/createDocument';
-import { createDocumentComposition, ensureDocumentComposition } from '../document/documentComposition';
 import { DocumentIssuer } from '../document/DocumentIssuer';
+import { createDocumentComposition, ensureDocumentComposition } from '../document/documentComposition';
 import { Editor } from '../editor/Editor';
 import { GraphicConnectorInteractions } from '../graphics/GraphicConnectorInteractions';
 import { GraphicElementInteractions } from '../graphics/GraphicElementInteractions';
