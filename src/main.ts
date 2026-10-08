@@ -1,9 +1,7 @@
 import './styles/main.css';
 
-import { renderApp } from './app/App';
+import { bootstrapApp } from './app/bootstrap';
 import { defaultOrganization } from './configuration/defaultOrganization';
-import { getObservability } from './observability/Observability';
-import { validateOrganizationConfig } from './configuration/validateOrganizationConfig';
 
 const app = document.querySelector<HTMLDivElement>('#app');
 
@@ -11,18 +9,8 @@ if (!app) {
   throw new Error('Elemento #app não encontrado.');
 }
 
-if (!validateOrganizationConfig(defaultOrganization)) {
+if (!bootstrapApp(app, defaultOrganization)) {
   renderConfigurationError(app);
-} else {
-  try {
-    renderApp(app, defaultOrganization);
-  } catch (error) {
-    getObservability().captureError(error, {
-      operation: 'bootstrap',
-      component: 'App',
-    });
-    renderConfigurationError(app);
-  }
 }
 
 function renderConfigurationError(root: HTMLElement): void {
