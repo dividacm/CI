@@ -90,7 +90,18 @@ function normalizeError(error: unknown): { name: string; message: string; stack?
   };
 }
 
-function sanitizeStack(value: string): string {\n  return sanitizeString(\n    value\n      .replace(/<[^>]*>/g, '[REDACTED]')\n      .replace(\n        /(?:token|password|authorization|cookie)\\s*[=:]\\s*[^\\s,;]+/gi,\n        '[REDACTED]',\n      ),\n  );\n}\n\nfunction sanitizeErrorMessage(value: string): string {
+function sanitizeStack(value: string): string {
+  return sanitizeString(
+    value
+      .replace(/<[^>]*>/g, '[REDACTED]')
+      .replace(
+        /(?:token|password|authorization|cookie)\\s*[=:]\\s*[^\\s,;]+/gi,
+        '[REDACTED]',
+      ),
+  );
+}
+
+function sanitizeErrorMessage(value: string): string {
   return sanitizeString(
     value
       .replace(/<[^>]*>/g, '[REDACTED]')
