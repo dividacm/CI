@@ -1,5 +1,5 @@
-import { validateOrganizationConfig } from './validateOrganizationConfig';
 import type { OrganizationConfig } from '../types/configuration';
+import { validateOrganizationConfig } from './validateOrganizationConfig';
 
 const STORAGE_PREFIX = 'ci:organization-config:';
 const CURRENT_SCHEMA_VERSION = 1;
