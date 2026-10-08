@@ -53,8 +53,10 @@ export class DocumentRepository {
 
   public clearActive(template?: TemplateConfig): void {
     if (template) {
-      this.activeStore.removeItem(getActiveDocumentKey(template.id));
-      if (this.activeStore.getItem(LEGACY_ACTIVE_DOCUMENT_KEY) === this.activeStore.getItem(getActiveDocumentKey(template.id))) {
+      const key = getActiveDocumentKey(template.id);
+      const activeId = this.activeStore.getItem(key);
+      this.activeStore.removeItem(key);
+      if (activeId && this.activeStore.getItem(LEGACY_ACTIVE_DOCUMENT_KEY) === activeId) {
         this.activeStore.removeItem(LEGACY_ACTIVE_DOCUMENT_KEY);
       }
       return;
