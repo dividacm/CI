@@ -243,7 +243,7 @@ export class AppController {
       if (action === 'save') { sync(); autosave.saveNow(); return; }
       if (action === 'retry-save') { sync(); autosave.saveNow(); return; }
       if (action === 'clear') {
-        repository.clearActive();
+        repository.clearActive(template);
         actions.clear();
         const freshDocument = createDocument({ template, year: new Date().getFullYear(), number: 0 });
         state.document = freshDocument;
