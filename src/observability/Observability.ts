@@ -95,7 +95,7 @@ function sanitizeStack(value: string): string {
     value
       .replace(/<[^>]*>/g, '[REDACTED]')
       .replace(
-        /(?:token|password|authorization|cookie)\\s*[=:]\\s*[^\\s,;]+/gi,
+        /(?:token|password|authorization|cookie)\s*[=:]\s*[^\s,;]+/gi,
         '[REDACTED]',
       ),
   );
