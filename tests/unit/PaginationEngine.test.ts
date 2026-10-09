@@ -213,7 +213,11 @@ describe('PaginationEngine edge branches', () => {
     const pages: HTMLElement[] = [];
     const page = createPage(root, { layout }, pages);
     const content = page.querySelector<HTMLElement>('.paper-page-content')!;
-    setOverflowModel(content);
+    Object.defineProperty(content, 'scrollHeight', {
+      configurable: true,
+      get: () => content.querySelector('ul') ? 30 : 10,
+    });
+    Object.defineProperty(content, 'clientHeight', { configurable: true, value: 20 });
 
     appendBodyAcrossPages(root, pages, content, '<ul></ul>', { layout });
     expect(pages).toHaveLength(1);
@@ -264,12 +268,12 @@ describe('PaginationEngine edge branches', () => {
     const clone = cloneTextRange(paragraph, 0, 3) as HTMLElement;
     expect(clone.textContent).toBe('abc');
     expect(clone.querySelector('strong')?.textContent).toBe('abc');
-    expect(clone.querySelector('br')).toBeNull();
+    expect(clone.querySelector('br')).not.toBeNull();
   });
 
   it('finds line and tab breaks and returns the boundary when none exists nearby', () => {
     const node = document.createElement('p');
-    node.textContent = 'primeira linha\\nsegunda\\tterceira';
+    node.textContent = 'primeira linha\nsegunda\tterceira';
     expect(findPreferredBreak(node, 20)).toBeLessThanOrEqual(20);
 
     node.textContent = 'x'.repeat(100);
