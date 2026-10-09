@@ -60,6 +60,12 @@ describe('AppController additional UI flows', () => {
     document.body.appendChild(root);
     const organization = structuredClone(defaultOrganization);
 
+    // jsdom does not implement the browser scrolling API used by preview navigation.
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    });
+
     new AppController(root, organization).render();
 
     for (let i = 0; i < 20; i += 1) {
