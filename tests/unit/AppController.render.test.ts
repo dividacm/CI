@@ -128,4 +128,54 @@ describe('AppController additional UI flows', () => {
       fontColor.dispatchEvent(new Event('input', { bubbles: true }));
     }
   });
+
+  it('dispatches formatting, table, graphic, SmartArt, zoom, and template-change actions', async () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    const organization = structuredClone(defaultOrganization);
+    organization.templates.push({
+      id: 'alternate-template',
+      name: 'Modelo alternativo',
+      fields: [{ id: 'subject', label: 'Assunto', defaultValue: 'Novo assunto' }],
+    });
+
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    });
+
+    new AppController(root, organization).render();
+
+    const click = async (action: string) => {
+      root.querySelector<HTMLButtonElement>(`[data-action="${action}"]`)?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    };
+
+    for (const action of [
+      'bold', 'italic', 'underline', 'align-left', 'align-center', 'align-right',
+      'align-justify', 'list-unordered', 'list-ordered', 'font-inc', 'font-dec',
+      'upper', 'lower', 'clear-formatting', 'undo', 'redo',
+      'table-insert', 'table-row-select', 'table-column-select', 'table-row-add',
+      'table-row-delete', 'table-column-add', 'table-column-delete',
+      'table-column-widen', 'table-column-narrow',
+      'graphic-insert', 'smartart-insert', 'smartart-node-add', 'smartart-node-remove',
+      'smartart-layout-process', 'smartart-layout-hierarchy', 'smartart-layout-cycle',
+      'graphic-duplicate', 'graphic-front', 'graphic-back', 'graphic-connect',
+      'connector-delete', 'page-prev', 'page-next', 'zoom-out', 'zoom-reset', 'zoom-in',
+    ]) {
+      await click(action);
+    }
+
+    const templateSelector = root.querySelector<HTMLSelectElement>('#template-selector');
+    expect(templateSelector).not.toBeNull();
+    if (templateSelector) {
+      templateSelector.value = 'alternate-template';
+      templateSelector.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    expect(root.querySelector('.app-header h1')?.textContent).toBe('Modelo alternativo');
+    expect(root.querySelector('[data-field="subject"]')).not.toBeNull();
+    expect(root.querySelector('#preview-zoom')?.textContent).toBe('110%');
+  });
+
 });
