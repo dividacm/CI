@@ -702,3 +702,45 @@ describe('GraphicElementInteractions defensive branches', () => {
     document.body.innerHTML = '';
   });
 });
+
+
+describe('GraphicElementInteractions stale SmartArt selection guards', () => {
+  it('rejects edits and removals when the selected node no longer exists', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-stale-node',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'process',
+        nodes: [
+          { id: 'node-keep', text: 'Manter' },
+          { id: 'node-remove', text: 'Remover' },
+        ],
+      },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-stale-node"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-smartart-node-id="node-remove"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    expect(interactions.getSelectedSmartArtNodeId()).toBe('node-remove');
+
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-stale-node',
+      kind: 'smartart',
+      smartArt: {
+        layout: 'process',
+        nodes: [{ id: 'node-keep', text: 'Manter' }],
+      },
+    })]);
+
+    expect(interactions.editSelectedSmartArtNode('Texto atualizado')).toBe(false);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(false);
+    expect(interactions.getElements()[0]?.smartArt?.nodes).toEqual([{ id: 'node-keep', text: 'Manter' }]);
+
+    interactions.dispose();
+  });
+});
