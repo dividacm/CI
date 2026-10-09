@@ -180,3 +180,107 @@ describe('Editor', () => {
     expect(root.innerHTML).toContain('<strong>Texto</strong>');
   });
 });
+
+
+describe('Editor defensive history and clipboard paths', () => {
+  beforeEach(() => {
+    document.body.innerHTML = '';
+    window.getSelection()?.removeAllRanges();
+  });
+
+  it('uses external history handlers when configured and falls back when they decline', () => {
+    const { root, editor } = createEditor();
+    const externalUndo = vi.fn(() => true);
+    const externalRedo = vi.fn(() => false);
+    editor.setExternalHistoryHandlers(externalUndo, externalRedo);
+
+    key(root, 'z');
+    expect(externalUndo).toHaveBeenCalledOnce();
+
+    key(root, 'y');
+    expect(externalRedo).toHaveBeenCalledOnce();
+    expect(root.innerHTML).toBe('<p>Texto</p>');
+
+    editor.setExternalHistoryHandlers(null, null);
+    selectContents(root);
+    editor.bold();
+    key(root, 'z');
+    expect(root.innerHTML).toBe('<p>Texto</p>');
+  });
+
+  it('copies and cuts a selected range and inserts normalized plain text', async () => {
+    const { root, editor } = createEditor('<p>Texto selecionado</p>');
+    const clipboard = {
+      writeText: vi.fn().mockResolvedValue(undefined),
+      readText: vi.fn().mockResolvedValue('Linha 1\r\nLinha 2'),
+    };
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard });
+
+    selectContents(root);
+    expect(await editor.copy()).toBe(true);
+    expect(clipboard.writeText).toHaveBeenCalledWith('Texto selecionado');
+
+    selectContents(root);
+    expect(await editor.cut()).toBe(true);
+    expect(root.textContent).toBe('');
+
+    root.innerHTML = '<p>Destino</p>';
+    const text = root.querySelector('p')?.firstChild;
+    if (!text) throw new Error('Texto de destino não encontrado.');
+    const range = document.createRange();
+    range.setStart(text, 0);
+    range.collapse(true);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+    root.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+
+    expect(await editor.pastePlainText()).toBe(true);
+    expect(root.textContent).toBe('Linha 1\nLinha 2Destino');
+  });
+
+  it('returns false for empty clipboard content and failed clipboard access', async () => {
+    const { root, editor } = createEditor();
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: vi.fn().mockRejectedValue(new Error('denied')),
+        readText: vi.fn().mockResolvedValue(''),
+      },
+    });
+    expect(await editor.copy()).toBe(false);
+    expect(await editor.cut()).toBe(false);
+    expect(await editor.pastePlainText()).toBe(false);
+
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: {
+        writeText: vi.fn().mockRejectedValue(new Error('denied')),
+        readText: vi.fn().mockRejectedValue(new Error('denied')),
+      },
+    });
+    expect(await editor.pastePlainText()).toBe(false);
+    expect(root.innerHTML).toBe('<p>Texto</p>');
+  });
+
+  it('handles Tab navigation only when the selection is inside an active table cell', () => {
+    const { root } = createEditor('<table data-ci-table="true"><tbody><tr><td>A</td><td>B</td></tr></tbody></table>');
+    const cell = root.querySelector('td');
+    if (!cell) throw new Error('Célula não encontrada.');
+    const text = cell.firstChild;
+    if (!text) throw new Error('Texto da célula não encontrado.');
+    const range = document.createRange();
+    range.selectNodeContents(text);
+    const selection = window.getSelection();
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    cell.dispatchEvent(tab);
+    expect(tab.defaultPrevented).toBe(true);
+
+    const outsideTab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    root.dispatchEvent(outsideTab);
+    expect(outsideTab.defaultPrevented).toBe(false);
+  });
+});
