@@ -1,11 +1,12 @@
 import type { TemplateConfig } from '../types/configuration';
-import type { CommunicationDocument } from '../types/document';
+import type { CommunicationDocument, DocumentComposition } from '../types/document';
 
 export interface CreateDocumentInput {
   template: TemplateConfig;
   number: number;
   year: number;
   fields?: Record<string, string>;
+  composition?: DocumentComposition;
 }
 
 export function createDocument(input: CreateDocumentInput): CommunicationDocument {
@@ -23,6 +24,7 @@ export function createDocument(input: CreateDocumentInput): CommunicationDocumen
     graphics: [],
     connectors: [],
     templateId: input.template.id,
+    composition: input.composition,
     createdAt: now,
     updatedAt: now,
   };

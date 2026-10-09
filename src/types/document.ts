@@ -1,6 +1,14 @@
 import type { GraphicConnector } from '../graphics/GraphicConnectorModel';
 import type { GraphicElement } from '../graphics/GraphicElementModel';
 
+export interface DocumentComposition {
+  headerAsset?: string;
+  footerAsset?: string;
+  signatureName?: string;
+  signatureRole?: string;
+  signatureLocation?: string;
+}
+
 export interface CommunicationDocument {
   id: string;
   number: number;
@@ -10,6 +18,7 @@ export interface CommunicationDocument {
   graphics?: GraphicElement[];
   connectors?: GraphicConnector[];
   templateId: string;
+  composition?: DocumentComposition;
   createdAt: string;
   updatedAt: string;
 }

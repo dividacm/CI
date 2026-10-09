@@ -1,5 +1,7 @@
+import { resolveTemplate } from '../configuration/resolveTemplate';
 import { createDocument } from '../document/createDocument';
 import { DocumentIssuer } from '../document/DocumentIssuer';
+import { createDocumentComposition, ensureDocumentComposition } from '../document/documentComposition';
 import { Editor } from '../editor/Editor';
 import { GraphicConnectorInteractions } from '../graphics/GraphicConnectorInteractions';
 import { GraphicElementInteractions } from '../graphics/GraphicElementInteractions';
@@ -23,8 +25,7 @@ export class AppController {
 
   public render(): void {
   applySavedLayoutConfig(this.organization);
-  const template = this.organization.templates.find((item) => item.id === this.organization.defaultTemplateId);
-  if (!template) throw new Error(`Template não encontrado: ${this.organization.defaultTemplateId}`);
+  let template = resolveTemplate(this.organization);
 
   this.root.innerHTML = renderShell(this.organization, template);
   const tableButton = this.root.ownerDocument.createElement('button');
@@ -68,7 +69,10 @@ export class AppController {
   const repository = new DocumentRepository(storage);
   const issuer = new DocumentIssuer({ storage });
   const pdfExporter = new PdfExporter();
-  const state: AppState = { document: repository.loadActive(template), template, organization: this.organization };
+  const initialDocument = repository.loadActive(template);
+  const initialCompositionCreated = ensureDocumentComposition(initialDocument, this.organization, template);
+  if (initialCompositionCreated) storage.save(initialDocument);
+  const state: AppState = { document: initialDocument, template, organization: this.organization };
 
   renderDocument(state.document, elements, this.organization, template);
   const setStatus = (status: DocumentStatus): void => {
@@ -204,8 +208,30 @@ export class AppController {
   graphicsRoot.addEventListener('pointerdown', () => queueMicrotask(() => { syncGraphicTools(); syncConnectorTools(); syncSmartArtTools(); }));
   document.addEventListener('selectionchange', syncTableTools);
 
-  this.root.querySelectorAll<HTMLInputElement>('[data-field]').forEach((field) => {
-    field.addEventListener('input', () => sync(false));
+  this.root.querySelector<HTMLSelectElement>('#template-selector')?.addEventListener('change', () => {
+    const selectedTemplateId = this.root.querySelector<HTMLSelectElement>('#template-selector')?.value;
+    if (!selectedTemplateId || selectedTemplateId === template.id) return;
+
+    sync();
+    autosave.saveNow();
+    template = resolveTemplate(this.organization, selectedTemplateId);
+    state.template = template;
+    state.document = repository.loadActive(template);
+    if (ensureDocumentComposition(state.document, this.organization, template)) {
+      storage.save(state.document);
+    }
+    autosave.attach(state.document);
+    renderDocument(state.document, elements, this.organization, template);
+    graphics.setElements(state.document.graphics ?? []);
+    connectors.setConnectors(state.document.connectors ?? []);
+    syncGraphicTools();
+    syncConnectorTools();
+    syncSmartArtTools();
+    updateIssueButton(elements.issueButton, state.document);
+    syncRuler();
+  });
+  this.root.addEventListener('input', (event) => {
+    if ((event.target as HTMLElement).matches?.('[data-field]')) sync(false);
   });
   elements.editor.addEventListener('input', () => sync(false));
   elements.paper.addEventListener('keydown', (event) => {
@@ -224,9 +250,14 @@ export class AppController {
       if (action === 'save') { sync(); autosave.saveNow(); return; }
       if (action === 'retry-save') { sync(); autosave.saveNow(); return; }
       if (action === 'clear') {
-        repository.clearActive();
+        repository.clearActive(template);
         actions.clear();
-        const freshDocument = createDocument({ template, year: new Date().getFullYear(), number: 0 });
+        const freshDocument = createDocument({
+          template,
+          year: new Date().getFullYear(),
+          number: 0,
+          composition: createDocumentComposition(this.organization, template),
+        });
         state.document = freshDocument;
         repository.setActive(freshDocument);
         autosave.attach(freshDocument);
