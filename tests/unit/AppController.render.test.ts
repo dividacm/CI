@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { AppController } from '../../src/app/AppController';
 import { defaultOrganization } from '../../src/configuration/defaultOrganization';
+import { PdfExporter } from '../../src/pdf/PdfExporter';
 
 describe('AppController render flow', () => {
   afterEach(() => {
@@ -178,4 +179,74 @@ describe('AppController additional UI flows', () => {
     expect(root.querySelector('#preview-zoom')?.textContent).toBe('110%');
   });
 
+});
+
+
+describe('AppController PDF export branches', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('handles successful and failed PDF export without leaving the button disabled', async () => {
+    const exportSpy = vi.spyOn(PdfExporter.prototype, 'export')
+      .mockResolvedValueOnce(undefined)
+      .mockRejectedValueOnce(new Error('PDF export failed'));
+
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    new AppController(root, structuredClone(defaultOrganization)).render();
+
+    const pdfButton = root.querySelector<HTMLButtonElement>('[data-action="pdf"]');
+    const status = root.querySelector<HTMLElement>('#app-status');
+    expect(pdfButton).not.toBeNull();
+    expect(status).not.toBeNull();
+
+    pdfButton?.click();
+    await vi.waitFor(() => expect(status?.textContent).toBe('PDF gerado com sucesso.'));
+    expect(pdfButton?.disabled).toBe(false);
+    expect(exportSpy).toHaveBeenCalledTimes(1);
+
+    pdfButton?.click();
+    await vi.waitFor(() => expect(status?.textContent).toBe('Falha ao gerar PDF. Tente novamente.'));
+    expect(pdfButton?.disabled).toBe(false);
+    expect(exportSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('does not invoke the exporter when PDF export is disabled by organization policy', async () => {
+    const exportSpy = vi.spyOn(PdfExporter.prototype, 'export').mockResolvedValue(undefined);
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    const organization = structuredClone(defaultOrganization);
+    organization.features.pdfExport = false;
+
+    new AppController(root, organization).render();
+    root.querySelector<HTMLButtonElement>('[data-action="pdf"]')?.click();
+    await Promise.resolve();
+
+    expect(exportSpy).not.toHaveBeenCalled();
+  });
+
+  it('ignores a template selection that is empty or already active and unknown margin controls', () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    new AppController(root, structuredClone(defaultOrganization)).render();
+
+    const selector = root.querySelector<HTMLSelectElement>('#template-selector');
+    expect(selector).not.toBeNull();
+    selector?.dispatchEvent(new Event('change', { bubbles: true }));
+    if (selector) {
+      selector.value = selector.options[0]?.value ?? '';
+      selector.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    const unknownMargin = document.createElement('input');
+    unknownMargin.id = 'margin-unknown';
+    root.appendChild(unknownMargin);
+    unknownMargin.value = '20';
+    unknownMargin.dispatchEvent(new Event('change', { bubbles: true }));
+
+    expect(localStorage.getItem('ci:layout-config')).toBeNull();
+  });
 });
