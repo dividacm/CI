@@ -608,3 +608,97 @@ describe('GraphicElementInteractions', () => {
   });
 
 });
+
+
+describe('GraphicElementInteractions defensive branches', () => {
+  it('returns false for empty selection operations and empty history', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+
+    expect(interactions.hasSelection()).toBe(false);
+    expect(interactions.clearSelection()).toBeUndefined();
+    expect(interactions.duplicateSelected()).toBe(false);
+    expect(interactions.bringSelectedToFront()).toBe(false);
+    expect(interactions.sendSelectedToBack()).toBe(false);
+    expect(interactions.groupSelected()).toBe(false);
+    expect(interactions.ungroupSelected()).toBe(false);
+    expect(interactions.editSelectedSmartArtNode('Texto')).toBe(false);
+    expect(interactions.addSmartArtNode()).toBe(false);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('cycle')).toBe(false);
+    expect(interactions.undo()).toBe(false);
+    expect(interactions.redo()).toBe(false);
+
+    interactions.dispose();
+    interactions.dispose();
+  });
+
+  it('handles SmartArt no-op text, single-node removal, and repeated layout selection', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({
+      id: 'smartart-defensive',
+      kind: 'smartart',
+      smartArt: { layout: 'process', nodes: [{ id: 'only-node', text: 'Único' }] },
+    })]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="smartart-defensive"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+    root.querySelector<HTMLElement>('[data-smartart-node-id="only-node"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 10, clientY: 10 }),
+    );
+
+    expect(interactions.editSelectedSmartArtNode('   ')).toBe(false);
+    expect(interactions.editSelectedSmartArtNode('Único')).toBe(false);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('process')).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('hierarchy')).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.layout).toBe('hierarchy');
+  });
+
+  it('ignores invalid pointer targets and clears selection when clicking outside a graphic', () => {
+    const root = document.createElement('article');
+    document.body.appendChild(root);
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([createGraphicElement({ id: 'click-clear', kind: 'shape' })]);
+
+    root.querySelector<HTMLElement>('.graphic-elements-layer')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, button: 2, clientX: 1, clientY: 1 }),
+    );
+    root.querySelector<HTMLElement>('.graphic-elements-layer')?.dispatchEvent(
+      new MouseEvent('dblclick', { bubbles: true }),
+    );
+    root.querySelector<HTMLElement>('[data-graphic-id="click-clear"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 1, clientY: 1 }),
+    );
+    expect(interactions.hasSelection()).toBe(true);
+
+    root.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(interactions.hasSelection()).toBe(false);
+    expect(interactions.getSelectedIds()).toEqual([]);
+    interactions.dispose();
+    document.body.innerHTML = '';
+  });
+
+  it('ignores keyboard events without selection, from outside the root, or with unknown commands', () => {
+    const root = document.createElement('article');
+    document.body.appendChild(root);
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    interactions.setElements([createGraphicElement({ id: 'keyboard-guard', kind: 'shape' })]);
+    root.querySelector<HTMLElement>('[data-graphic-id="keyboard-guard"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, clientX: 0, clientY: 0 }),
+    );
+
+    const outside = document.createElement('button');
+    document.body.appendChild(outside);
+    outside.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+    root.dispatchEvent(new KeyboardEvent('keydown', { key: 'F1', bubbles: true }));
+    expect(interactions.getElements()[0]?.position.x).toBe(40);
+
+    interactions.dispose();
+    document.body.innerHTML = '';
+  });
+});
