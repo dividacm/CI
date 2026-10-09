@@ -696,7 +696,7 @@ describe('GraphicElementInteractions defensive branches', () => {
     document.body.appendChild(outside);
     outside.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
     root.dispatchEvent(new KeyboardEvent('keydown', { key: 'F1', bubbles: true }));
-    expect(interactions.getElements()[0]?.position.x).toBe(40);
+    expect(interactions.getElements()[0]?.position.x).toBe(0);
 
     interactions.dispose();
     document.body.innerHTML = '';
