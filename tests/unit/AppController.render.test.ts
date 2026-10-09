@@ -199,7 +199,7 @@ describe('AppController PDF export branches', () => {
     new AppController(root, structuredClone(defaultOrganization)).render();
 
     const pdfButton = root.querySelector<HTMLButtonElement>('[data-action="pdf"]');
-    const status = root.querySelector<HTMLElement>('#app-status');
+    const status = root.querySelector<HTMLElement>('#save-status');
     expect(pdfButton).not.toBeNull();
     expect(status).not.toBeNull();
 
