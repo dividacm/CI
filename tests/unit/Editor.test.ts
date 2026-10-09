@@ -265,7 +265,7 @@ describe('Editor defensive history and clipboard paths', () => {
   });
 
   it('handles Tab navigation only when the selection is inside an active table cell', () => {
-    const { root } = createEditor('<table data-ci-table="true"><tbody><tr><td>A</td><td>B</td></tr></tbody></table>');
+    const { root } = createEditor('<table data-ci-table="true"><tbody><tr><td>A</td><td>B</td></tr></tbody></table><p>Fora da tabela</p>');
     const cell = root.querySelector('td');
     if (!cell) throw new Error('Célula não encontrada.');
     cell.click();
@@ -280,6 +280,13 @@ describe('Editor defensive history and clipboard paths', () => {
     const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
     cell.dispatchEvent(tab);
     expect(tab.defaultPrevented).toBe(true);
+
+    const outsideText = root.querySelector('p')?.firstChild;
+    if (!outsideText) throw new Error('Texto fora da tabela não encontrado.');
+    const outsideRange = document.createRange();
+    outsideRange.selectNodeContents(outsideText);
+    selection?.removeAllRanges();
+    selection?.addRange(outsideRange);
 
     const outsideTab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
     root.dispatchEvent(outsideTab);
