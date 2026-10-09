@@ -25,9 +25,6 @@ jobs:
       - name: Dependency security audit
         run: npm audit --audit-level=high
 
-      - name: Dependency security audit
-        run: npm audit --audit-level=high
-
       - name: Run tests
         run: npm run test
 
