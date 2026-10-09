@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AppController } from '../../src/app/AppController';
+import { AppController, applySavedLayoutConfig, clampMargin, persistLayoutConfig } from '../../src/app/AppController';
 import { defaultOrganization } from '../../src/configuration/defaultOrganization';
 import { PdfExporter } from '../../src/pdf/PdfExporter';
 
@@ -250,5 +250,83 @@ describe('AppController PDF export branches', () => {
     }
 
     expect(localStorage.getItem('ci:layout-config')).toBeNull();
+  });
+});
+
+
+describe('AppController layout and branding branches', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('clamps margin values and falls back for non-finite input', () => {
+    expect(clampMargin(Number.NaN)).toBe(20);
+    expect(clampMargin(Number.POSITIVE_INFINITY)).toBe(20);
+    expect(clampMargin(-12)).toBe(0);
+    expect(clampMargin(13.6)).toBe(14);
+    expect(clampMargin(99)).toBe(60);
+  });
+
+  it('loads only valid numeric margins and optional branding assets from saved settings', () => {
+    const organization = structuredClone(defaultOrganization);
+    localStorage.setItem('ci:layout-config', JSON.stringify({
+      marginTopMm: 12.4,
+      marginRightMm: 'invalid',
+      marginBottomMm: 75,
+      unrelatedSetting: 123,
+      headerAsset: '/assets/header-test.png',
+      footerAsset: '',
+    }));
+
+    applySavedLayoutConfig(organization);
+
+    expect(organization.layout.marginTopMm).toBe(12);
+    expect(organization.layout.marginRightMm).toBe(defaultOrganization.layout.marginRightMm);
+    expect(organization.layout.marginBottomMm).toBe(60);
+    expect(organization.branding.headerAsset).toBe('/assets/header-test.png');
+    expect(organization.branding.footerAsset).toBeUndefined();
+  });
+
+  it('persists valid margin changes and trims or clears header and footer asset fields', () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    const organization = structuredClone(defaultOrganization);
+    new AppController(root, organization).render();
+
+    const margin = root.querySelector<HTMLInputElement>('#margin-left');
+    expect(margin).not.toBeNull();
+    if (margin) {
+      margin.value = '17.7';
+      margin.dispatchEvent(new Event('change', { bubbles: true }));
+      expect(margin.value).toBe('18');
+      expect(organization.layout.marginLeftMm).toBe(18);
+    }
+
+    const header = root.querySelector<HTMLInputElement>('#header-asset');
+    const footer = root.querySelector<HTMLInputElement>('#footer-asset');
+    expect(header).not.toBeNull();
+    expect(footer).not.toBeNull();
+    if (header) {
+      header.value = '  /assets/custom-header.png  ';
+      header.dispatchEvent(new Event('change', { bubbles: true }));
+      expect(organization.branding.headerAsset).toBe('/assets/custom-header.png');
+    }
+    if (footer) {
+      footer.value = '  ';
+      footer.dispatchEvent(new Event('change', { bubbles: true }));
+      expect(organization.branding.footerAsset).toBeUndefined();
+    }
+
+    const persisted = localStorage.getItem('ci:layout-config');
+    expect(persisted).not.toBeNull();
+    expect(JSON.parse(persisted ?? '{}')).toMatchObject({
+      marginLeftMm: 18,
+      headerAsset: '/assets/custom-header.png',
+      footerAsset: '',
+    });
+    persistLayoutConfig(organization);
+    expect(JSON.parse(localStorage.getItem('ci:layout-config') ?? '{}').footerAsset).toBe('');
   });
 });
