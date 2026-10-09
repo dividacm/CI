@@ -268,6 +268,7 @@ describe('Editor defensive history and clipboard paths', () => {
     const { root } = createEditor('<table data-ci-table="true"><tbody><tr><td>A</td><td>B</td></tr></tbody></table>');
     const cell = root.querySelector('td');
     if (!cell) throw new Error('Célula não encontrada.');
+    cell.click();
     const text = cell.firstChild;
     if (!text) throw new Error('Texto da célula não encontrado.');
     const range = document.createRange();
