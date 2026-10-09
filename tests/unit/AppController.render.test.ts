@@ -406,3 +406,40 @@ describe('AppController defensive action branches', () => {
     expect(editorRoot.textContent).toContain('Replacement content');
   });
 });
+
+describe('AppController command dispatch edge paths', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('dispatches toolbar commands safely with no active text, table, graphic, or connector selection', async () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    const organization = structuredClone(defaultOrganization);
+    new AppController(root, organization).render();
+
+    const actions = [
+      'bold', 'italic', 'underline', 'align-left', 'align-center', 'align-right',
+      'align-justify', 'list-unordered', 'list-ordered', 'table-row-select',
+      'table-column-select', 'table-row-add', 'table-row-delete', 'table-column-add',
+      'table-column-delete', 'table-column-widen', 'table-column-narrow',
+      'font-inc', 'font-dec', 'upper', 'lower', 'copy', 'cut', 'paste',
+      'clear-formatting', 'smartart-node-add', 'smartart-node-remove',
+      'smartart-layout-process', 'smartart-layout-hierarchy', 'smartart-layout-cycle',
+      'graphic-duplicate', 'graphic-front', 'graphic-back', 'connector-delete',
+      'smartart-node-edit', 'graphic-connect', 'undo', 'redo',
+    ];
+
+    for (const action of actions) {
+      const button = root.querySelector<HTMLButtonElement>(`[data-action="${action}"]`);
+      if (button) {
+        button.click();
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+
+    expect(root.querySelector('#editor')).not.toBeNull();
+  });
+});
