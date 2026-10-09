@@ -330,3 +330,79 @@ describe('AppController layout and branding branches', () => {
     expect(JSON.parse(localStorage.getItem('ci:layout-config') ?? '{}').footerAsset).toBe('');
   });
 });
+
+
+describe('AppController defensive action branches', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('handles retry, empty issue requests, inactive SmartArt editing, and empty branding paths', async () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    const organization = structuredClone(defaultOrganization);
+    new AppController(root, organization).render();
+
+    const click = async (action: string) => {
+      root.querySelector<HTMLButtonElement>(`[data-action="${action}"]`)?.click();
+      await Promise.resolve();
+      await Promise.resolve();
+    };
+
+    await click('retry-save');
+    await click('issue');
+    await click('smartart-node-edit');
+    await click('graphic-connect');
+    await click('copy');
+    await click('cut');
+    await click('paste');
+
+    const header = root.querySelector<HTMLInputElement>('#header-asset');
+    const footer = root.querySelector<HTMLInputElement>('#footer-asset');
+    expect(header).not.toBeNull();
+    expect(footer).not.toBeNull();
+    if (header) {
+      header.value = '';
+      header.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (footer) {
+      footer.value = '';
+      footer.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    expect(organization.branding.headerAsset).toBeUndefined();
+    expect(organization.branding.footerAsset).toBeUndefined();
+    expect(JSON.parse(localStorage.getItem('ci:layout-config') ?? '{}')).toMatchObject({
+      headerAsset: '',
+      footerAsset: '',
+    });
+  });
+
+  it('discards a saved selection after its text node is replaced', () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    new AppController(root, structuredClone(defaultOrganization)).render();
+    const editorRoot = root.querySelector<HTMLElement>('#editor');
+    expect(editorRoot).not.toBeNull();
+    if (!editorRoot) return;
+
+    const textNode = editorRoot.querySelector('[contenteditable="true"]')?.firstChild;
+    if (textNode) {
+      const range = document.createRange();
+      range.selectNodeContents(textNode);
+      const selection = window.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(range);
+      editorRoot.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    }
+    editorRoot.innerHTML = '<p>Replacement content</p>';
+    editorRoot.dispatchEvent(new KeyboardEvent('keydown', {
+      key: 'b',
+      ctrlKey: true,
+      bubbles: true,
+      cancelable: true,
+    }));
+    expect(editorRoot.textContent).toContain('Replacement content');
+  });
+});
