@@ -241,11 +241,13 @@ describe('AppController PDF export branches', () => {
       selector.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    const unknownMargin = document.createElement('input');
-    unknownMargin.id = 'margin-unknown';
-    root.appendChild(unknownMargin);
-    unknownMargin.value = '20';
-    unknownMargin.dispatchEvent(new Event('change', { bubbles: true }));
+    const unknownMargin = root.querySelector<HTMLInputElement>('#margin-top');
+    expect(unknownMargin).not.toBeNull();
+    if (unknownMargin) {
+      unknownMargin.id = 'margin-unknown';
+      unknownMargin.value = '20';
+      unknownMargin.dispatchEvent(new Event('change', { bubbles: true }));
+    }
 
     expect(localStorage.getItem('ci:layout-config')).toBeNull();
   });
