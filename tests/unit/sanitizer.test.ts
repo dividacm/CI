@@ -54,14 +54,17 @@ describe('sanitizeHtml', () => {
     expect(result).not.toContain('alert(1)');
   });
 
-  it('remove URLs perigosas de estilos inline e mantém formatação segura', () => {
-    const result = sanitizeHtml(
+  it('remove estilos inline com valores perigosos e preserva estilos seguros', () => {
+    const unsafeResult = sanitizeHtml(
       '<p style="color: red; background-image: url(javascript:alert(1))">Texto</p>',
     );
+    const safeResult = sanitizeHtml('<p style="color: red">Texto seguro</p>');
 
-    expect(result).toContain('Texto');
-    expect(result).not.toMatch(/javascript\s*:/i);
-    expect(result).not.toContain('alert(1)');
-    expect(result).toMatch(/style="[^"]*color:\s*red/i);
+    expect(unsafeResult).toContain('Texto');
+    expect(unsafeResult).not.toMatch(/javascript\s*:/i);
+    expect(unsafeResult).not.toContain('alert(1)');
+    expect(unsafeResult).not.toMatch(/style=/i);
+    expect(safeResult).toContain('Texto seguro');
+    expect(safeResult).toMatch(/style="[^"]*color:\s*red/i);
   });
 });
