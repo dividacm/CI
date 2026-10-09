@@ -59,6 +59,7 @@ describe('Editor', () => {
     const cell = root.querySelector<HTMLTableCellElement>('td');
     if (!cell) throw new Error('Célula de teste não encontrada.');
     cell.click();
+    cell.click();
     const text = cell.firstChild;
     if (!text) throw new Error('Texto da célula não encontrado.');
     const range = document.createRange();
