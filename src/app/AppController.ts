@@ -357,7 +357,8 @@ export class AppController {
       });
       commands.register('graphic-connect', () => {
         const ids = graphics.getSelectedIds();
-        if (ids.length === 2) connectors.connect(ids[0]!, ids[1]!);
+        const [fromId, toId] = ids;
+        if (fromId !== undefined && toId !== undefined && ids.length === 2) connectors.connect(fromId, toId);
       });
       commands.register('undo', () => {
         if (connectors.hasSelection()) connectors.undo();
