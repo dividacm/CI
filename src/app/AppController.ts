@@ -361,12 +361,12 @@ export class AppController {
       });
       commands.register('undo', () => {
         if (connectors.hasSelection()) connectors.undo();
-        else if (graphics.hasSelection()) graphics.undo();
+        else if (graphics.hasSelection() || graphics.canUndo()) graphics.undo();
         else editor.undo();
       });
       commands.register('redo', () => {
         if (connectors.hasSelection()) connectors.redo();
-        else if (graphics.hasSelection()) graphics.redo();
+        else if (graphics.hasSelection() || graphics.canRedo()) graphics.redo();
         else editor.redo();
       });
       if (!(await commands.execute(action))) return;
