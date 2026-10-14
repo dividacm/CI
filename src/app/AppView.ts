@@ -23,7 +23,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
     .join('');
   const layout = organization.layout;
   const header = template.headerAsset ?? organization.branding.headerAsset ?? '';
-  const templateOptions = organization.templates.map((item) => '<option value="' + escapeHtml(item.id) + '"' + (item.id === template.id ? ' selected' : '') + '>' + escapeHtml(item.name) + '</option>').join('');
+  const templateOptions = organization.templates.map((item) => `<option value="${escapeHtml(item.id)}"${item.id === template.id ? ' selected' : ''}>${escapeHtml(item.name)}</option>`).join('');
   const footer = template.footerAsset ?? organization.branding.footerAsset ?? '';
 
   return `<main class="app-shell" style="--primary:${escapeHtml(organization.branding.primaryColor)};--secondary:${escapeHtml(organization.branding.secondaryColor)};--body-font:${escapeHtml(organization.branding.fontFamily)};--document-margin-top:${layout.marginTopMm}mm;--document-margin-right:${layout.marginRightMm}mm;--document-margin-bottom:${layout.marginBottomMm}mm;--document-margin-left:${layout.marginLeftMm}mm">
