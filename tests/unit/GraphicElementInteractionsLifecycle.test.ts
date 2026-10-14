@@ -94,3 +94,75 @@ describe('GraphicElementInteractions command guard branches', () => {
     interactions.dispose();
   });
 });
+
+
+describe('GraphicElementInteractions history and ordering branches', () => {
+  it('covers empty and populated undo/redo stacks', () => {
+    const root = document.createElement('article');
+    const onChange = vi.fn();
+    const interactions = new GraphicElementInteractions(root, { onChange });
+
+    expect(interactions.canUndo()).toBe(false);
+    expect(interactions.canRedo()).toBe(false);
+    expect(interactions.undo()).toBe(false);
+    expect(interactions.redo()).toBe(false);
+
+    expect(interactions.insertShape()).toBe(true);
+    expect(interactions.canUndo()).toBe(true);
+    expect(interactions.canRedo()).toBe(false);
+    expect(interactions.undo()).toBe(true);
+    expect(interactions.canUndo()).toBe(false);
+    expect(interactions.canRedo()).toBe(true);
+    expect(interactions.redo()).toBe(true);
+    expect(interactions.canUndo()).toBe(true);
+    expect(interactions.canRedo()).toBe(false);
+
+    interactions.dispose();
+  });
+
+  it('covers grouping, ungrouping, and no-op z-order changes', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({ id: 'shape-a', kind: 'shape', position: { x: 10, y: 10 } }),
+      createGraphicElement({ id: 'shape-b', kind: 'shape', position: { x: 30, y: 30 } }),
+    ]);
+
+    expect(interactions.groupSelected()).toBe(false);
+    expect(interactions.ungroupSelected()).toBe(false);
+    expect(interactions.bringSelectedToFront()).toBe(false);
+    expect(interactions.sendSelectedToBack()).toBe(false);
+
+    const first = root.querySelector<HTMLElement>('[data-graphic-id="shape-a"]');
+    const second = root.querySelector<HTMLElement>('[data-graphic-id="shape-b"]');
+    first?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 10, clientY: 10 }));
+    second?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0, ctrlKey: true, clientX: 30, clientY: 30 }));
+
+    expect(interactions.getSelectedIds()).toHaveLength(2);
+    expect(interactions.groupSelected()).toBe(true);
+    expect(interactions.getElements().every((element) => Boolean(element.groupId))).toBe(true);
+    expect(interactions.ungroupSelected()).toBe(true);
+    expect(interactions.getElements().every((element) => !element.groupId)).toBe(true);
+
+    interactions.dispose();
+  });
+
+  it('covers z-order changes when a selected element can move', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({ id: 'shape-a', kind: 'shape', position: { x: 10, y: 10 } }),
+      createGraphicElement({ id: 'shape-b', kind: 'shape', position: { x: 30, y: 30 } }),
+    ]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="shape-a"]')?.dispatchEvent(
+      new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 10, clientY: 10 }),
+    );
+    expect(interactions.bringSelectedToFront()).toBe(true);
+    expect(interactions.getElements().map((element) => element.id)).toEqual(['shape-b', 'shape-a']);
+    expect(interactions.sendSelectedToBack()).toBe(true);
+    expect(interactions.getElements().map((element) => element.id)).toEqual(['shape-a', 'shape-b']);
+
+    interactions.dispose();
+  });
+});
