@@ -62,3 +62,35 @@ describe('GraphicElementInteractions lifecycle', () => {
     expect(onChange).toHaveBeenCalledTimes(0);
   });
 });
+
+
+describe('GraphicElementInteractions command guard branches', () => {
+  it('rejects SmartArt and grouping operations without a valid selection', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+
+    expect(interactions.groupSelected()).toBe(false);
+    expect(interactions.ungroupSelected()).toBe(false);
+    expect(interactions.editSelectedSmartArtNode('Updated')).toBe(false);
+    expect(interactions.addSmartArtNode()).toBe(false);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('hierarchy')).toBe(false);
+
+    interactions.dispose();
+  });
+
+  it('covers SmartArt node editing guards and layout updates on a selected SmartArt', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+
+    expect(interactions.insertSmartArt('process')).toBe(true);
+    expect(interactions.editSelectedSmartArtNode('')).toBe(false);
+    expect(interactions.editSelectedSmartArtNode('Etapa 1')).toBe(false);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('process')).toBe(false);
+    expect(interactions.setSelectedSmartArtLayout('hierarchy')).toBe(true);
+    expect(interactions.addSmartArtNode()).toBe(true);
+
+    interactions.dispose();
+  });
+});
