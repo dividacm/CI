@@ -443,3 +443,41 @@ describe('AppController command dispatch edge paths', () => {
     expect(root.querySelector('#editor')).not.toBeNull();
   });
 });
+
+
+describe('AppController selected graphic history routing', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('routes undo and redo to the selected graphic history', async () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    new AppController(root, structuredClone(defaultOrganization)).render();
+
+    root.querySelector<HTMLButtonElement>('[data-action="graphic-insert"]')?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const graphic = root.querySelector<HTMLElement>('[data-graphic-id]');
+    expect(graphic).not.toBeNull();
+    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(1);
+
+    graphic?.dispatchEvent(new MouseEvent('pointerdown', {
+      bubbles: true,
+      clientX: 10,
+      clientY: 10,
+    }));
+    root.querySelector<HTMLButtonElement>('[data-action="undo"]')?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(0);
+
+    root.querySelector<HTMLButtonElement>('[data-action="redo"]')?.click();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(1);
+  });
+});
