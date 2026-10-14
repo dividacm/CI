@@ -134,8 +134,9 @@ describe('GraphicElementInteractions history and ordering branches', () => {
     expect(interactions.sendSelectedToBack()).toBe(false);
 
     const first = root.querySelector<HTMLElement>('[data-graphic-id="shape-a"]');
-    const second = root.querySelector<HTMLElement>('[data-graphic-id="shape-b"]');
     first?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0, clientX: 10, clientY: 10 }));
+    // Selecting the first element re-renders the layer, so query the second element afterward.
+    const second = root.querySelector<HTMLElement>('[data-graphic-id="shape-b"]');
     second?.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true, button: 0, ctrlKey: true, clientX: 30, clientY: 30 }));
 
     expect(interactions.getSelectedIds()).toHaveLength(2);
