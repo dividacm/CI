@@ -10,13 +10,21 @@ vi.mock('html2canvas', () => ({
   default: html2canvas,
 }));
 
+
 vi.mock('jspdf', () => ({
-  jsPDF: vi.fn().mockImplementation(() => ({
-    internal: { pageSize: { getWidth: () => 210, getHeight: () => 297 } },
-    addPage,
-    addImage,
-    save,
-  })),
+  jsPDF: vi.fn().mockImplementation(function () {
+    return {
+      internal: {
+        pageSize: {
+          getWidth: () => 210,
+          getHeight: () => 297,
+        },
+      },
+      addPage,
+      addImage,
+      save,
+    };
+  }),
 }));
 
 describe('PdfExporter', () => {

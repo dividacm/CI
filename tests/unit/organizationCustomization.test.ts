@@ -62,7 +62,8 @@ describe('organization customization acceptance', () => {
   });
 
   it('builds document composition entirely from organization and template config', () => {
-    const template = secondOrganization.templates[0]!;
+    const template = secondOrganization.templates[0];
+    if (!template) throw new Error('Modelo de memorando não encontrado.');
 
     expect(createDocumentComposition(secondOrganization, template)).toEqual({
       headerAsset: '/assets/org-exemplo/header.png',

@@ -15,11 +15,11 @@ export function renderGraphicFlow(container: HTMLElement, options: RenderGraphic
     const node = doc.createElement('div');
     node.className = 'paper-graphic-element';
     node.dataset.graphicId = element.id;
-    node.style.left = placement.x + 'px';
-    node.style.top = placement.y + 'px';
-    node.style.width = element.size.width + 'px';
-    node.style.height = element.size.height + 'px';
-    node.style.transform = 'rotate(' + element.rotation + 'deg)';
+    node.style.left = `${placement.x}px`;
+    node.style.top = `${placement.y}px`;
+    node.style.width = `${element.size.width}px`;
+    node.style.height = `${element.size.height}px`;
+    node.style.transform = `rotate(${element.rotation}deg)`;
     node.setAttribute('aria-label', element.data.label || (element.kind === 'smartart' ? 'SmartArt' : 'Forma'));
     if (element.kind === 'smartart' && element.smartArt) renderSmartArt(node, element.smartArt.nodes);
     else node.textContent = element.data.label || 'Forma';
@@ -52,7 +52,7 @@ function renderConnectors(ownerDocument: Document, connectors: GraphicConnector[
   const svg = ownerDocument.createElementNS('http://www.w3.org/2000/svg', 'svg');
   svg.classList.add('paper-graphic-connectors');
   svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('viewBox', '0 0 ' + Math.max(1, metrics.contentWidthPx) + ' ' + Math.max(1, metrics.contentHeightPx));
+  svg.setAttribute('viewBox', `0 0 ${Math.max(1, metrics.contentWidthPx)} ${Math.max(1, metrics.contentHeightPx)}`);
   svg.setAttribute('preserveAspectRatio', 'none');
   const byId = new Map(elements.map((element) => [element.id, element]));
   for (const connector of connectors) {
