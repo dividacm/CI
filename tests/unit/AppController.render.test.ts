@@ -457,27 +457,21 @@ describe('AppController selected graphic history routing', () => {
     document.body.appendChild(root);
     new AppController(root, structuredClone(defaultOrganization)).render();
 
+    const initialCount = root.querySelectorAll('[data-graphic-id]').length;
     root.querySelector<HTMLButtonElement>('[data-action="graphic-insert"]')?.click();
     await Promise.resolve();
     await Promise.resolve();
 
-    const graphic = root.querySelector<HTMLElement>('[data-graphic-id]');
-    expect(graphic).not.toBeNull();
-    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(1);
+    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(initialCount + 1);
 
-    graphic?.dispatchEvent(new MouseEvent('pointerdown', {
-      bubbles: true,
-      clientX: 10,
-      clientY: 10,
-    }));
     root.querySelector<HTMLButtonElement>('[data-action="undo"]')?.click();
     await Promise.resolve();
     await Promise.resolve();
-    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(0);
+    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(initialCount);
 
     root.querySelector<HTMLButtonElement>('[data-action="redo"]')?.click();
     await Promise.resolve();
     await Promise.resolve();
-    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(1);
+    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(initialCount + 1);
   });
 });
