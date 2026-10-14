@@ -89,6 +89,14 @@ export class GraphicElementInteractions {
     return [...this.selectedIds];
   }
 
+  canUndo(): boolean {
+    return this.undoStack.length > 0;
+  }
+
+  canRedo(): boolean {
+    return this.redoStack.length > 0;
+  }
+
   getSelectedSmartArtNodeId(): string | null {
     return this.selectedSmartArtNodeId;
   }

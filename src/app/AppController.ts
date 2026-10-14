@@ -357,16 +357,17 @@ export class AppController {
       });
       commands.register('graphic-connect', () => {
         const ids = graphics.getSelectedIds();
-        if (ids.length === 2) connectors.connect(ids[0]!, ids[1]!);
+        const [fromId, toId] = ids;
+        if (fromId !== undefined && toId !== undefined && ids.length === 2) connectors.connect(fromId, toId);
       });
       commands.register('undo', () => {
         if (connectors.hasSelection()) connectors.undo();
-        else if (graphics.hasSelection()) graphics.undo();
+        else if (graphics.hasSelection() || graphics.canUndo()) graphics.undo();
         else editor.undo();
       });
       commands.register('redo', () => {
         if (connectors.hasSelection()) connectors.redo();
-        else if (graphics.hasSelection()) graphics.redo();
+        else if (graphics.hasSelection() || graphics.canRedo()) graphics.redo();
         else editor.redo();
       });
       if (!(await commands.execute(action))) return;
@@ -410,7 +411,7 @@ export class AppController {
   }
 }
 
-function applySavedLayoutConfig(organization: OrganizationConfig): void {
+export function applySavedLayoutConfig(organization: OrganizationConfig): void {
   const raw = localStorage.getItem(LAYOUT_CONFIG_KEY);
   if (!raw) return;
   try {
@@ -437,7 +438,7 @@ function applySavedLayoutConfig(organization: OrganizationConfig): void {
   }
 }
 
-function persistLayoutConfig(organization: OrganizationConfig): void {
+export function persistLayoutConfig(organization: OrganizationConfig): void {
   localStorage.setItem(LAYOUT_CONFIG_KEY, JSON.stringify({
     ...organization.layout,
     headerAsset: organization.branding.headerAsset ?? '',
@@ -445,7 +446,7 @@ function persistLayoutConfig(organization: OrganizationConfig): void {
   }));
 }
 
-function clampMargin(value: number): number {
+export function clampMargin(value: number): number {
   if (!Number.isFinite(value)) return 20;
   return Math.min(60, Math.max(0, Math.round(value)));
 }
