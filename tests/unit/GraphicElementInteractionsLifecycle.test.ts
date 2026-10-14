@@ -167,3 +167,53 @@ describe('GraphicElementInteractions history and ordering branches', () => {
     interactions.dispose();
   });
 });
+
+
+describe('GraphicElementInteractions SmartArt node lifecycle branches', () => {
+  it('edits a selected node and removes it while detaching its children', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    const prompt = vi.spyOn(window, 'prompt').mockReturnValue('Direção atualizada');
+
+    interactions.insertSmartArt('hierarchy');
+    const graphic = root.querySelector<HTMLElement>('.graphic-element-smartart');
+    const nodes = graphic?.querySelectorAll<HTMLElement>('.smartart-node');
+    expect(nodes?.length).toBe(2);
+
+    nodes?.[0]?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(interactions.getElements()[0]?.smartArt?.nodes[0]?.text).toBe('Direção atualizada');
+    expect(interactions.getSelectedSmartArtNodeId()).toBe(interactions.getElements()[0]?.smartArt?.nodes[0]?.id);
+
+    expect(interactions.removeSelectedSmartArtNode()).toBe(true);
+    const remaining = interactions.getElements()[0]?.smartArt?.nodes ?? [];
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.parentId).toBeUndefined();
+    expect(interactions.getSelectedSmartArtNodeId()).toBeNull();
+
+    prompt.mockRestore();
+    interactions.dispose();
+  });
+
+  it('ignores unchanged or cancelled SmartArt edits and supports hierarchy child creation', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    const prompt = vi.spyOn(window, 'prompt').mockReturnValue(null);
+
+    interactions.insertSmartArt('hierarchy');
+    const firstNode = root.querySelector<HTMLElement>('.smartart-node');
+    firstNode?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(interactions.getElements()[0]?.smartArt?.nodes[0]?.text).toBe('Direção');
+
+    const nodeId = interactions.getElements()[0]?.smartArt?.nodes[0]?.id;
+    expect(nodeId).toBeTruthy();
+    expect(interactions.addSmartArtNode()).toBe(true);
+    const elements = interactions.getElements();
+    const addedNode = elements[0]?.smartArt?.nodes[2];
+    expect(addedNode?.parentId).toBe(nodeId);
+    expect(interactions.removeSelectedSmartArtNode()).toBe(true);
+    expect(interactions.getElements()[0]?.smartArt?.nodes).toHaveLength(2);
+
+    prompt.mockRestore();
+    interactions.dispose();
+  });
+});
