@@ -4,8 +4,8 @@ import {
   cloneTextRange,
   createPage,
   findPreferredBreak,
-  isOverflowing,
   getPageContent,
+  isOverflowing,
   removeEmptyPages,
 } from '../../src/pagination/PaginationEngine';
 
