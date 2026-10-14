@@ -465,20 +465,19 @@ describe('AppController selected graphic history routing', () => {
     ).size;
     const initialCount = graphicIds();
 
+    const flushCommands = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
     root.querySelector<HTMLButtonElement>('[data-action="graphic-insert"]')?.click();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushCommands();
 
     expect(graphicIds()).toBe(initialCount + 1);
 
     root.querySelector<HTMLButtonElement>('[data-action="undo"]')?.click();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushCommands();
     expect(graphicIds()).toBe(initialCount);
 
     root.querySelector<HTMLButtonElement>('[data-action="redo"]')?.click();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushCommands();
     expect(graphicIds()).toBe(initialCount + 1);
   });
 });
