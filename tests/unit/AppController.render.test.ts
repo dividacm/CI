@@ -457,21 +457,28 @@ describe('AppController selected graphic history routing', () => {
     document.body.appendChild(root);
     new AppController(root, structuredClone(defaultOrganization)).render();
 
-    const initialCount = root.querySelectorAll('[data-graphic-id]').length;
+    // Graphic renderers can repeat data-graphic-id on nested nodes; count unique model IDs.
+    const graphicIds = () => new Set(
+      [...root.querySelectorAll<HTMLElement>('[data-graphic-id]')]
+        .map((element) => element.dataset.graphicId)
+        .filter((id): id is string => Boolean(id)),
+    ).size;
+    const initialCount = graphicIds();
+
     root.querySelector<HTMLButtonElement>('[data-action="graphic-insert"]')?.click();
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(initialCount + 1);
+    expect(graphicIds()).toBe(initialCount + 1);
 
     root.querySelector<HTMLButtonElement>('[data-action="undo"]')?.click();
     await Promise.resolve();
     await Promise.resolve();
-    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(initialCount);
+    expect(graphicIds()).toBe(initialCount);
 
     root.querySelector<HTMLButtonElement>('[data-action="redo"]')?.click();
     await Promise.resolve();
     await Promise.resolve();
-    expect(root.querySelectorAll('[data-graphic-id]')).toHaveLength(initialCount + 1);
+    expect(graphicIds()).toBe(initialCount + 1);
   });
 });
