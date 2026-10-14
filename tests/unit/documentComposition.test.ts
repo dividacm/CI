@@ -6,8 +6,10 @@ import type { TemplateConfig } from '../../src/types/configuration';
 
 describe('document composition', () => {
   it('snapshots template assets and organization signature data', () => {
+    const baseTemplate = defaultOrganization.templates[0];
+    if (!baseTemplate) throw new Error('Modelo padrão não encontrado.');
     const template: TemplateConfig = {
-      ...defaultOrganization.templates[0]!,
+      ...baseTemplate,
       headerAsset: '/assets/template-header.png',
       footerAsset: '/assets/template-footer.png',
     };
@@ -22,7 +24,8 @@ describe('document composition', () => {
   });
 
   it('does not replace an existing document composition', () => {
-    const template = defaultOrganization.templates[0]!;
+    const template = defaultOrganization.templates[0];
+    if (!template) throw new Error('Modelo padrão não encontrado.');
     const document = createDocument({
       template,
       number: 0,
