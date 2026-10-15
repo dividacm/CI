@@ -91,19 +91,18 @@ function normalizeError(error: unknown): { name: string; message: string; stack?
 }
 
 function sanitizeStack(value: string): string {
-  return sanitizeString(
-    value
-      .replace(/<[^>]*>/g, '[REDACTED]')
-      .replace(
-        /(?:token|password|authorization|cookie)\s*[=:]\s*[^\s,;]+/gi,
-        '[REDACTED]',
-      ),
-  );
+  return sanitizeErrorText(value);
 }
 
 function sanitizeErrorMessage(value: string): string {
+  return sanitizeErrorText(value);
+}
+
+function sanitizeErrorText(value: string): string {
   return sanitizeString(
     value
+      // Remove complete markup elements before stripping residual tags so inner text is not leaked.
+      .replace(/<([a-z][\w:-]*)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '[REDACTED]')
       .replace(/<[^>]*>/g, '[REDACTED]')
       .replace(
         /(?:token|password|authorization|cookie)\s*[=:]\s*[^\s,;]+/gi,
