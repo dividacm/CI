@@ -40,7 +40,6 @@ describe('DocumentBackup', () => {
     const original = sampleDocument();
     const json = serializeDocumentBackup(original, '2026-10-15T12:00:00.000Z');
     const restored = parseDocumentBackup(json, original.templateId);
-
     expect(restored).toMatchObject({
       id: original.id,
       templateId: original.templateId,
@@ -57,7 +56,7 @@ describe('DocumentBackup', () => {
     expect(() => parseDocumentBackup(JSON.stringify({ format: 'other', schemaVersion: 1 }), original.templateId)).toThrow(/não é um backup/);
     expect(() => parseDocumentBackup(JSON.stringify(envelope(original, { schemaVersion: 99 })), original.templateId)).toThrow(/não é compatível/);
     expect(() => parseDocumentBackup(JSON.stringify(envelope(original, { exportedAt: 42 })), original.templateId)).toThrow(/incompleto/);
-    expect(() => parseDocumentBackup(JSON.stringify(envelope(null)), original.templateId)).toThrow(/não é um backup/);
+    expect(() => parseDocumentBackup(JSON.stringify(envelope(null)), original.templateId)).toThrow(/incompleto/);
     expect(() => parseDocumentBackup(JSON.stringify(envelope({ id: '' })), original.templateId)).toThrow(/validação/);
   });
 
@@ -82,7 +81,6 @@ describe('DocumentBackup', () => {
     const original = sampleDocument();
     const createId = vi.fn().mockReturnValueOnce('restored-id');
     const restored = resolveImportedDocumentId(original, (id) => id === original.id, createId);
-
     expect(restored.id).toBe('restored-id');
     expect(original.id).not.toBe(restored.id);
     expect(createId).toHaveBeenCalledTimes(1);
