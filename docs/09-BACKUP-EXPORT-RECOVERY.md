@@ -1,13 +1,13 @@
 # Estratégia de backup, exportação e recuperação de documentos
 
-**Status:** proposta operacional para revisão; não significa que os recursos de exportação/importação de backup já estejam implementados.
+**Status:** exportação/importação JSON local implementada nesta branch e aguardando validação CI/E2E; backup remoto/centralizado continua não implementado.
 
 ## 1. Estado atual e limite de proteção
 
 - O documento ativo é persistido pelo adapter `DocumentStorage`, com implementação atual em `LocalStorageDocumentStorage`.
 - Os dados são armazenados no `localStorage` do navegador, sob chaves `ci:document:<id>`; a referência do documento ativo também é local.
 - O autosave reduz a perda por fechamento acidental, mas **não é backup**. Ele não protege contra limpeza dos dados do navegador, falha do perfil/dispositivo, corrupção, quota excedida ou perda de acesso ao equipamento.
-- A aplicação client-side atual não oferece backup centralizado, histórico remoto nem recuperação administrativa. Exportar PDF é útil para leitura/registro, mas não preserva necessariamente a estrutura editável e não deve ser considerado cópia restaurável.
+- A aplicação client-side não oferece backup centralizado, histórico remoto nem recuperação administrativa. A exportação JSON local preserva o modelo editável; exportar PDF continua sendo útil para leitura/registro, mas não deve ser considerado cópia restaurável.
 
 ## 2. Formatos e propósito
 
@@ -23,7 +23,7 @@ A futura exportação JSON deve incluir o modelo de documento e metadados necess
 
 Até existir um fluxo testado de exportação/importação no produto:
 
-1. Ao concluir um documento importante, gerar o PDF final para registro e, se o documento precisar continuar editável, manter uma cópia editável apenas por um mecanismo de exportação aprovado quando disponível.
+1. Ao concluir um documento importante, gerar o PDF final para registro e, se precisar continuar editável, usar **Exportar JSON** e guardar o arquivo em local institucional autorizado.
 2. Guardar cópias somente em local institucional autorizado, com controle de acesso e proteção compatível com a classificação dos dados.
 3. Não usar e-mail pessoal, nuvem pessoal, pendrive não autorizado ou repositório Git para transportar documentos com dados pessoais ou institucionais.
 4. Não limpar os dados do navegador, trocar de perfil ou reinstalar o sistema antes de verificar que os documentos necessários foram exportados e que a cópia está íntegra.
@@ -33,18 +33,18 @@ Este procedimento é mitigação temporária, não substitui uma funcionalidade 
 
 ## 4. Requisitos para implementar exportação e restauração
 
-- [ ] Exportar um documento individual em JSON com nome de arquivo seguro e versão de esquema explícita.
-- [ ] Validar tipo, tamanho, estrutura, campos obrigatórios, identificadores e versão ao importar.
-- [ ] Rejeitar arquivos inválidos ou versões não suportadas com mensagem compreensível, sem alterar o documento atual.
-- [ ] Sanitizar HTML no caminho de importação e normalizar o modelo antes de persistir.
-- [ ] Mostrar resumo/preview e pedir confirmação antes de restaurar; nunca sobrescrever silenciosamente um documento existente.
-- [ ] Quando houver conflito de ID, criar uma cópia restaurada com novo ID ou exigir decisão explícita; preservar a origem.
-- [ ] Fazer a gravação de modo seguro: validar tudo antes de gravar e tratar quota/falha de escrita sem indicar sucesso indevidamente.
-- [ ] Oferecer confirmação de exportação e permitir verificar se o arquivo não está vazio.
-- [ ] Testar round-trip exportar → importar → comparar conteúdo e metadados relevantes.
-- [ ] Testar JSON truncado, payload excessivo, campos extras, esquema desconhecido, HTML malicioso, ID duplicado e falha de armazenamento.
+- [x] Exportar um documento individual em JSON com nome de arquivo seguro e versão de esquema explícita.
+- [x] Validar formato, tamanho, estrutura, campos, identificadores e versão ao importar.
+- [x] Rejeitar JSON inválido, formatos/versões não suportados e documentos inválidos antes de persistir.
+- [x] Sanitizar HTML e normalizar o modelo antes de persistir.
+- [x] Exibir resumo e pedir confirmação; a importação cria uma cópia com novo ID quando há colisão.
+- [x] Resolver conflito de ID com novo identificador e preservar a origem.
+- [x] Validar antes de gravar e apresentar falhas de persistência sem indicar sucesso.
+- [x] Oferecer confirmação de exportação e limitar o tamanho do arquivo.
+- [x] Adicionar testes unitários de round-trip, sanitização, limites, versão desconhecida e colisão de ID.
+- [ ] Ampliar testes de UI/integração para importação real via navegador, campos extras e falha de armazenamento.
 - [ ] Não registrar o conteúdo documental nos logs; registrar somente contexto técnico minimizado.
-- [ ] Documentar instruções para operador e usuário final, incluindo limitações do formato.
+- [x] Documentar o fluxo local e as limitações; instruções institucionais finais ainda dependem de validação.
 
 ## 5. Backup institucional e recuperação
 
