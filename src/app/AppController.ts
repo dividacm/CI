@@ -342,7 +342,7 @@ export class AppController {
           const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
           const url = URL.createObjectURL(blob);
           const anchor = this.root.ownerDocument.createElement('a');
-          const subject = (state.document.fields.subject || 'documento').normalize('NFKD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'documento';
+          const subject = (state.document.fields.subject || 'documento').normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'documento';
           anchor.href = url;
           anchor.download = `ci-${subject}-${state.document.year}.json`;
           anchor.hidden = true;
