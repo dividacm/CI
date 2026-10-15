@@ -1,6 +1,6 @@
 # Estratégia de backup, exportação e recuperação de documentos
 
-**Status:** exportação/importação JSON local publicada na V2.9.6. Esta branch adiciona cobertura E2E no navegador para restauração de backup e falha de persistência; o resultado depende dos checks da PR. Backup remoto/centralizado continua não implementado.
+**Status:** exportação/importação JSON local publicada na V2.9.6. Os testes E2E de importação real via navegador e de falha de persistência passaram no CI pós-merge da PR #129 em 2026-10-15. Backup remoto/centralizado continua não implementado.
 
 ## 1. Estado atual e limite de proteção
 
@@ -8,12 +8,13 @@
 - Os dados são armazenados no `localStorage` do navegador, sob chaves `ci:document:<id>`; a referência do documento ativo também é local.
 - O autosave reduz a perda por fechamento acidental, mas **não é backup**. Ele não protege contra limpeza dos dados do navegador, falha do perfil/dispositivo, corrupção, quota excedida ou perda de acesso ao equipamento.
 - A aplicação client-side não oferece backup centralizado, histórico remoto nem recuperação administrativa. A exportação JSON local preserva o modelo editável; exportar PDF continua sendo útil para leitura/registro, mas não deve ser considerado cópia restaurável.
+- A aprovação dos testes E2E comprova os cenários cobertos pela automação; não comprova recuperação operacional completa nem substitui validação com usuários.
 
 ## 2. Formatos e propósito
 
 | Formato | Uso | Pode restaurar o documento editável? |
 |---|---|---|
-| JSON estruturado do documento | Cópia de segurança/restauração futura | Sim, se o formato e a versão forem suportados |
+| JSON estruturado do documento | Cópia local para restauração editável | Sim, se o formato e a versão forem suportados |
 | PDF exportado | Leitura, impressão e registro final | Não é o formato primário de restauração |
 | Cópia completa dos dados locais | Recuperação técnica excepcional, se viável | Depende do navegador e da integridade; não é o fluxo recomendado |
 
@@ -21,17 +22,15 @@ A exportação JSON implementada inclui um único modelo de documento e metadado
 
 ## 3. Procedimento operacional provisório
 
-Até que a validação automatizada e operacional do fluxo esteja concluída:
-
 1. Ao concluir um documento importante, gerar o PDF final para registro e, se precisar continuar editável, usar **Exportar JSON** e guardar o arquivo em local institucional autorizado.
 2. Guardar cópias somente em local institucional autorizado, com controle de acesso e proteção compatível com a classificação dos dados.
 3. Não usar e-mail pessoal, nuvem pessoal, pendrive não autorizado ou repositório Git para transportar documentos com dados pessoais ou institucionais.
 4. Não limpar os dados do navegador, trocar de perfil ou reinstalar o sistema antes de verificar que os documentos necessários foram exportados e que a cópia está íntegra.
 5. Se houver suspeita de perda/corrupção, evitar continuar editando sobre a única cópia disponível. Registrar o ocorrido, preservar o que ainda está acessível e acionar o suporte responsável.
 
-Este procedimento é mitigação temporária, não substitui uma funcionalidade de backup restaurável.
+Este procedimento é mitigação temporária, não substitui uma funcionalidade de backup centralizado nem a aprovação de procedimento operacional pela área responsável.
 
-## 4. Requisitos para implementar exportação e restauração
+## 4. Requisitos e evidências do fluxo JSON
 
 - [x] Exportar um documento individual em JSON com nome de arquivo seguro e versão de esquema explícita.
 - [x] Validar formato, tamanho, estrutura, campos, identificadores e versão ao importar.
@@ -42,9 +41,10 @@ Este procedimento é mitigação temporária, não substitui uma funcionalidade 
 - [x] Validar antes de gravar e apresentar falhas de persistência sem indicar sucesso.
 - [x] Oferecer confirmação de exportação e limitar o tamanho do arquivo.
 - [x] Adicionar testes unitários de round-trip, sanitização, limites, versão desconhecida e colisão de ID.
-- [ ] Confirmar que os novos testes E2E de importação real via navegador e falha de armazenamento passam no CI; ampliar casos de campos extras se necessário.
-- [ ] Não registrar o conteúdo documental nos logs; registrar somente contexto técnico minimizado.
-- [x] Documentar o fluxo local e as limitações; instruções institucionais finais ainda dependem de validação.
+- [x] Testar via Playwright a importação real pelo input do navegador, a restauração de campos/conteúdo e a referência do documento ativo (PR #129; CI e E2E pós-merge aprovados em 2026-10-15).
+- [x] Testar via Playwright a falha de `localStorage.setItem` durante importação e confirmar que o documento atual não é substituído silenciosamente (PR #129).
+- [ ] Executar e registrar teste de redaction com valores-sentinela em logs/stack traces.
+- [x] Documentar o fluxo local e suas limitações; instruções institucionais finais ainda dependem de validação.
 
 ## 5. Backup institucional e recuperação
 
@@ -70,12 +70,12 @@ A restauração só será considerada concluída quando:
 5. o usuário responsável confirmar o resultado;
 6. o evento e o resultado forem registrados sem expor o conteúdo do documento.
 
-**Metas operacionais:** definir RPO (perda máxima de dados aceitável), RTO (tempo máximo de recuperação), retenção e frequência de backup com a área responsável. Nenhum valor está aprovado nesta proposta; não assumir que há compromisso operacional antes dessa decisão.
+**Metas operacionais:** definir RPO (perda máxima de dados aceitável), RTO (tempo máximo de recuperação), retenção e frequência de backup com a área responsável. Nenhum valor está aprovado nesta proposta; não assumir compromisso operacional antes dessa decisão.
 
 ## 7. Critério de aceite da estratégia
 
-- O usuário sabe distinguir autosave, exportação PDF e backup restaurável.
-- Existe um fluxo JSON de exportação/importação coberto por testes antes de afirmar que há backup local restaurável.
+- O usuário sabe distinguir autosave, exportação PDF e cópia JSON restaurável.
+- Existe um fluxo JSON de exportação/importação coberto por testes unitários e E2E antes de afirmar que a restauração local foi testada.
 - A restauração não sobrescreve dados silenciosamente e falhas não são reportadas como sucesso.
 - Se houver armazenamento remoto, a operação de backup e os testes periódicos de restauração têm responsáveis definidos.
 - As instruções e limitações são apresentadas aos usuários antes do uso institucional com documentos importantes.
