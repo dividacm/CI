@@ -1,6 +1,6 @@
 # Estratégia de backup, exportação e recuperação de documentos
 
-**Status:** exportação/importação JSON local implementada nesta branch e aguardando validação CI/E2E; backup remoto/centralizado continua não implementado.
+**Status:** exportação/importação JSON local publicada na V2.9.6. Esta branch adiciona cobertura E2E no navegador para restauração de backup e falha de persistência; o resultado depende dos checks da PR. Backup remoto/centralizado continua não implementado.
 
 ## 1. Estado atual e limite de proteção
 
@@ -42,7 +42,7 @@ Este procedimento é mitigação temporária, não substitui uma funcionalidade 
 - [x] Validar antes de gravar e apresentar falhas de persistência sem indicar sucesso.
 - [x] Oferecer confirmação de exportação e limitar o tamanho do arquivo.
 - [x] Adicionar testes unitários de round-trip, sanitização, limites, versão desconhecida e colisão de ID.
-- [ ] Ampliar testes de UI/integração para importação real via navegador, campos extras e falha de armazenamento.
+- [ ] Confirmar que os novos testes E2E de importação real via navegador e falha de armazenamento passam no CI; ampliar casos de campos extras se necessário.
 - [ ] Não registrar o conteúdo documental nos logs; registrar somente contexto técnico minimizado.
 - [x] Documentar o fluxo local e as limitações; instruções institucionais finais ainda dependem de validação.
 
