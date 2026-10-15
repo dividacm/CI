@@ -17,11 +17,11 @@
 | PDF exportado | Leitura, impressão e registro final | Não é o formato primário de restauração |
 | Cópia completa dos dados locais | Recuperação técnica excepcional, se viável | Depende do navegador e da integridade; não é o fluxo recomendado |
 
-A futura exportação JSON deve incluir o modelo de documento e metadados necessários à edição, com versão explícita de esquema. Não deve incluir dados de outros documentos, chaves internas do navegador, segredos ou dados de sessão.
+A exportação JSON implementada inclui um único modelo de documento e metadados necessários à edição, com versão explícita de esquema. Não inclui dados de outros documentos, chaves internas do navegador, segredos ou dados de sessão.
 
 ## 3. Procedimento operacional provisório
 
-Até existir um fluxo testado de exportação/importação no produto:
+Até que a validação automatizada e operacional do fluxo esteja concluída:
 
 1. Ao concluir um documento importante, gerar o PDF final para registro e, se precisar continuar editável, usar **Exportar JSON** e guardar o arquivo em local institucional autorizado.
 2. Guardar cópias somente em local institucional autorizado, com controle de acesso e proteção compatível com a classificação dos dados.
