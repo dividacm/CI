@@ -10,5 +10,6 @@ Esta pasta consolida a documentação funcional, técnica, de fluxo, UI/UX, arqu
 - 06-IMPLEMENTATION-PLAN.md — sequência de implementação da V2.
 - 07-SECURITY-PENTEST.md — threat model e estratégia de testes de segurança.
 - 08-ADR/ — decisões arquiteturais registradas.
+- 09-BACKUP-EXPORT-RECOVERY.md — proposta de backup, exportação, recuperação e requisitos para implementação.
 
 BASELINE.md permanece como registro histórico detalhado do estado M0 e DEVELOPMENT_PLAN.md como roadmap técnico principal.
