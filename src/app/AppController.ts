@@ -9,6 +9,7 @@ import { renderHorizontalRuler } from '../layout/RulerView';
 import { getObservability } from '../observability/Observability';
 import { PdfExporter } from '../pdf/PdfExporter';
 import { AutosaveController } from '../storage/AutosaveController';
+import { DocumentBackupError, MAX_DOCUMENT_BACKUP_BYTES, parseDocumentBackup, resolveImportedDocumentId, serializeDocumentBackup } from '../storage/DocumentBackup';
 import { DocumentRepository } from '../storage/DocumentRepository';
 import { LocalStorageDocumentStorage } from '../storage/LocalStorageDocumentStorage';
 import type { OrganizationConfig } from '../types/configuration';
@@ -244,6 +245,53 @@ export class AppController {
     }
   });
 
+  const backupImportInput = this.root.querySelector<HTMLInputElement>('#backup-import-file');
+  backupImportInput?.addEventListener('change', async () => {
+    const file = backupImportInput.files?.[0];
+    if (!file) return;
+    try {
+      if (file.size > MAX_DOCUMENT_BACKUP_BYTES) {
+        throw new DocumentBackupError('O arquivo excede o limite de 2 MB.');
+      }
+      const candidate = parseDocumentBackup(await file.text(), template.id);
+      const confirmed = this.root.ownerDocument.defaultView?.confirm(
+        `Importar “${candidate.fields.subject || 'Documento sem assunto'}”? O documento atual será preservado. A restauração será criada como uma cópia quando o identificador já existir.`,
+      );
+      if (!confirmed) return;
+
+      const imported = resolveImportedDocumentId(
+        candidate,
+        (id) => localStorage.getItem(`ci:document:${id}`) !== null,
+      );
+      storage.save(imported);
+      repository.setActive(imported);
+      state.document = imported;
+      autosave.attach(imported);
+      renderDocument(state.document, elements, this.organization, template);
+      graphics.setElements(state.document.graphics ?? []);
+      connectors.setConnectors(state.document.connectors ?? []);
+      syncGraphicTools();
+      syncConnectorTools();
+      syncSmartArtTools();
+      updateIssueButton(elements.issueButton, state.document);
+      setStatus('saved');
+      syncView();
+      elements.status.textContent = 'Documento JSON restaurado. Confira o conteúdo antes de continuar.';
+      elements.status.dataset.status = 'saved';
+    } catch (error) {
+      getObservability().captureError(error, {
+        operation: 'import-document-backup',
+        component: 'DocumentBackup',
+      });
+      elements.status.textContent = error instanceof Error
+        ? `Não foi possível importar o backup: ${error.message}`
+        : 'Não foi possível importar o backup. Verifique o arquivo e tente novamente.';
+      elements.status.dataset.status = 'error';
+    } finally {
+      backupImportInput.value = '';
+    }
+  });
+
   this.root.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => {
     button.addEventListener('click', async () => {
       const action = button.dataset.action;
@@ -286,6 +334,40 @@ export class AppController {
       if (action === 'zoom-out') { updatePreviewZoom(previewZoom - 10); return; }
       if (action === 'zoom-reset') { updatePreviewZoom(100); return; }
       if (action === 'zoom-in') { updatePreviewZoom(previewZoom + 10); return; }
+      if (action === 'backup-export') {
+        sync();
+        autosave.saveNow();
+        try {
+          const json = serializeDocumentBackup(state.document);
+          const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const anchor = this.root.ownerDocument.createElement('a');
+          const subject = (state.document.fields.subject || 'documento').normalize('NFKD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'documento';
+          anchor.href = url;
+          anchor.download = `ci-${subject}-${state.document.year}.json`;
+          anchor.hidden = true;
+          this.root.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+          URL.revokeObjectURL(url);
+          elements.status.textContent = 'Backup JSON exportado. Guarde o arquivo em local institucional autorizado.';
+          elements.status.dataset.status = 'saved';
+        } catch (error) {
+          getObservability().captureError(error, {
+            operation: 'export-document-backup',
+            component: 'DocumentBackup',
+          });
+          elements.status.textContent = error instanceof Error
+            ? `Não foi possível exportar o backup: ${error.message}`
+            : 'Não foi possível exportar o backup.';
+          elements.status.dataset.status = 'error';
+        }
+        return;
+      }
+      if (action === 'backup-import') {
+        backupImportInput?.click();
+        return;
+      }
       if (action === 'pdf') {
         if (!this.organization.features.pdfExport) return;
         sync(); elements.pdfButton.disabled = true;

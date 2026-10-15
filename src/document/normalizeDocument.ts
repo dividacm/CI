@@ -37,6 +37,7 @@ export function normalizeCommunicationDocument(value: unknown): CommunicationDoc
     graphics,
     connectors: normalizeGraphicConnectors(document.connectors, elementIds),
     templateId: document.templateId,
+    composition: normalizeComposition(document.composition),
     createdAt: document.createdAt,
     updatedAt: document.updatedAt,
   };
@@ -56,4 +57,20 @@ function normalizeFields(document: LegacyDocument): Record<string, string> {
       ['subject', document.subject],
     ].filter(([, value]) => typeof value === 'string'),
   ) as Record<string, string>;
+}
+
+function normalizeComposition(value: unknown): CommunicationDocument['composition'] {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const composition = value as Record<string, unknown>;
+  const stringValue = (key: string): string | undefined => {
+    const item = composition[key];
+    return typeof item === 'string' && item.length <= 2_000 ? item : undefined;
+  };
+  return {
+    headerAsset: stringValue('headerAsset'),
+    footerAsset: stringValue('footerAsset'),
+    signatureName: stringValue('signatureName'),
+    signatureRole: stringValue('signatureRole'),
+    signatureLocation: stringValue('signatureLocation'),
+  };
 }
