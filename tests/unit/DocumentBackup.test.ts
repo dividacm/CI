@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createDocument } from '../../src/document/createDocument';
 import { defaultOrganization } from '../../src/configuration/defaultOrganization';
+import { createDocument } from '../../src/document/createDocument';
 import {
   DocumentBackupError,
   MAX_DOCUMENT_BACKUP_BYTES,
