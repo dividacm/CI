@@ -89,6 +89,80 @@ test.describe('Comunicação Interna editor', () => {
     expect(mutationBatches).toBe(1);
   });
 
+
+  test('imports a valid JSON backup through the browser and restores its content', async ({ page }) => {
+    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    const backup = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((item) => item.startsWith('ci:document:'));
+      if (!key) throw new Error('Documento persistido não encontrado.');
+      const document = JSON.parse(localStorage.getItem(key) ?? 'null');
+      document.id = 'e2e-imported-document';
+      document.fields.subject = 'Backup restaurado via E2E';
+      document.bodyHtml = '<p>Conteúdo restaurado pelo teste de navegador.</p>';
+      return JSON.stringify({
+        format: 'ci-communication-document',
+        schemaVersion: 1,
+        exportedAt: new Date().toISOString(),
+        document,
+      });
+    });
+
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.locator('#backup-import-file').setInputFiles({
+      name: 'backup-e2e.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(backup),
+    });
+
+    await expect(page.locator('#save-status')).toHaveText(
+      'Documento JSON restaurado. Confira o conteúdo antes de continuar.',
+    );
+    await expect(page.locator('[data-field="subject"]')).toHaveValue('Backup restaurado via E2E');
+    await expect(page.locator('#editor')).toContainText('Conteúdo restaurado pelo teste de navegador.');
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('ci:active-document'))).toContain(
+      'e2e-imported-document',
+    );
+  });
+
+  test('reports a storage failure during import without replacing the current document', async ({ page }) => {
+    const originalSubject = await page.locator('[data-field="subject"]').inputValue();
+    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    const backup = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((item) => item.startsWith('ci:document:'));
+      if (!key) throw new Error('Documento persistido não encontrado.');
+      const document = JSON.parse(localStorage.getItem(key) ?? 'null');
+      document.id = 'e2e-storage-failure-document';
+      document.fields.subject = 'Não deve substituir o documento';
+      return JSON.stringify({
+        format: 'ci-communication-document',
+        schemaVersion: 1,
+        exportedAt: new Date().toISOString(),
+        document,
+      });
+    });
+
+    await page.evaluate(() => {
+      const originalSetItem = Storage.prototype.setItem;
+      Storage.prototype.setItem = function (key: string, value: string) {
+        if (key.startsWith('ci:document:') || key === 'ci:active-document') {
+          throw new DOMException('Quota exceeded', 'QuotaExceededError');
+        }
+        return originalSetItem.call(this, key, value);
+      };
+    });
+    page.once('dialog', (dialog) => dialog.accept());
+    await page.locator('#backup-import-file').setInputFiles({
+      name: 'backup-storage-failure.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(backup),
+    });
+
+    await expect(page.locator('#save-status')).toContainText('Não foi possível importar o backup');
+    await expect(page.locator('#save-status')).toHaveAttribute('data-status', 'error');
+    await expect(page.locator('[data-field="subject"]')).toHaveValue(originalSubject);
+    await expect(page.locator('#editor')).not.toContainText('Não deve substituir o documento');
+  });
+
   test('has no console errors during the main editor flow', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', (message) => {
