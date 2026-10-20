@@ -163,6 +163,72 @@ test.describe('Comunicação Interna editor', () => {
     await expect(page.locator('#editor')).not.toContainText('Não deve substituir o documento');
   });
 
+  test('keeps preview zoom within supported bounds and resets to 100%', async ({ page }) => {
+    const zoom = page.locator('#preview-zoom');
+    const zoomIn = page.getByRole('button', { name: 'Aumentar zoom' });
+    const zoomOut = page.getByRole('button', { name: 'Reduzir zoom' });
+
+    for (let index = 0; index < 8; index += 1) await zoomIn.click();
+    await expect(zoom).toHaveText('150%');
+    await zoomIn.click();
+    await expect(zoom).toHaveText('150%');
+
+    for (let index = 0; index < 12; index += 1) await zoomOut.click();
+    await expect(zoom).toHaveText('50%');
+    await zoomOut.click();
+    await expect(zoom).toHaveText('50%');
+
+    await page.getByRole('button', { name: 'Redefinir zoom' }).click();
+    await expect(zoom).toHaveText('100%');
+  });
+
+  test('updates the left margin through the keyboard-accessible ruler', async ({ page }) => {
+    const marker = page.getByRole('slider', { name: 'Margem esquerda' });
+    const initialValue = Number(await marker.getAttribute('aria-valuenow'));
+
+    await marker.press('ArrowRight');
+
+    await expect.poll(async () => {
+      const currentMarker = page.getByRole('slider', { name: 'Margem esquerda' });
+      return Number(await currentMarker.getAttribute('aria-valuenow'));
+    }).toBe(initialValue + 1);
+  });
+
+  test('navigates between pages after editing content that spans multiple pages', async ({ page }) => {
+    const editor = page.locator('#editor');
+    await editor.fill('Conteúdo sintético para validar paginação. '.repeat(900));
+
+    await expect.poll(() => page.locator('#paper .paper-page').count(), {
+      timeout: 10_000,
+    }).toBeGreaterThan(1);
+
+    const indicator = page.locator('#page-indicator');
+    await expect(indicator).toHaveText(/^Página 1 de [2-9]\d*$/);
+    await expect(page.getByRole('button', { name: 'Página anterior' })).toBeDisabled();
+
+    await page.getByRole('button', { name: 'Próxima página' }).click();
+    await expect(indicator).toHaveText(/^Página 2 de [2-9]\d*$/);
+    await expect(page.locator('#paper .paper-page[data-active="true"]')).toHaveAttribute(
+      'data-page-number',
+      '2',
+    );
+
+    await page.getByRole('button', { name: 'Página anterior' }).click();
+    await expect(indicator).toHaveText(/^Página 1 de [2-9]\d*$/);
+  });
+
+  test('inserts a graphic element and persists it after reload', async ({ page }) => {
+    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    await page.getByRole('button', { name: 'Inserir forma' }).click();
+
+    await expect(page.locator('#paper .paper-graphic-element')).toHaveCount(1);
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await expect(page.locator('#save-status')).toHaveText('Salvo localmente.');
+
+    await page.reload();
+    await expect(page.locator('#paper .paper-graphic-element')).toHaveCount(1);
+  });
+
   test('has no console errors during the main editor flow', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', (message) => {
