@@ -36,8 +36,8 @@ test.describe('Performance de documentos longos', () => {
         .repeat(Math.ceil(characters / 31))
         .slice(0, characters);
 
-      const dispatchInput = async (): Promise<number> =>
-        editor.evaluate((element, content) => {
+      const dispatchInputAndWaitForRender = async (): Promise<number> =>
+        editor.evaluate(async (element, content) => {
           element.innerHTML = `<p>${content}</p>`;
           const start = performance.now();
           element.dispatchEvent(
@@ -46,20 +46,27 @@ test.describe('Performance de documentos longos', () => {
               inputType: 'insertText',
             }),
           );
+
+          // O listener do editor agenda renderPreview via requestAnimationFrame.
+          // Este callback é enfileirado depois do callback de renderização.
+          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
           return performance.now() - start;
         }, text);
 
       // Uma execução de aquecimento por tamanho não entra no relatório.
-      await dispatchInput();
+      await dispatchInputAndWaitForRender();
       await expect.poll(() => paper.locator('.paper-page').count()).toBeGreaterThan(0);
+      await expect(paper).toContainText(text);
 
       const measurements: Measurement[] = [];
 
       for (let sample = 0; sample < SAMPLES_PER_SIZE; sample += 1) {
-        const durationMs = await dispatchInput();
+        const durationMs = await dispatchInputAndWaitForRender();
         const pages = await paper.locator('.paper-page').count();
+        const renderedText = (await paper.textContent()) ?? '';
 
         expect(pages, `preview sem páginas para ${characters} caracteres`).toBeGreaterThan(0);
+        expect(renderedText, `conteúdo incompleto para ${characters} caracteres`).toContain(text);
         measurements.push({ characters, durationMs, pages });
       }
 
@@ -74,7 +81,9 @@ test.describe('Performance de documentos longos', () => {
       });
     }
 
-    console.log(`Long-document benchmark (ms; one warm-up + ${SAMPLES_PER_SIZE} samples per size): ${JSON.stringify(report)}`);
+    console.log(
+      `Long-document benchmark (ms; one warm-up + ${SAMPLES_PER_SIZE} samples per size, including preview render): ${JSON.stringify(report)}`,
+    );
     expect(report).toHaveLength(sizes.length);
   });
 });
