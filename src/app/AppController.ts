@@ -44,20 +44,23 @@ export class AppController {
     ['table-column-widen', 'Col +', 'Aumentar largura da coluna'],
     ['table-column-narrow', 'Col −', 'Reduzir largura da coluna'],
   ];
-  const tableGroup = this.root.ownerDocument.createElement('div');
-  tableGroup.className = 'toolbar-group table-tools';
-  tableGroup.appendChild(tableButton);
+  const tableInsertGroup = this.root.ownerDocument.createElement('div');
+  tableInsertGroup.className = 'toolbar-group table-insert-tools';
+  tableInsertGroup.appendChild(tableButton);
+  const tableSelectionGroup = this.root.ownerDocument.createElement('div');
+  tableSelectionGroup.className = 'toolbar-group table-selection-tools';
   for (const [action, label, ariaLabel] of tableActions) {
     const button = this.root.ownerDocument.createElement('button');
     button.type = 'button';
     button.dataset.action = action;
     button.textContent = label;
     button.setAttribute('aria-label', ariaLabel);
-    tableGroup.appendChild(button);
+    tableSelectionGroup.appendChild(button);
   }
-  this.root.querySelector('.toolbar-groups')?.appendChild(tableGroup);
+  const toolbarGroups = this.root.querySelector('.toolbar-groups');
+  toolbarGroups?.append(tableInsertGroup, tableSelectionGroup);
   const elements = getAppElements(this.root);
-  const tableTools = tableGroup;
+  const tableTools = tableSelectionGroup;
   let previewZoom = 100;
   const updatePreviewZoom = (value: number): void => {
     previewZoom = Math.min(150, Math.max(50, Math.round(value / 10) * 10));
