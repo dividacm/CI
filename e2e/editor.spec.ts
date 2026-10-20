@@ -163,6 +163,32 @@ test.describe('Comunicação Interna editor', () => {
     await expect(page.locator('#editor')).not.toContainText('Não deve substituir o documento');
   });
 
+  test('inserts the first table when no table cell is active and persists it after reload', async ({ page }) => {
+    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+
+    const insertTable = page.getByRole('button', { name: 'Inserir tabela 2 por 3' });
+    const selectionTools = page.locator('.table-selection-tools');
+    await expect(insertTable).toBeVisible();
+    await expect(selectionTools).toBeHidden();
+
+    await page.locator('#editor').click();
+    await insertTable.click();
+    await expect(page.locator('#editor table')).toHaveCount(1);
+    await expect(page.locator('#editor table tr')).toHaveCount(2);
+    await expect(page.locator('#editor table tr').first().locator('td, th')).toHaveCount(3);
+
+    await page.locator('#editor table td, #editor table th').first().click();
+    await expect(selectionTools).toBeVisible();
+
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await expect(page.locator('#save-status')).toHaveText('Salvo localmente.');
+    await page.reload();
+
+    await expect(page.locator('#editor table')).toHaveCount(1);
+    await expect(page.locator('#editor table tr')).toHaveCount(2);
+    await expect(page.locator('#editor table tr').first().locator('td, th')).toHaveCount(3);
+  });
+
   test('keeps preview zoom within supported bounds and resets to 100%', async ({ page }) => {
     const zoom = page.locator('#preview-zoom');
     const zoomIn = page.getByRole('button', { name: 'Aumentar zoom' });
