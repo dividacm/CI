@@ -26,7 +26,7 @@ test.describe('Performance de documentos longos', () => {
     const sizes = [5_000, 20_000, 50_000];
     const report: Array<{
       characters: number;
-      pages: number[][];
+      pages: number[];
       samplesMs: number[];
       medianMs: number;
     }> = [];
