@@ -103,6 +103,7 @@ export class AppController {
   const syncTableTools = (): void => {
     tableTools.hidden = !editor.hasActiveTableCell();
   };
+  syncTableTools();
   const graphicsRoot = elements.editor.parentElement;
   if (!graphicsRoot) throw new Error('Canvas gráfico não encontrado.');
   const graphics = new GraphicElementInteractions(graphicsRoot, {
