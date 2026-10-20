@@ -49,6 +49,29 @@ describe('AppController render flow', () => {
 });
 
 
+describe('AppController table tool visibility', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('keeps initial table insertion visible and selection actions hidden until a cell is active', () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+
+    new AppController(root, structuredClone(defaultOrganization)).render();
+
+    const insertButton = root.querySelector<HTMLButtonElement>('[data-action="table-insert"]');
+    const selectionTools = root.querySelector<HTMLElement>('.table-selection-tools');
+
+    expect(insertButton).not.toBeNull();
+    expect(insertButton?.hidden).toBe(false);
+    expect(insertButton?.getAttribute('aria-label')).toBe('Inserir tabela 2 por 3');
+    expect(selectionTools?.hidden).toBe(true);
+  });
+});
+
 describe('AppController additional UI flows', () => {
   afterEach(() => {
     document.body.innerHTML = '';
