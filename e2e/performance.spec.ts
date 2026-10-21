@@ -35,10 +35,13 @@ test.describe('Performance de documentos longos', () => {
       const text = 'Texto de teste para benchmark. '
         .repeat(Math.ceil(characters / 31))
         .slice(0, characters);
+      // Parágrafos separados exercitam o fluxo de paginação usado por documentos reais.
+      const paragraphs = text.match(/.{1,500}/g) ?? [];
+      const html = paragraphs.map((paragraph) => `<p>${paragraph}</p>`).join('');
 
       const dispatchInputAndWaitForRender = async (): Promise<number> =>
         editor.evaluate(async (element, content) => {
-          element.innerHTML = `<p>${content}</p>`;
+          element.innerHTML = content;
           const start = performance.now();
           element.dispatchEvent(
             new InputEvent('input', {
@@ -51,7 +54,7 @@ test.describe('Performance de documentos longos', () => {
           // Este callback é enfileirado depois do callback de renderização.
           await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
           return performance.now() - start;
-        }, text);
+        }, html);
 
       // Uma execução de aquecimento por tamanho não entra no relatório.
       await dispatchInputAndWaitForRender();
@@ -72,6 +75,26 @@ test.describe('Performance de documentos longos', () => {
 
       const sampleTimes = measurements.map(({ durationMs }) => durationMs);
       const pageCounts = measurements.map(({ pages }) => pages);
+      const medianPages = median(pageCounts);
+
+      expect(
+        Math.min(...pageCounts),
+        `paginação insuficiente para ${characters} caracteres`,
+      ).toBeGreaterThan(1);
+      expect(
+        await paper.locator('.paper-page-content').evaluateAll((contents) =>
+          contents.filter((content) => content.querySelector('p')).length,
+        ),
+        `o corpo não foi distribuído em várias páginas para ${characters} caracteres`,
+      ).toBeGreaterThan(1);
+
+      const previous = report.at(-1);
+      if (previous) {
+        expect(
+          medianPages,
+          `a quantidade mediana de páginas não cresceu de ${previous.characters} para ${characters} caracteres`,
+        ).toBeGreaterThan(median(previous.pages));
+      }
 
       report.push({
         characters,
