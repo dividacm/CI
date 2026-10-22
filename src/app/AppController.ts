@@ -108,6 +108,11 @@ export class AppController {
   if (!graphicsRoot) throw new Error('Canvas gráfico não encontrado.');
   const graphics = new GraphicElementInteractions(graphicsRoot, {
     onChange: () => sync(),
+    onSelectionChange: () => {
+      syncGraphicTools();
+      syncConnectorTools();
+      syncSmartArtTools();
+    },
   });
   const connectors = new GraphicConnectorInteractions(graphicsRoot, {
     getElements: () => graphics.getElements(),
