@@ -41,6 +41,12 @@ export interface FeatureFlags {
   clipboardFormatting: boolean;
 }
 
+export interface DemoNoticeConfig {
+  enabled: boolean;
+  title: string;
+  message: string;
+}
+
 export interface OrganizationConfig {
   id: string;
   name: string;
@@ -49,4 +55,6 @@ export interface OrganizationConfig {
   defaultTemplateId: string;
   templates: TemplateConfig[];
   features: FeatureFlags;
+  /** Aviso informativo de demonstração; não é um controle de segurança. */
+  demoNotice?: DemoNoticeConfig;
 }
