@@ -74,10 +74,16 @@ for (const viewport of [
     const insertTable = page.getByRole('button', { name: 'Inserir tabela 2 por 3' });
     await expect(insertTable).toBeVisible();
 
-    await page.locator('#editor').click();
-    await insertTable.click();
-    await expect(page.locator('#editor table')).toHaveCount(1);
-    await expect(page.locator('#editor table tr')).toHaveCount(2);
-    await expect(page.locator('#editor table tr').first().locator('td, th')).toHaveCount(3);
+    await test.step('focar o editor antes da inserção', async () => {
+      await page.locator('#editor').click({ timeout: 8_000 });
+    });
+    await test.step('acionar a inserção da tabela', async () => {
+      await insertTable.click({ timeout: 8_000 });
+    });
+    await test.step('validar a estrutura da tabela inserida', async () => {
+      await expect(page.locator('#editor table')).toHaveCount(1, { timeout: 8_000 });
+      await expect(page.locator('#editor table tr')).toHaveCount(2, { timeout: 8_000 });
+      await expect(page.locator('#editor table tr').first().locator('td, th')).toHaveCount(3, { timeout: 8_000 });
+    });
   });
 }

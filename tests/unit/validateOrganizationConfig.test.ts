@@ -7,6 +7,20 @@ describe('validateOrganizationConfig', () => {
     expect(validateOrganizationConfig(defaultOrganization)).toBe(true);
   });
 
+  it('accepts an explicitly disabled demo notice for configured deployments', () => {
+    expect(validateOrganizationConfig({
+      ...defaultOrganization,
+      demoNotice: { enabled: false, title: 'Aviso', message: 'Configuração institucional.' },
+    })).toBe(true);
+  });
+
+  it('rejects an invalid demo notice', () => {
+    expect(validateOrganizationConfig({
+      ...defaultOrganization,
+      demoNotice: { enabled: true, title: '', message: 'Mensagem' },
+    })).toBe(false);
+  });
+
   it('rejects a missing default template', () => {
     const configuration = {
       ...defaultOrganization,

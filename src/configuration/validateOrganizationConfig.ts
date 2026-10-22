@@ -7,6 +7,7 @@ export function validateOrganizationConfig(value: unknown): value is Organizatio
   if (!isBrandingConfig(value.branding) || !isPageLayoutConfig(value.layout)) return false;
   if (!isNonEmptyString(value.defaultTemplateId) || !Array.isArray(value.templates)) return false;
   if (!isFeatureFlags(value.features) || value.templates.length === 0) return false;
+  if (value.demoNotice !== undefined && !isDemoNoticeConfig(value.demoNotice)) return false;
 
   const templateIds = new Set<string>();
   for (const template of value.templates) {
@@ -62,6 +63,11 @@ function isTemplateConfig(value: unknown): value is TemplateConfig {
       isOptionalString(field.defaultValue)
     );
   });
+}
+
+function isDemoNoticeConfig(value: unknown): boolean {
+  if (!isRecord(value)) return false;
+  return typeof value.enabled === 'boolean' && isNonEmptyString(value.title) && isNonEmptyString(value.message);
 }
 
 function isFeatureFlags(value: unknown): boolean {

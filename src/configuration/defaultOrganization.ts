@@ -1,18 +1,16 @@
 import type { OrganizationConfig } from '../types/configuration';
 
 export const defaultOrganization: OrganizationConfig = {
-  id: 'dividacm',
-  name: 'Comunicação Interna',
+  id: 'demo',
+  name: 'Demonstração — Comunicação Interna',
   branding: {
-    organizationName: 'Comunicação Interna',
+    organizationName: 'Organização de demonstração',
     primaryColor: '#1f4e79',
     secondaryColor: '#e8eef5',
     fontFamily: 'Carlito, Arial, sans-serif',
-    headerAsset: '/assets/cab.png',
-    footerAsset: '/assets/rodape.png',
-    signatureName: 'CRISTIANE SCHWARZ',
-    signatureRole: 'Gerente de Valores em Carteira e Cobrança',
-    signatureLocation: 'Campo Mourão',
+    signatureName: 'NOME FICTÍCIO',
+    signatureRole: 'Cargo de demonstração',
+    signatureLocation: 'Cidade de exemplo',
   },
   layout: {
     marginTopMm: 10,
@@ -31,13 +29,13 @@ export const defaultOrganization: OrganizationConfig = {
           id: 'from',
           label: 'De',
           required: true,
-          defaultValue: 'Gerência de Valores em Carteira e Cobrança - GCCOB',
+          defaultValue: 'Setor de demonstração',
         },
         {
           id: 'to',
           label: 'Para',
           required: true,
-          defaultValue: 'CRISTIANE SCHWARZ',
+          defaultValue: 'Destinatário fictício',
         },
         {
           id: 'subject',
@@ -48,6 +46,11 @@ export const defaultOrganization: OrganizationConfig = {
       ],
     },
   ],
+  demoNotice: {
+    enabled: true,
+    title: 'Demonstração pública',
+    message: 'Use somente dados fictícios. Não insira documentos reais, dados pessoais ou informações institucionais reservadas. Os documentos são salvos localmente neste navegador; esta demonstração não oferece autenticação nem controle de acesso.',
+  },
   features: {
     pdfExport: true,
     autosave: true,

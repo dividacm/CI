@@ -4,10 +4,14 @@ import { resolveTemplate } from '../../src/configuration/resolveTemplate';
 
 describe('configuration', () => {
   it('expõe uma organização padrão completa', () => {
-    expect(defaultOrganization.id).toBe('dividacm');
+    expect(defaultOrganization.id).toBe('demo');
     expect(defaultOrganization.templates).toHaveLength(1);
     expect(defaultOrganization.features.pdfExport).toBe(true);
-    expect(defaultOrganization.branding.headerAsset).toBe('/assets/cab.png');
+    expect(defaultOrganization.demoNotice?.enabled).toBe(true);
+    expect(defaultOrganization.branding.signatureName).toBe('NOME FICTÍCIO');
+    expect(defaultOrganization.branding.signatureRole).toBe('Cargo de demonstração');
+    expect(defaultOrganization.templates[0].fields[0].defaultValue).toBe('Setor de demonstração');
+    expect(defaultOrganization.templates[0].fields[1].defaultValue).toBe('Destinatário fictício');
   });
 
   it('resolve o template padrão e rejeita ids inexistentes', () => {

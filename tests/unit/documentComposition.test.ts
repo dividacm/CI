@@ -17,9 +17,9 @@ describe('document composition', () => {
     expect(createDocumentComposition(defaultOrganization, template)).toEqual({
       headerAsset: '/assets/template-header.png',
       footerAsset: '/assets/template-footer.png',
-      signatureName: 'CRISTIANE SCHWARZ',
-      signatureRole: 'Gerente de Valores em Carteira e Cobrança',
-      signatureLocation: 'Campo Mourão',
+      signatureName: 'NOME FICTÍCIO',
+      signatureRole: 'Cargo de demonstração',
+      signatureLocation: 'Cidade de exemplo',
     });
   });
 
@@ -52,9 +52,9 @@ describe('document composition', () => {
     const originalBody = document.bodyHtml;
 
     expect(ensureDocumentComposition(document, defaultOrganization, template)).toBe(true);
-    expect(document.composition?.headerAsset).toBe('/assets/cab.png');
-    expect(document.composition?.footerAsset).toBe('/assets/rodape.png');
-    expect(document.composition?.signatureName).toBe('CRISTIANE SCHWARZ');
+    expect(document.composition?.headerAsset).toBeUndefined();
+    expect(document.composition?.footerAsset).toBeUndefined();
+    expect(document.composition?.signatureName).toBe('NOME FICTÍCIO');
     expect(document.fields).toEqual(originalFields);
     expect(document.bodyHtml).toBe(originalBody);
   });

@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { defaultOrganization } from '../../src/configuration/defaultOrganization';
 import { OrganizationConfigStorage } from '../../src/configuration/OrganizationConfigStorage';
 
+const organizationConfigKey = `ci:organization-config:${defaultOrganization.id}`;
+
 class MemoryStorage implements Storage {
   private readonly data = new Map<string, string>();
 
@@ -60,7 +62,7 @@ describe('OrganizationConfigStorage', () => {
 
   it('migrates a legacy unversioned configuration', () => {
     storage.setItem(
-      'ci:organization-config:dividacm',
+      organizationConfigKey,
       JSON.stringify(defaultOrganization),
     );
 
@@ -69,7 +71,7 @@ describe('OrganizationConfigStorage', () => {
 
   it('rejects unsupported schema versions and clears the corrupt entry', () => {
     storage.setItem(
-      'ci:organization-config:dividacm',
+      organizationConfigKey,
       JSON.stringify({
         schemaVersion: 999,
         organization: defaultOrganization,
@@ -77,12 +79,12 @@ describe('OrganizationConfigStorage', () => {
     );
 
     expect(repository.load(defaultOrganization.id)).toBeNull();
-    expect(storage.getItem('ci:organization-config:dividacm')).toBeNull();
+    expect(storage.getItem(organizationConfigKey)).toBeNull();
   });
 
   it('clears an invalid persisted payload instead of returning unsafe data', () => {
     storage.setItem(
-      'ci:organization-config:dividacm',
+      organizationConfigKey,
       JSON.stringify({
         schemaVersion: 1,
         organization: {
@@ -93,6 +95,6 @@ describe('OrganizationConfigStorage', () => {
     );
 
     expect(repository.load(defaultOrganization.id)).toBeNull();
-    expect(storage.getItem('ci:organization-config:dividacm')).toBeNull();
+    expect(storage.getItem(organizationConfigKey)).toBeNull();
   });
 });
