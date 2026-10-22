@@ -228,13 +228,13 @@ test.describe('Comunicação Interna editor', () => {
     await page.locator('summary', { hasText: 'Ferramentas' }).click();
     await page.getByRole('button', { name: 'Inserir SmartArt' }).click();
 
-    await expect(page.locator('#editor .graphic-element-smartart')).toHaveCount(1);
+    await expect(page.locator('.editor-page-content .graphic-element-smartart')).toHaveCount(1);
     await page.getByRole('button', { name: 'Salvar' }).click();
     await expect(page.locator('#save-status')).toHaveText('Salvo localmente.');
 
     await page.reload();
-    await expect(page.locator('#editor .graphic-element-smartart')).toHaveCount(1);
-    await expect(page.locator('#editor .graphic-element-smartart')).toContainText('Etapa 1');
+    await expect(page.locator('.editor-page-content .graphic-element-smartart')).toHaveCount(1);
+    await expect(page.locator('.editor-page-content .graphic-element-smartart')).toContainText('Etapa 1');
   });
 
   test('keeps preview zoom within supported bounds and resets to 100%', async ({ page }) => {
