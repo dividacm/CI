@@ -327,7 +327,7 @@ test.describe('Comunicação Interna editor', () => {
       await expect(smartArtTools).toBeHidden();
       await expect(connectorTools).toBeHidden();
 
-      await page.locator('#editor').click({ position: { x: 500, y: 300 } });
+      await page.locator('#editor').dispatchEvent('click');
       await expect(graphicTools).toBeHidden();
 
       await page.getByRole('button', { name: 'Inserir SmartArt' }).click();
@@ -336,7 +336,7 @@ test.describe('Comunicação Interna editor', () => {
       await expect(smartArtTools).toBeVisible();
       await expect(connectorTools).toBeHidden();
 
-      await page.locator('#editor').click({ position: { x: 500, y: 300 } });
+      await page.locator('#editor').dispatchEvent('click');
       await expect(graphicTools).toBeHidden();
       await expect(smartArtTools).toBeHidden();
       await expect(connectorTools).toBeHidden();
