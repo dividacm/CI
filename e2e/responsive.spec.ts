@@ -15,6 +15,55 @@ for (const viewport of responsiveViewports) {
       await expect(page.locator('#editor')).toBeVisible();
     });
 
+    test('registra baseline mensurável da toolbar e da área de edição', async ({ page }, testInfo) => {
+      const metrics = await page.evaluate(() => {
+        const toolbar = document.querySelector<HTMLElement>('.toolbar');
+        const primaryActions = document.querySelector<HTMLElement>('.toolbar-primary-actions');
+        const toolsSummary = document.querySelector<HTMLElement>('.tools-menu > summary');
+        const editor = document.querySelector<HTMLElement>('#editor');
+        const paper = document.querySelector<HTMLElement>('.editor-page');
+
+        if (!toolbar || !primaryActions || !toolsSummary || !editor || !paper) {
+          throw new Error('Não foi possível medir os elementos principais da toolbar e do editor.');
+        }
+
+        const buttons = [...primaryActions.querySelectorAll('button')];
+        const buttonTops = [...new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top)))];
+        const toolbarRect = toolbar.getBoundingClientRect();
+        const editorRect = editor.getBoundingClientRect();
+        const paperRect = paper.getBoundingClientRect();
+
+        return {
+          viewport: { width: window.innerWidth, height: window.innerHeight },
+          toolbarHeight: Math.round(toolbarRect.height),
+          primaryActionCount: buttons.length,
+          primaryActionRows: buttonTops.length,
+          toolsSummaryHeight: Math.round(toolsSummary.getBoundingClientRect().height),
+          editorVisibleHeight: Math.max(
+            0,
+            Math.min(editorRect.bottom, window.innerHeight) - Math.max(editorRect.top, 0),
+          ),
+          paperTop: Math.round(paperRect.top),
+          documentScrollWidth: document.documentElement.scrollWidth,
+          documentClientWidth: document.documentElement.clientWidth,
+        };
+      });
+
+      testInfo.annotations.push({
+        type: 'toolbar-baseline',
+        description: JSON.stringify({ viewport: viewport.name, ...metrics }),
+      });
+
+      expect(metrics.toolbarHeight, 'A toolbar deve ter altura mensurável').toBeGreaterThan(0);
+      expect(metrics.primaryActionCount).toBe(4);
+      expect(metrics.primaryActionRows, 'A quantidade de linhas das ações principais deve ser mensurável').toBeGreaterThan(0);
+      expect(metrics.toolsSummaryHeight).toBeGreaterThan(0);
+      expect(
+        metrics.documentScrollWidth - metrics.documentClientWidth,
+        'A medição da toolbar não deve introduzir overflow horizontal na página',
+      ).toBeLessThanOrEqual(1);
+    });
+
     test('mantém as ações principais acessíveis e o editor utilizável', async ({ page }) => {
       for (const name of ['Salvar', 'Limpar', 'Emitir documento', 'Baixar PDF']) {
         const button = page.getByRole('button', { name, exact: true });
