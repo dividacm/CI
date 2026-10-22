@@ -6,12 +6,22 @@ test.describe('Comunicação Interna editor', () => {
     await expect(page.locator('#editor')).toBeVisible();
   });
 
-  test('clearly identifies the public demo and warns against real data', async ({ page }) => {
-    const notice = page.getByRole('note', { name: 'Demonstração pública' });
+  test('clearly identifies the public demo and warns against real data on desktop and mobile', async ({ page }) => {
+    const notice = page.locator('.demo-notice');
     await expect(notice).toBeVisible();
+    await expect(notice).toHaveAttribute('role', 'note');
+    await expect(notice).toContainText('Demonstração pública');
     await expect(notice).toContainText('Use somente dados fictícios');
     await expect(notice).toContainText('Não insira documentos reais, dados pessoais ou informações institucionais reservadas');
     await expect(notice).toContainText('não oferece autenticação nem controle de acesso');
+
+    await page.setViewportSize({ width: 375, height: 812 });
+    await expect(notice).toBeVisible();
+    const mobileWidth = await notice.evaluate((element) => element.getBoundingClientRect().width);
+    expect(mobileWidth).toBeLessThanOrEqual(375);
+
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(notice).toBeVisible();
   });
 
   test('opens with the default document fields and editor', async ({ page }) => {
