@@ -303,6 +303,46 @@ test.describe('Comunicação Interna editor', () => {
     await expect(page.locator('#paper .paper-graphic-element')).toHaveCount(1);
   });
 
+  for (const viewport of [
+    { name: 'desktop', width: 1280, height: 800 },
+    { name: 'mobile', width: 375, height: 812 },
+  ] as const) {
+    test(`keeps graphic tool groups synchronized with selection on ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/');
+      await expect(page.locator('#editor')).toBeVisible();
+      await page.locator('summary', { hasText: 'Ferramentas' }).click();
+
+      const graphicTools = page.locator('.graphic-tools');
+      const smartArtTools = page.locator('.smartart-tools');
+      const connectorTools = page.locator('.connector-tools');
+
+      await expect(graphicTools).toBeHidden();
+      await expect(smartArtTools).toBeHidden();
+      await expect(connectorTools).toBeHidden();
+
+      await page.getByRole('button', { name: 'Inserir forma' }).click();
+      await expect(page.locator('.graphic-elements-layer .graphic-element-shape')).toHaveCount(1);
+      await expect(graphicTools).toBeVisible();
+      await expect(smartArtTools).toBeHidden();
+      await expect(connectorTools).toBeHidden();
+
+      await page.locator('#editor').click({ position: { x: 500, y: 300 } });
+      await expect(graphicTools).toBeHidden();
+
+      await page.getByRole('button', { name: 'Inserir SmartArt' }).click();
+      await expect(page.locator('.graphic-elements-layer .graphic-element-smartart')).toHaveCount(1);
+      await expect(graphicTools).toBeVisible();
+      await expect(smartArtTools).toBeVisible();
+      await expect(connectorTools).toBeHidden();
+
+      await page.locator('#editor').click({ position: { x: 500, y: 300 } });
+      await expect(graphicTools).toBeHidden();
+      await expect(smartArtTools).toBeHidden();
+      await expect(connectorTools).toBeHidden();
+    });
+  }
+
   test('has no console errors during the main editor flow', async ({ page }) => {
     const errors: string[] = [];
     page.on('console', (message) => {
