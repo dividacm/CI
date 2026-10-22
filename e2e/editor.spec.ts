@@ -6,11 +6,19 @@ test.describe('Comunicação Interna editor', () => {
     await expect(page.locator('#editor')).toBeVisible();
   });
 
+  test('clearly identifies the public demo and warns against real data', async ({ page }) => {
+    const notice = page.getByRole('note', { name: 'Demonstração pública' });
+    await expect(notice).toBeVisible();
+    await expect(notice).toContainText('Use somente dados fictícios');
+    await expect(notice).toContainText('Não insira documentos reais, dados pessoais ou informações institucionais reservadas');
+    await expect(notice).toContainText('não oferece autenticação nem controle de acesso');
+  });
+
   test('opens with the default document fields and editor', async ({ page }) => {
     await expect(page.locator('[data-field="from"]')).toHaveValue(
-      'Gerência de Valores em Carteira e Cobrança - GCCOB',
+      'Setor de demonstração',
     );
-    await expect(page.locator('[data-field="to"]')).toHaveValue('CRISTIANE SCHWARZ');
+    await expect(page.locator('[data-field="to"]')).toHaveValue('Destinatário fictício');
     await expect(page.locator('#editor')).toBeVisible();
     await expect(page.locator('#paper')).toBeVisible();
     await expect(page.locator('#save-status')).toHaveText('Salvo localmente.');
