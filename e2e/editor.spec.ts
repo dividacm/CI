@@ -207,6 +207,36 @@ test.describe('Comunicação Interna editor', () => {
     await expect(page.locator('#editor table tr').first().locator('td, th')).toHaveCount(3);
   });
 
+
+  test('edits a table cell and persists its content after reload', async ({ page }) => {
+    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    const editor = page.locator('#editor');
+    await editor.click();
+    await page.getByRole('button', { name: 'Inserir tabela 2 por 3' }).click();
+
+    const firstCell = editor.locator('table td').first();
+    await firstCell.fill('Célula de teste persistida');
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await expect(page.locator('#save-status')).toHaveText('Salvo localmente.');
+
+    await page.reload();
+    await expect(page.locator('#editor table td').first()).toHaveText('Célula de teste persistida');
+    await expect(page.locator('#editor table tr')).toHaveCount(2);
+  });
+
+  test('inserts SmartArt and persists it after reload', async ({ page }) => {
+    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    await page.getByRole('button', { name: 'Inserir SmartArt' }).click();
+
+    await expect(page.locator('#editor .graphic-element-smartart')).toHaveCount(1);
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await expect(page.locator('#save-status')).toHaveText('Salvo localmente.');
+
+    await page.reload();
+    await expect(page.locator('#editor .graphic-element-smartart')).toHaveCount(1);
+    await expect(page.locator('#editor .graphic-element-smartart')).toContainText('Etapa 1');
+  });
+
   test('keeps preview zoom within supported bounds and resets to 100%', async ({ page }) => {
     const zoom = page.locator('#preview-zoom');
     const zoomIn = page.getByRole('button', { name: 'Aumentar zoom' });
