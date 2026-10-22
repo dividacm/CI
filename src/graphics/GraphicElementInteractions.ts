@@ -4,6 +4,7 @@ import { createSmartArt, type SmartArtData } from './SmartArtModel';
 
 interface GraphicElementInteractionsOptions {
   onChange: (elements: GraphicElement[]) => void;
+  onSelectionChange?: () => void;
 }
 
 type GraphicDrag = {
@@ -106,6 +107,7 @@ export class GraphicElementInteractions {
     this.selectedIds.clear();
     this.selectedSmartArtNodeId = null;
     this.render();
+    this.options.onSelectionChange?.();
   }
 
   duplicateSelected(): boolean {
@@ -412,7 +414,9 @@ export class GraphicElementInteractions {
     if (target.closest('.graphic-element') || target.closest('.graphic-selection-box')) return;
     if (this.selectedIds.size) {
       this.selectedIds.clear();
+      this.selectedSmartArtNodeId = null;
       this.render();
+      this.options.onSelectionChange?.();
     }
   };
 
