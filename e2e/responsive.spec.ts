@@ -16,6 +16,13 @@ for (const viewport of responsiveViewports) {
       await expect(page.locator('#editor')).toBeVisible();
     });
 
+    test('atalho visível leva o foco ao corpo do documento', async ({ page }) => {
+      await page.getByRole('button', { name: 'Ir para o corpo do documento' }).click();
+      await expect(page.locator('#editor')).toBeFocused();
+      await expect(page.locator('#editor')).toBeVisible();
+      await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+    });
+
     test('registra baseline mensurável da toolbar e da área de edição', async ({ page }, testInfo) => {
       const metrics = await page.evaluate(() => {
         const toolbar = document.querySelector<HTMLElement>('.toolbar');
@@ -28,7 +35,7 @@ for (const viewport of responsiveViewports) {
           throw new Error('Não foi possível medir os elementos principais da toolbar e do editor.');
         }
 
-        const buttons = [...primaryActions.querySelectorAll('button')];
+        const buttons = [...primaryActions.querySelectorAll('button:not([data-action="focus-editor"])')];
         const buttonTops = [...new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top)))];
         const toolbarRect = toolbar.getBoundingClientRect();
         const editorRect = editor.getBoundingClientRect();

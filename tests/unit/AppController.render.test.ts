@@ -18,6 +18,14 @@ describe('AppController render flow', () => {
     new AppController(root, organization).render();
 
     expect(root.querySelector('#editor')).not.toBeNull();
+    const editor = root.querySelector<HTMLElement>('#editor');
+    const focusEditorButton = root.querySelector<HTMLButtonElement>('[data-action="focus-editor"]');
+    expect(focusEditorButton?.getAttribute('aria-label')).toBe('Ir para o corpo do documento');
+    const scrollIntoView = vi.fn();
+    if (editor) Object.defineProperty(editor, 'scrollIntoView', { configurable: true, value: scrollIntoView });
+    focusEditorButton?.click();
+    expect(scrollIntoView).toHaveBeenCalledWith({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+    expect(document.activeElement).toBe(editor);
     expect(root.querySelector('[data-action="save"]')).not.toBeNull();
     expect(root.querySelector('#preview-zoom')?.textContent).toBe('100%');
 

@@ -34,7 +34,7 @@ export function renderShell(organization: OrganizationConfig, template: Template
     ${demoNotice}
     <section class="editor-panel" aria-label="Editor de comunicação">
       <div class="toolbar" role="toolbar" aria-label="Ferramentas do editor">
-        <div class="toolbar-actions toolbar-primary-actions"><button type="button" data-action="save" class="action-green">Salvar</button><button type="button" data-action="clear" class="action-gray">Limpar</button><button type="button" data-action="issue" class="action-primary">Emitir documento</button><button type="button" data-action="pdf" class="action-orange">Baixar PDF</button></div>
+        <div class="toolbar-actions toolbar-primary-actions"><button type="button" data-action="focus-editor" class="action-focus-editor" aria-label="Ir para o corpo do documento" title="Ir para o corpo do documento">Corpo</button><button type="button" data-action="save" class="action-green">Salvar</button><button type="button" data-action="clear" class="action-gray">Limpar</button><button type="button" data-action="issue" class="action-primary">Emitir documento</button><button type="button" data-action="pdf" class="action-orange">Baixar PDF</button></div>
         <details class="tools-menu">
           <summary>Ferramentas</summary>
           <div class="tools-panel">
