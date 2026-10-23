@@ -48,6 +48,32 @@ test.describe('Acessibilidade do editor', () => {
     await expect(page.locator('#editor')).toBeFocused();
   });
 
+  test('insere tabela e forma usando apenas teclado', async ({ page }) => {
+    const summary = page.locator('summary', { hasText: 'Ferramentas' });
+    await summary.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.tools-menu')).toHaveAttribute('open', '');
+
+    const editor = page.locator('#editor');
+    const insertTable = page.getByRole('button', { name: 'Inserir tabela 2 por 3' });
+    await editor.focus();
+    await insertTable.focus();
+    await expect(insertTable).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    await expect(editor.locator('table')).toHaveCount(1);
+    await expect(editor.locator('table tr')).toHaveCount(2);
+    await expect(editor.locator('table tr').first().locator('td, th')).toHaveCount(3);
+
+    const insertShape = page.getByRole('button', { name: 'Inserir forma' });
+    await insertShape.focus();
+    await expect(insertShape).toBeFocused();
+    await page.keyboard.press('Space');
+
+    await expect(page.locator('#paper .paper-graphic-element')).toHaveCount(1);
+    await expect(page.locator('.graphic-tools')).toBeVisible();
+  });
+
   test('expõe recuperação acessível quando o salvamento falha', async ({ page }) => {
     await page.evaluate(() => {
       Storage.prototype.setItem = () => {
