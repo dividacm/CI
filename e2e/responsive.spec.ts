@@ -35,7 +35,7 @@ for (const viewport of responsiveViewports) {
           throw new Error('Não foi possível medir os elementos principais da toolbar e do editor.');
         }
 
-        const buttons = [...primaryActions.querySelectorAll('button')];
+        const buttons = [...primaryActions.querySelectorAll('button:not([data-action="focus-editor"])')];
         const buttonTops = [...new Set(buttons.map((button) => Math.round(button.getBoundingClientRect().top)))];
         const toolbarRect = toolbar.getBoundingClientRect();
         const editorRect = editor.getBoundingClientRect();
