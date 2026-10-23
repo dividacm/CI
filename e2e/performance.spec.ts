@@ -124,7 +124,7 @@ test.describe('Performance de documentos longos', () => {
         '',
         'Este relatório é observacional: não define um limite automático de regressão.',
         '',
-      ].join('\\n');
+      ].join('\n');
       await appendFile(summaryPath, summary, 'utf8');
     }
 
