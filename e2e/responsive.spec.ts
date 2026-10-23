@@ -1,3 +1,4 @@
+import { appendFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 const responsiveViewports = [
@@ -49,10 +50,33 @@ for (const viewport of responsiveViewports) {
         };
       });
 
+      const report = { viewport: viewport.name, ...metrics };
+      const serializedMetrics = JSON.stringify(report);
       testInfo.annotations.push({
         type: 'toolbar-baseline',
-        description: JSON.stringify({ viewport: viewport.name, ...metrics }),
+        description: serializedMetrics,
       });
+      console.log(`Responsive toolbar baseline: ${serializedMetrics}`);
+
+      if (process.env.GITHUB_STEP_SUMMARY) {
+        const summary = [
+          `\n### Toolbar responsiva — ${viewport.name} (${viewport.width}×${viewport.height})`,
+          '',
+          '| Métrica | Valor |',
+          '|---|---:|',
+          `| Altura da toolbar | ${metrics.toolbarHeight} px |`,
+          `| Ações primárias | ${metrics.primaryActionCount} |`,
+          `| Linhas das ações primárias | ${metrics.primaryActionRows} |`,
+          `| Altura do resumo Ferramentas | ${metrics.toolsSummaryHeight} px |`,
+          `| Altura visível do editor no viewport | ${metrics.editorVisibleHeight} px |`,
+          `| Topo do papel | ${metrics.paperTop} px |`,
+          `| Largura de rolagem − largura útil | ${metrics.documentScrollWidth - metrics.documentClientWidth} px |`,
+          '',
+          '_Medição observacional; não estabelece orçamento automático nem altera o layout._',
+          '',
+        ].join('\n');
+        await appendFile(process.env.GITHUB_STEP_SUMMARY, summary, 'utf8');
+      }
 
       expect(metrics.toolbarHeight, 'A toolbar deve ter altura mensurável').toBeGreaterThan(0);
       expect(metrics.primaryActionCount).toBe(4);
