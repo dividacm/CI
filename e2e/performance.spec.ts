@@ -1,3 +1,4 @@
+import { appendFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 type Measurement = {
@@ -107,6 +108,26 @@ test.describe('Performance de documentos longos', () => {
     console.log(
       `Long-document benchmark (ms; one warm-up + ${SAMPLES_PER_SIZE} samples per size, including preview render): ${JSON.stringify(report)}`,
     );
+    const summaryPath = process.env.GITHUB_STEP_SUMMARY;
+    if (summaryPath) {
+      const rows = report.map(({ characters, samplesMs, medianMs, pages }) =>
+        `| ${characters.toLocaleString('pt-BR')} | ${samplesMs.join(', ')} | ${medianMs.toFixed(2)} | ${pages.join(', ')} |`,
+      );
+      const summary = [
+        '## Benchmark E2E — documentos longos',
+        '',
+        'Medições em milissegundos; uma amostra de aquecimento por tamanho não está incluída. Os tempos incluem o ciclo de renderização do preview.',
+        '',
+        '| Caracteres | Amostras (ms) | Mediana (ms) | Páginas por amostra |',
+        '| ---: | --- | ---: | --- |',
+        ...rows,
+        '',
+        'Este relatório é observacional: não define um limite automático de regressão.',
+        '',
+      ].join('\n');
+      await appendFile(summaryPath, summary, 'utf8');
+    }
+
     expect(report).toHaveLength(sizes.length);
   });
 });
