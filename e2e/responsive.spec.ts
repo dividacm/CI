@@ -33,17 +33,29 @@ for (const viewport of responsiveViewports) {
         const toolbarRect = toolbar.getBoundingClientRect();
         const editorRect = editor.getBoundingClientRect();
         const paperRect = paper.getBoundingClientRect();
+        const pageHeader = document.querySelector<HTMLElement>('.editor-page-header');
+        const documentTitle = document.querySelector<HTMLElement>('.editor-document-title');
+        const documentDate = document.querySelector<HTMLElement>('.editor-document-date');
+        const metadata = document.querySelector<HTMLElement>('.editor-metadata');
 
         return {
           viewport: { width: window.innerWidth, height: window.innerHeight },
+          scrollY: Math.round(window.scrollY),
           toolbarHeight: Math.round(toolbarRect.height),
           primaryActionCount: buttons.length,
           primaryActionRows: buttonTops.length,
           toolsSummaryHeight: Math.round(toolsSummary.getBoundingClientRect().height),
+          editorTop: Math.round(editorRect.top),
+          editorBottom: Math.round(editorRect.bottom),
+          editorHeight: Math.round(editorRect.height),
           editorVisibleHeight: Math.max(
             0,
             Math.min(editorRect.bottom, window.innerHeight) - Math.max(editorRect.top, 0),
           ),
+          pageHeaderHeight: Math.round(pageHeader?.getBoundingClientRect().height ?? 0),
+          documentTitleHeight: Math.round(documentTitle?.getBoundingClientRect().height ?? 0),
+          documentDateHeight: Math.round(documentDate?.getBoundingClientRect().height ?? 0),
+          metadataHeight: Math.round(metadata?.getBoundingClientRect().height ?? 0),
           paperTop: Math.round(paperRect.top),
           documentScrollWidth: document.documentElement.scrollWidth,
           documentClientWidth: document.documentElement.clientWidth,
@@ -68,7 +80,12 @@ for (const viewport of responsiveViewports) {
           `| Ações primárias | ${metrics.primaryActionCount} |`,
           `| Linhas das ações primárias | ${metrics.primaryActionRows} |`,
           `| Altura do resumo Ferramentas | ${metrics.toolsSummaryHeight} px |`,
+          `| Posição vertical do editor (topo/fim) | ${metrics.editorTop} / ${metrics.editorBottom} px |`,
+          `| Altura total do editor | ${metrics.editorHeight} px |`,
           `| Altura visível do editor no viewport | ${metrics.editorVisibleHeight} px |`,
+          `| Cabeçalho da página A4 | ${metrics.pageHeaderHeight} px |`,
+          `| Título / data / metadados | ${metrics.documentTitleHeight} / ${metrics.documentDateHeight} / ${metrics.metadataHeight} px |`,
+          `| Posição de rolagem vertical | ${metrics.scrollY} px |`,
           `| Topo do papel | ${metrics.paperTop} px |`,
           `| Largura de rolagem − largura útil | ${metrics.documentScrollWidth - metrics.documentClientWidth} px |`,
           '',
