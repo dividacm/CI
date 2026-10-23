@@ -344,7 +344,7 @@ export class AppController {
       if (action === 'zoom-reset') { updatePreviewZoom(100); return; }
       if (action === 'zoom-in') { updatePreviewZoom(previewZoom + 10); return; }
       if (action === 'focus-editor') {
-        const reduceMotion = this.root.ownerDocument.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches ?? false;
+        const reduceMotion = this.root.ownerDocument.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
         elements.editor.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center', inline: 'nearest' });
         elements.editor.focus({ preventScroll: true });
         return;
