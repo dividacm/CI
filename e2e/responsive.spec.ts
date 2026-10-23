@@ -33,7 +33,12 @@ for (const viewport of responsiveViewports) {
         const toolbarRect = toolbar.getBoundingClientRect();
         const editorRect = editor.getBoundingClientRect();
         const paperRect = paper.getBoundingClientRect();
+        const editorCanvas = document.querySelector<HTMLElement>('.editor-canvas');
         const pageHeader = document.querySelector<HTMLElement>('.editor-page-header');
+        if (!editorCanvas) {
+          throw new Error('Não foi possível medir a área rolável do documento.');
+        }
+        const editorCanvasRect = editorCanvas.getBoundingClientRect();
         const documentTitle = document.querySelector<HTMLElement>('.editor-document-title');
         const documentDate = document.querySelector<HTMLElement>('.editor-document-date');
         const metadata = document.querySelector<HTMLElement>('.editor-metadata');
@@ -52,6 +57,12 @@ for (const viewport of responsiveViewports) {
             0,
             Math.min(editorRect.bottom, window.innerHeight) - Math.max(editorRect.top, 0),
           ),
+          editorCanvasTop: Math.round(editorCanvasRect.top),
+          editorCanvasClientHeight: editorCanvas.clientHeight,
+          editorCanvasScrollHeight: editorCanvas.scrollHeight,
+          editorCanvasScrollTop: editorCanvas.scrollTop,
+          editorCanvasVerticalScrollRange: Math.max(0, editorCanvas.scrollHeight - editorCanvas.clientHeight),
+          editorTopWithinCanvas: Math.round(editorRect.top - editorCanvasRect.top + editorCanvas.scrollTop),
           pageHeaderHeight: Math.round(pageHeader?.getBoundingClientRect().height ?? 0),
           documentTitleHeight: Math.round(documentTitle?.getBoundingClientRect().height ?? 0),
           documentDateHeight: Math.round(documentDate?.getBoundingClientRect().height ?? 0),
@@ -83,6 +94,11 @@ for (const viewport of responsiveViewports) {
           `| Posição vertical do editor (topo/fim) | ${metrics.editorTop} / ${metrics.editorBottom} px |`,
           `| Altura total do editor | ${metrics.editorHeight} px |`,
           `| Altura visível do editor no viewport | ${metrics.editorVisibleHeight} px |`,
+          `| Topo da área rolável do documento | ${metrics.editorCanvasTop} px |`,
+          `| Altura útil / conteúdo da área rolável | ${metrics.editorCanvasClientHeight} / ${metrics.editorCanvasScrollHeight} px |`,
+          `| Faixa de rolagem vertical interna | ${metrics.editorCanvasVerticalScrollRange} px |`,
+          `| Posição do editor dentro da área rolável | ${metrics.editorTopWithinCanvas} px |`,
+          `| Posição inicial de rolagem interna | ${metrics.editorCanvasScrollTop} px |`,
           `| Cabeçalho da página A4 | ${metrics.pageHeaderHeight} px |`,
           `| Título / data / metadados | ${metrics.documentTitleHeight} / ${metrics.documentDateHeight} / ${metrics.metadataHeight} px |`,
           `| Posição de rolagem vertical | ${metrics.scrollY} px |`,
