@@ -490,7 +490,14 @@ export class GraphicElementInteractions {
 
     event.preventDefault();
     event.stopPropagation();
-    this.selectFromElement(id, event.ctrlKey || event.metaKey);
+    const additive = event.ctrlKey || event.metaKey;
+    if (!additive && this.selectedIds.has(id)) {
+      this.selectedIds.clear();
+      this.selectedSmartArtNodeId = null;
+      this.render();
+    } else {
+      this.selectFromElement(id, additive);
+    }
     this.options.onSelectionChange?.();
     this.layer.querySelectorAll<HTMLElement>('[data-graphic-id]').forEach((element) => {
       if (element.dataset.graphicId === id) element.focus();
