@@ -359,6 +359,9 @@ test.describe('Comunicação Interna editor', () => {
 });
 
   test('shows connector actions only for a selected connector and clears them when selection changes', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#editor')).toBeVisible();
+
     const errors: string[] = [];
     page.on('console', (message) => {
       if (message.type() === 'error') errors.push(message.text());
