@@ -49,6 +49,7 @@ export class GraphicElementInteractions {
     this.layer.appendChild(this.selectionBox);
 
     this.layer.addEventListener('pointerdown', this.handlePointerDown);
+    this.layer.addEventListener('keydown', this.handleElementKeyDown);
     this.layer.addEventListener('dblclick', this.handleDoubleClick);
     root.addEventListener('pointerdown', this.handleRootPointerDown);
     root.addEventListener('click', this.handleRootClick);
@@ -62,6 +63,7 @@ export class GraphicElementInteractions {
     this.root.removeEventListener('pointerdown', this.handleRootPointerDown);
     this.root.removeEventListener('click', this.handleRootClick);
     this.layer.removeEventListener('pointerdown', this.handlePointerDown);
+    this.layer.removeEventListener('keydown', this.handleElementKeyDown);
     this.layer.removeEventListener('dblclick', this.handleDoubleClick);
     this.root.ownerDocument.removeEventListener('pointermove', this.handlePointerMove);
     this.root.ownerDocument.removeEventListener('pointermove', this.handleSelectionMove);
@@ -334,6 +336,8 @@ export class GraphicElementInteractions {
       node.dataset.graphicId = element.id;
       node.setAttribute('role', 'button');
       node.setAttribute('aria-label', element.data.label || 'Elemento gráfico');
+      node.setAttribute('aria-pressed', this.selectedIds.has(element.id) ? 'true' : 'false');
+      node.tabIndex = 0;
       node.contentEditable = 'false';
       node.style.left = `${element.position.x}px`;
       node.style.top = `${element.position.y}px`;
@@ -474,6 +478,30 @@ export class GraphicElementInteractions {
     const value = this.root.ownerDocument.defaultView?.prompt('Editar nó SmartArt', current);
     if (value !== null && value !== undefined) this.editSelectedSmartArtNode(value);
     this.render();
+  };
+
+  private handleElementKeyDown = (event: KeyboardEvent): void => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    const target = event.target;
+    if (!(target instanceof HTMLElement)) return;
+    const node = target.closest<HTMLElement>('.graphic-element');
+    const id = node?.dataset.graphicId;
+    if (!id) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    const additive = event.ctrlKey || event.metaKey;
+    if (!additive && this.selectedIds.has(id)) {
+      this.selectedIds.clear();
+      this.selectedSmartArtNodeId = null;
+      this.render();
+    } else {
+      this.selectFromElement(id, additive);
+    }
+    this.options.onSelectionChange?.();
+    this.layer.querySelectorAll<HTMLElement>('[data-graphic-id]').forEach((element) => {
+      if (element.dataset.graphicId === id) element.focus();
+    });
   };
 
   private handlePointerDown = (event: PointerEvent): void => {

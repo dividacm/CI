@@ -48,6 +48,34 @@ test.describe('Acessibilidade do editor', () => {
     await expect(page.locator('#editor')).toBeFocused();
   });
 
+  test('permite selecionar e operar elementos gráficos com teclado', async ({ page }) => {
+    const summary = page.locator('summary', { hasText: 'Ferramentas' });
+    await summary.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.tools-menu')).toHaveAttribute('open', '');
+
+    await page.getByRole('button', { name: 'Inserir forma' }).click();
+    const shape = page.locator('.graphic-elements-layer .graphic-element-shape').first();
+    await expect(shape).toHaveAttribute('tabindex', '0');
+
+    await page.locator('#editor').dispatchEvent('click');
+    await expect(page.locator('.graphic-tools')).toBeHidden();
+
+    await shape.focus();
+    await expect(shape).toBeFocused();
+    await page.keyboard.press('Enter');
+
+    const selectedShape = page.locator('.graphic-elements-layer .graphic-element-shape').first();
+    await expect(selectedShape).toBeFocused();
+    await expect(selectedShape).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.graphic-tools')).toBeVisible();
+
+    const duplicate = page.getByRole('button', { name: 'Duplicar elemento' });
+    await duplicate.focus();
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.graphic-elements-layer .graphic-element-shape')).toHaveCount(2);
+  });
+
   test('insere tabela e forma usando apenas teclado', async ({ page }) => {
     const summary = page.locator('summary', { hasText: 'Ferramentas' });
     await summary.focus();
