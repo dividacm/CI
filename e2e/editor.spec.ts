@@ -357,3 +357,46 @@ test.describe('Comunicação Interna editor', () => {
     expect(errors).toEqual([]);
   });
 });
+
+  test('shows connector actions only for a selected connector and clears them when selection changes', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('console', (message) => {
+      if (message.type() === 'error') errors.push(message.text());
+    });
+
+    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    const graphicTools = page.locator('.graphic-tools');
+    const connectorTools = page.locator('.connector-tools');
+    const smartArtTools = page.locator('.smartart-tools');
+
+    await expect(graphicTools).toBeHidden();
+    await expect(connectorTools).toBeHidden();
+    await expect(smartArtTools).toBeHidden();
+
+    await page.getByRole('button', { name: 'Inserir forma' }).click();
+    let graphics = page.locator('.graphic-elements-layer .graphic-element-shape');
+    await expect(graphics).toHaveCount(1);
+    await expect(graphicTools).toBeVisible();
+    await expect(connectorTools).toBeHidden();
+
+    await page.getByRole('button', { name: 'Inserir forma' }).click();
+    graphics = page.locator('.graphic-elements-layer .graphic-element-shape');
+    await expect(graphics).toHaveCount(2);
+
+    await graphics.first().focus();
+    await page.keyboard.press('Control+Enter');
+    await expect(graphicTools).toBeVisible();
+    await page.getByRole('button', { name: 'Conectar dois elementos' }).click();
+
+    const connector = page.locator('.graphic-connectors-layer [data-connector-id]');
+    await expect(connector).toHaveCount(1);
+    await expect(connectorTools).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Excluir conector' })).toBeVisible();
+
+    await graphics.last().click();
+    await expect(connectorTools).toBeHidden();
+    await expect(smartArtTools).toBeHidden();
+
+    expect(errors).toEqual([]);
+  });
+
