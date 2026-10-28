@@ -109,6 +109,7 @@ export class AppController {
   const graphics = new GraphicElementInteractions(graphicsRoot, {
     onChange: () => sync(),
     onSelectionChange: () => {
+      if (graphics.hasSelection()) connectors.clearSelection();
       syncGraphicTools();
       syncConnectorTools();
       syncSmartArtTools();
