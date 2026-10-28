@@ -744,3 +744,62 @@ describe('GraphicElementInteractions stale SmartArt selection guards', () => {
     interactions.dispose();
   });
 });
+
+describe('GraphicElementInteractions keyboard selection', () => {
+  it('makes graphic elements focusable and toggles selection with Enter and Space', () => {
+    const root = document.createElement('article');
+    const onSelectionChange = vi.fn();
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn(), onSelectionChange });
+    interactions.setElements([createGraphicElement({ id: 'keyboard-shape', kind: 'shape' })]);
+
+    const node = root.querySelector<HTMLElement>('[data-graphic-id="keyboard-shape"]');
+    expect(node?.tabIndex).toBe(0);
+    expect(node?.getAttribute('role')).toBe('button');
+    expect(node?.getAttribute('aria-pressed')).toBe('false');
+
+    node?.dispatchEvent(new KeyboardEvent('keydown', { key: 'x', bubbles: true }));
+    expect(interactions.getSelectedIds()).toEqual([]);
+
+    node?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(interactions.getSelectedIds()).toEqual(['keyboard-shape']);
+    expect(root.querySelector('[data-graphic-id="keyboard-shape"]')?.getAttribute('aria-pressed')).toBe('true');
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="keyboard-shape"]')?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: ' ', bubbles: true }),
+    );
+    expect(interactions.getSelectedIds()).toEqual([]);
+    expect(root.querySelector('[data-graphic-id="keyboard-shape"]')?.getAttribute('aria-pressed')).toBe('false');
+    expect(onSelectionChange).toHaveBeenCalledTimes(2);
+
+    interactions.dispose();
+  });
+
+  it('supports additive keyboard selection with Ctrl and Meta', () => {
+    const root = document.createElement('article');
+    const interactions = new GraphicElementInteractions(root, { onChange: vi.fn() });
+    interactions.setElements([
+      createGraphicElement({ id: 'keyboard-a', kind: 'shape' }),
+      createGraphicElement({ id: 'keyboard-b', kind: 'shape', position: { x: 200, y: 0 } }),
+      createGraphicElement({ id: 'keyboard-c', kind: 'shape', position: { x: 400, y: 0 } }),
+    ]);
+
+    root.querySelector<HTMLElement>('[data-graphic-id="keyboard-a"]')?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }),
+    );
+    root.querySelector<HTMLElement>('[data-graphic-id="keyboard-b"]')?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }),
+    );
+    root.querySelector<HTMLElement>('[data-graphic-id="keyboard-c"]')?.dispatchEvent(
+      new KeyboardEvent('keydown', { key: ' ', metaKey: true, bubbles: true }),
+    );
+
+    expect(interactions.getSelectedIds()).toEqual(['keyboard-a', 'keyboard-b', 'keyboard-c']);
+    for (const id of ['keyboard-a', 'keyboard-b', 'keyboard-c']) {
+      expect(root.querySelector(`[data-graphic-id="${id}"]`)?.getAttribute('aria-pressed')).toBe('true');
+    }
+
+    interactions.dispose();
+  });
+});
+
