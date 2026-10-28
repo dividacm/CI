@@ -128,6 +128,86 @@ for (const viewport of responsiveViewports) {
       ).toBeLessThanOrEqual(1);
     });
 
+    test('mede a ocupação da toolbar com Ferramentas recolhidas e abertas', async ({ page }, testInfo) => {
+      const before = await page.evaluate(() => {
+        const toolbar = document.querySelector<HTMLElement>('.toolbar');
+        const canvas = document.querySelector<HTMLElement>('.editor-canvas');
+        const summary = document.querySelector<HTMLElement>('.tools-menu > summary');
+        if (!toolbar || !canvas || !summary) {
+          throw new Error('Não foi possível medir toolbar, canvas e controle Ferramentas.');
+        }
+        return {
+          toolbarHeight: Math.round(toolbar.getBoundingClientRect().height),
+          canvasTop: Math.round(canvas.getBoundingClientRect().top),
+          summaryHeight: Math.round(summary.getBoundingClientRect().height),
+          pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+
+      const summary = page.locator('.tools-menu > summary');
+      await summary.click();
+      const panel = page.locator('.tools-panel');
+      await expect(panel).toBeVisible();
+
+      const after = await page.evaluate(() => {
+        const toolbar = document.querySelector<HTMLElement>('.toolbar');
+        const canvas = document.querySelector<HTMLElement>('.editor-canvas');
+        const panel = document.querySelector<HTMLElement>('.tools-panel');
+        if (!toolbar || !canvas || !panel) {
+          throw new Error('Não foi possível medir a toolbar expandida e o painel de ferramentas.');
+        }
+        const panelRect = panel.getBoundingClientRect();
+        return {
+          toolbarHeight: Math.round(toolbar.getBoundingClientRect().height),
+          canvasTop: Math.round(canvas.getBoundingClientRect().top),
+          panelWidth: Math.round(panelRect.width),
+          panelHeight: Math.round(panelRect.height),
+          panelScrollHeight: panel.scrollHeight,
+          panelClientHeight: panel.clientHeight,
+          panelLeft: Math.round(panelRect.left),
+          panelRight: Math.round(panelRect.right),
+          pageOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+
+      const report = { viewport: viewport.name, collapsed: before, expanded: after };
+      const serializedMetrics = JSON.stringify(report);
+      testInfo.annotations.push({ type: 'toolbar-density-baseline', description: serializedMetrics });
+      console.log(`Toolbar density baseline: ${serializedMetrics}`);
+
+      if (process.env.GITHUB_STEP_SUMMARY) {
+        const summaryMarkdown = [
+          `\\n### Ocupação da toolbar — Ferramentas ${viewport.name} (${viewport.width}×${viewport.height})`,
+          '',
+          '| Métrica | Recolhida | Aberta |',
+          '|---|---:|---:|',
+          `| Altura da toolbar | ${before.toolbarHeight} px | ${after.toolbarHeight} px |`,
+          `| Topo do canvas | ${before.canvasTop} px | ${after.canvasTop} px |`,
+          `| Altura do resumo Ferramentas | ${before.summaryHeight} px | — |`,
+          `| Dimensões do painel aberto | — | ${after.panelWidth} × ${after.panelHeight} px |`,
+          `| Rolagem interna do painel (conteúdo/área útil) | — | ${after.panelScrollHeight} / ${after.panelClientHeight} px |`,
+          `| Limites horizontais do painel | — | ${after.panelLeft}–${after.panelRight} px |`,
+          `| Overflow horizontal da página | ${before.pageOverflow} px | ${after.pageOverflow} px |`,
+          '',
+          '_Medição observacional para decisão de UX; não altera CSS nem define thresholds de performance._',
+          '',
+        ].join('\\n');
+        await appendFile(process.env.GITHUB_STEP_SUMMARY, summaryMarkdown, 'utf8');
+      }
+
+      expect(Math.abs(after.toolbarHeight - before.toolbarHeight),
+        'Abrir Ferramentas não deve aumentar a altura reservada da toolbar').toBeLessThanOrEqual(1);
+      expect(Math.abs(after.canvasTop - before.canvasTop),
+        'Abrir Ferramentas não deve deslocar verticalmente a área do canvas').toBeLessThanOrEqual(1);
+      expect(after.panelWidth).toBeGreaterThan(0);
+      expect(after.panelHeight).toBeGreaterThan(0);
+      expect(after.panelClientHeight).toBeGreaterThan(0);
+      expect(after.panelScrollHeight).toBeGreaterThanOrEqual(after.panelClientHeight);
+      expect(after.panelLeft).toBeGreaterThanOrEqual(-1);
+      expect(after.panelRight).toBeLessThanOrEqual(viewport.width + 1);
+      expect(after.pageOverflow, 'Ferramentas abertas não devem criar overflow horizontal na página').toBeLessThanOrEqual(1);
+    });
+
     test('mantém as ações principais acessíveis e o editor utilizável', async ({ page }) => {
       for (const name of ['Salvar', 'Limpar', 'Emitir documento', 'Baixar PDF']) {
         const button = page.getByRole('button', { name, exact: true });
