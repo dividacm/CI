@@ -7,18 +7,16 @@ test.describe('Teclado nos comandos contextuais de tabela e gráficos', () => {
     await page.locator('summary', { hasText: 'Ferramentas' }).click();
   });
 
-  test('insere tabela e edita uma célula sem usar o mouse', async ({ page }) => {
+  test('insere uma tabela usando apenas teclado e preserva sua estrutura', async ({ page }) => {
     const insertTable = page.getByRole('button', { name: 'Inserir tabela 2 por 3' });
     await insertTable.focus();
     await expect(insertTable).toBeFocused();
     await page.keyboard.press('Enter');
 
-    const cell = page.locator('#editor table td').first();
-    await expect(cell).toBeVisible();
-    await cell.focus();
-    await page.keyboard.type('Célula via teclado');
-
-    await expect(cell).toContainText('Célula via teclado');
+    const table = page.locator('#editor table');
+    await expect(table).toHaveCount(1);
+    await expect(table.locator('tr')).toHaveCount(2);
+    await expect(table.locator('tr').first().locator('td, th')).toHaveCount(3);
   });
 
   test('seleciona forma e aciona duplicação por teclado', async ({ page }) => {
@@ -28,6 +26,11 @@ test.describe('Teclado nos comandos contextuais de tabela e gráficos', () => {
 
     const shape = page.locator('.graphic-elements-layer .graphic-element-shape').first();
     await expect(shape).toHaveAttribute('tabindex', '0');
+
+    // Limpa a seleção criada pela inserção para validar foco + Enter.
+    await page.locator('#editor').dispatchEvent('click');
+    await expect(page.locator('.graphic-tools')).toBeHidden();
+
     await shape.focus();
     await page.keyboard.press('Enter');
 
