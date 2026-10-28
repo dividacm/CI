@@ -109,6 +109,7 @@ export class AppController {
   const graphics = new GraphicElementInteractions(graphicsRoot, {
     onChange: () => sync(),
     onSelectionChange: () => {
+      if (graphics.hasSelection()) connectors.clearSelection();
       syncGraphicTools();
       syncConnectorTools();
       syncSmartArtTools();
@@ -215,7 +216,11 @@ export class AppController {
   elements.editor.addEventListener('click', syncTableTools);
   elements.editor.addEventListener('keyup', syncTableTools);
   elements.editor.addEventListener('focus', syncTableTools);
-  graphicsRoot.addEventListener('pointerdown', () => queueMicrotask(() => { syncGraphicTools(); syncConnectorTools(); syncSmartArtTools(); }));
+  graphicsRoot.addEventListener('pointerdown', (event) => {
+    const target = event.target;
+    if (target instanceof Element && target.closest('.graphic-element')) connectors.clearSelection();
+    queueMicrotask(() => { syncGraphicTools(); syncConnectorTools(); syncSmartArtTools(); });
+  }, true);
   document.addEventListener('selectionchange', syncTableTools);
 
   this.root.querySelector<HTMLSelectElement>('#template-selector')?.addEventListener('change', () => {
