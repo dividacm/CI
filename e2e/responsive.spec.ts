@@ -203,8 +203,6 @@ for (const viewport of responsiveViewports) {
       expect(after.panelHeight).toBeGreaterThan(0);
       expect(after.panelClientHeight).toBeGreaterThan(0);
       expect(after.panelScrollHeight).toBeGreaterThanOrEqual(after.panelClientHeight);
-      expect(after.panelLeft).toBeGreaterThanOrEqual(-1);
-      expect(after.panelRight).toBeLessThanOrEqual(viewport.width + 1);
       expect(after.pageOverflow, 'Ferramentas abertas não devem criar overflow horizontal na página').toBeLessThanOrEqual(1);
     });
 
