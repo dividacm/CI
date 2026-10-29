@@ -512,3 +512,53 @@ describe('AppController selected graphic history routing', () => {
     expect(graphicIds()).toBe(initialCount + 1);
   });
 });
+
+
+describe('AppController interface density preference', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('uses the compact default, persists valid choices, and ignores invalid saved values', () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    localStorage.setItem('ci:ui-density', 'invalid');
+    const organization = structuredClone(defaultOrganization);
+    const originalLayout = structuredClone(organization.layout);
+
+    new AppController(root, organization).render();
+
+    const shell = root.querySelector<HTMLElement>('.app-shell');
+    const selector = root.querySelector<HTMLSelectElement>('#ui-density');
+    expect(shell?.dataset.density).toBe('compact');
+    expect(selector?.value).toBe('compact');
+    expect(selector?.options.length).toBe(3);
+
+    if (!selector || !shell) throw new Error('Controle de densidade não foi renderizado.');
+
+    selector.value = 'tight';
+    selector.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(shell.dataset.density).toBe('tight');
+    expect(localStorage.getItem('ci:ui-density')).toBe('tight');
+
+    selector.value = 'comfortable';
+    selector.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(shell.dataset.density).toBe('comfortable');
+    expect(localStorage.getItem('ci:ui-density')).toBe('comfortable');
+
+    selector.value = 'not-a-density';
+    selector.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(shell.dataset.density).toBe('comfortable');
+    expect(localStorage.getItem('ci:ui-density')).toBe('comfortable');
+    expect(organization.layout).toEqual(originalLayout);
+    expect(localStorage.getItem('ci:layout-config')).toBeNull();
+
+    document.body.innerHTML = '';
+    const nextRoot = document.createElement('div');
+    document.body.appendChild(nextRoot);
+    new AppController(nextRoot, structuredClone(defaultOrganization)).render();
+    expect(nextRoot.querySelector<HTMLElement>('.app-shell')?.dataset.density).toBe('comfortable');
+  });
+});
