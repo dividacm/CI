@@ -411,3 +411,38 @@ test.describe('Comunicação Interna editor', () => {
     });
   }
 
+
+
+test.describe('Régua e zoom da pré-visualização responsiva', () => {
+  for (const viewport of [
+    { name: 'mobile', width: 375, height: 812 },
+    { name: 'tablet', width: 768, height: 1024 },
+    { name: 'desktop', width: 1280, height: 800 },
+  ]) {
+    test(`mantém régua e controles de zoom funcionais em ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/');
+      await expect(page.locator('#paper')).toBeVisible();
+      await expect(page.locator('#horizontal-ruler')).toBeVisible();
+      await expect(page.locator('[data-action="zoom-in"]')).toBeVisible();
+      await expect(page.locator('[data-action="zoom-out"]')).toBeVisible();
+
+      const zoom = page.locator('#preview-zoom');
+      await expect(zoom).toHaveText('100%');
+      await page.locator('[data-action="zoom-in"]').click();
+      await expect(zoom).toHaveText('110%');
+      await page.locator('[data-action="zoom-out"]').click();
+      await expect(zoom).toHaveText('100%');
+
+      const dimensions = await page.evaluate(() => ({
+        viewportWidth: document.documentElement.clientWidth,
+        documentWidth: document.documentElement.scrollWidth,
+        rulerWidth: document.querySelector<HTMLElement>('#horizontal-ruler')?.getBoundingClientRect().width ?? 0,
+        paperWidth: document.querySelector<HTMLElement>('#paper')?.getBoundingClientRect().width ?? 0,
+      }));
+      expect(dimensions.documentWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
+      expect(dimensions.rulerWidth).toBeGreaterThan(0);
+      expect(dimensions.paperWidth).toBeGreaterThan(0);
+    });
+  }
+});
