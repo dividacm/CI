@@ -446,3 +446,52 @@ test.describe('Régua e zoom da pré-visualização responsiva', () => {
     });
   }
 });
+
+
+test.describe('Preservação do documento e exportação PDF', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('#editor')).toBeVisible();
+  });
+
+  test('preserva os campos e o corpo editados após salvar e recarregar', async ({ page }) => {
+    await page.locator('[data-field="from"]').fill('Setor de teste documental');
+    await page.locator('[data-field="to"]').fill('Destinatário de teste');
+    await page.locator('[data-field="subject"]').fill('Preservação do documento V2.10');
+
+    const editor = page.locator('#editor');
+    await editor.fill('Conteúdo que deve permanecer no documento após salvar.');
+    await page.getByRole('button', { name: 'Salvar' }).click();
+    await expect(page.locator('#save-status')).toHaveText('Salvo localmente.');
+
+    await page.reload();
+    await expect(page.locator('[data-field="from"]')).toHaveValue('Setor de teste documental');
+    await expect(page.locator('[data-field="to"]')).toHaveValue('Destinatário de teste');
+    await expect(page.locator('[data-field="subject"]')).toHaveValue('Preservação do documento V2.10');
+    await expect(page.locator('#editor')).toContainText('Conteúdo que deve permanecer no documento após salvar.');
+    await expect(page.locator('#paper')).toBeVisible();
+  });
+
+  test('gera um PDF multipágina quando o documento tem conteúdo extenso', async ({ page }) => {
+    const editor = page.locator('#editor');
+    await editor.fill('Conteúdo sintético para validar a exportação multipágina. '.repeat(900));
+
+    const downloadPromise = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Baixar PDF' }).click();
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/\.pdf$/i);
+
+    const stream = await download.createReadStream();
+    if (!stream) throw new Error('Não foi possível ler o PDF baixado.');
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) chunks.push(Buffer.from(chunk));
+    const pdf = Buffer.concat(chunks).toString('latin1');
+
+    expect(pdf.startsWith('%PDF-')).toBe(true);
+    const exportedPageCount = (pdf.match(/\/Type\s*\/Page\b/g) ?? []).length;
+    expect(exportedPageCount).toBeGreaterThan(1);
+    await expect(page.locator('#save-status')).toHaveText('PDF gerado com sucesso.', {
+      timeout: 30_000,
+    });
+  });
+});
