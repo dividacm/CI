@@ -115,3 +115,30 @@ html,body,#app{min-height:100%;margin:0}body{min-height:100vh;background:var(--c
  .app-header h1{max-width:52vw;font-size:.82rem}
  .app-header .save-status-group{max-width:42%;text-align:right}
 }
+
+
+/* Canvas framing: clearer workspace/paper separation without changing A4 geometry. */
+.editor-canvas{background:var(--color-canvas);border-right:1px solid var(--color-border-subtle)}
+.preview-column{display:flex;flex-direction:column;min-height:680px;background:var(--color-canvas)}
+.preview-controls{justify-content:space-between;flex:0 0 34px;padding-inline:12px;gap:8px;background:var(--color-surface);border-bottom:1px solid var(--color-border)}
+.page-navigation,.zoom-navigation{flex:0 0 auto}
+.horizontal-ruler{flex:0 0 auto;margin-top:12px;border:1px solid var(--color-border-subtle);border-bottom-color:var(--color-border);background:color-mix(in srgb,var(--color-surface-muted) 86%,var(--color-canvas))}
+.preview-wrap{flex:1 1 auto;min-height:640px;padding:20px 16px 32px;background:var(--color-canvas)}
+.paper-page{outline-offset:0}
+.paper-page[data-active="true"]{outline:1px solid color-mix(in srgb,var(--color-primary) 24%,transparent);outline-offset:0}
+@media(max-width:1050px){
+ .editor-canvas{border-right:0;border-bottom:1px solid var(--color-border-subtle)}
+ .preview-column{min-height:680px}
+ .preview-wrap{min-height:640px}
+}
+@media(max-width:720px){
+ .preview-controls{position:sticky;top:0;justify-content:space-between;padding-inline:6px;gap:4px}
+ .page-navigation{padding-right:5px}
+ .preview-controls output{min-width:38px;font-size:.72rem}
+ .preview-controls #page-indicator{min-width:78px}
+ .horizontal-ruler{margin-top:8px}
+ .preview-wrap{padding:12px 8px 24px;min-height:520px}
+}
+@media(prefers-reduced-motion:reduce){
+ .preview-column,.preview-wrap,.paper-page{scroll-behavior:auto;transition:none!important}
+}
