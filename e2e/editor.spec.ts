@@ -479,7 +479,7 @@ test.describe('Preservação do documento e exportação PDF', () => {
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Baixar PDF' }).click();
     const download = await downloadPromise;
-    expect(download.suggestedFilename()).toMatch(/\\.pdf$/i);
+    expect(download.suggestedFilename()).toMatch(/\.pdf$/i);
 
     const stream = await download.createReadStream();
     if (!stream) throw new Error('Não foi possível ler o PDF baixado.');
@@ -488,7 +488,7 @@ test.describe('Preservação do documento e exportação PDF', () => {
     const pdf = Buffer.concat(chunks).toString('latin1');
 
     expect(pdf.startsWith('%PDF-')).toBe(true);
-    const exportedPageCount = (pdf.match(/\\/Type\\s*\\/Page\\b/g) ?? []).length;
+    const exportedPageCount = (pdf.match(/\/Type\s*\/Page\b/g) ?? []).length;
     expect(exportedPageCount).toBeGreaterThan(1);
     await expect(page.locator('#save-status')).toHaveText('PDF gerado com sucesso.', {
       timeout: 30_000,
