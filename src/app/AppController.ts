@@ -29,6 +29,22 @@ export class AppController {
   let template = resolveTemplate(this.organization);
 
   this.root.innerHTML = renderShell(this.organization, template);
+  const densityKey = 'ci:ui-density';
+  const densityOptions = ['comfortable', 'compact', 'tight'] as const;
+  const savedDensity = localStorage.getItem(densityKey);
+  const initialDensity = densityOptions.find((option) => option === savedDensity) ?? 'compact';
+  const appShell = this.root.querySelector<HTMLElement>('.app-shell');
+  const densitySelector = this.root.querySelector<HTMLSelectElement>('#ui-density');
+  if (appShell) appShell.dataset.density = initialDensity;
+  if (densitySelector) {
+    densitySelector.value = initialDensity;
+    densitySelector.addEventListener('change', () => {
+      const selectedDensity = densityOptions.find((option) => option === densitySelector.value);
+      if (!selectedDensity || !appShell) return;
+      appShell.dataset.density = selectedDensity;
+      localStorage.setItem(densityKey, selectedDensity);
+    });
+  }
   const tableButton = this.root.ownerDocument.createElement('button');
   tableButton.type = 'button';
   tableButton.dataset.action = 'table-insert';
