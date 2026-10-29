@@ -1,4 +1,5 @@
 import './styles/main.css';
+import './styles/design-system.css';
 
 import { bootstrapApp } from './app/bootstrap';
 import { defaultOrganization } from './configuration/defaultOrganization';
