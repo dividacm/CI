@@ -1,0 +1,119 @@
+/* CI Design System V2.10 — semantic tokens and typography.
+   These tokens style the application chrome and document surface without changing A4 dimensions. */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --ds-app-bg: #e9ece9;
+  --ds-paper: #fffefd;
+  --ds-ink: #19201c;
+  --ds-muted: #68716b;
+  --ds-line: #d6dbd7;
+  --ds-line-dark: #b7c0b9;
+  --ds-green: #1e5a47;
+  --ds-green-soft: #e5f0e9;
+  --ds-select: #cfe1f8;
+  --ds-error: #a53c35;
+  --ds-warn: #a56a1b;
+  --ds-radius: 5px;
+  --ds-shadow-paper: 0 3px 11px rgb(30 42 34 / 13%), 0 1px 2px rgb(30 42 34 / 8%);
+  --ds-font-ui: 'Manrope', Arial, sans-serif;
+  --ds-font-document: 'Libre Baskerville', Georgia, serif;
+
+  /* Compatibility aliases used by existing editor components. */
+  --color-bg: var(--ds-app-bg);
+  --color-surface: var(--ds-paper);
+  --color-surface-muted: #f4f6f3;
+  --color-canvas: var(--ds-app-bg);
+  --color-border: var(--ds-line);
+  --color-border-subtle: var(--ds-line);
+  --color-control-border: var(--ds-line-dark);
+  --color-text: var(--ds-ink);
+  --color-muted: var(--ds-muted);
+  --color-label: var(--ds-ink);
+  --color-danger: var(--ds-error);
+  --color-action-orange: var(--ds-warn);
+  --color-action-green: var(--ds-green);
+  --space-1: 4px;
+  --space-2: 6px;
+  --space-3: 8px;
+  --space-4: 12px;
+  --space-5: 16px;
+  --space-6: 20px;
+  --space-7: 24px;
+  --radius-sm: var(--ds-radius);
+  --radius-md: var(--ds-radius);
+  --radius-lg: var(--ds-radius);
+  --shadow-panel: none;
+  --shadow-paper: var(--ds-shadow-paper);
+
+  font-family: var(--ds-font-ui);
+  color: var(--ds-ink);
+  background: var(--ds-app-bg);
+}
+
+body,
+.app-shell {
+  font-family: var(--ds-font-ui);
+  color: var(--ds-ink);
+}
+
+.editor-panel {
+  box-shadow: none;
+}
+
+.editor-page,
+.editor-surface,
+.paper,
+.paper-page {
+  font-family: var(--ds-font-document);
+  background-color: var(--ds-paper);
+}
+
+.paper,
+.editor-page,
+.paper-page {
+  box-shadow: var(--ds-shadow-paper);
+}
+
+.field input,
+.layout-setting input,
+.asset-setting input,
+.template-selector select,
+.density-control select,
+.toolbar button,
+.toolbar select,
+.toolbar input,
+.preview-controls button {
+  border-radius: var(--ds-radius);
+}
+
+.field input:focus-visible,
+button:focus-visible,
+select:focus-visible,
+input:focus-visible,
+[contenteditable="true"]:focus-visible {
+  outline: 2px solid var(--color-primary, var(--ds-green));
+  outline-offset: 2px;
+}
+
+.toolbar button[aria-pressed="true"],
+.toolbar button[data-active="true"] {
+  border-color: var(--ds-green);
+  background: var(--ds-green-soft);
+  color: var(--ds-green);
+}
+
+::selection {
+  background: var(--ds-select);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
