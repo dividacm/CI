@@ -437,7 +437,11 @@ export class AppController {
       }
       if (action === 'pdf') {
         if (!this.organization.features.pdfExport) return;
-        sync(); elements.pdfButton.disabled = true;
+        // Flush the pending autosave before export so its delayed status callback
+        // cannot overwrite the PDF result message.
+        sync();
+        autosave.saveNow();
+        elements.pdfButton.disabled = true;
         const previous = elements.pdfButton.textContent;
         elements.pdfButton.textContent = 'Gerando PDF…';
         try {
