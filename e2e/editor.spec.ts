@@ -230,7 +230,8 @@ test.describe('Comunicação Interna editor', () => {
       await expect(shapes).toHaveCount(1);
 
       await shapes.first().focus();
-      await page.keyboard.press('Control+Enter');
+      await page.keyboard.press('Enter');
+      await expect(shapes.first()).toHaveAttribute('aria-pressed', 'true');
       const duplicate = page.getByRole('button', { name: 'Duplicar elemento' });
       await expect(duplicate).toBeVisible();
       await duplicate.focus();
