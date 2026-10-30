@@ -534,3 +534,29 @@ test.describe('Preservação do documento e exportação PDF', () => {
     });
   });
 });
+
+
+test.describe('Quebra automática de linhas no corpo do documento', () => {
+  test('quebra sequências longas sem espaços no editor e na pré-visualização', async ({ page }) => {
+    await page.goto('/');
+    const unbrokenText = 'IPSUM'.repeat(80);
+    const editor = page.locator('#editor');
+
+    await editor.fill(unbrokenText);
+
+    await expect(editor).toContainText(unbrokenText);
+    await expect.poll(() => editor.evaluate((element) => ({
+      overflowWrap: getComputedStyle(element).overflowWrap,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    }))).toMatchObject({ overflowWrap: 'anywhere' });
+
+    const previewContent = page.locator('#paper .paper-page-content').first();
+    await expect(previewContent).toContainText(unbrokenText);
+    await expect.poll(() => previewContent.evaluate((element) => ({
+      overflowWrap: getComputedStyle(element).overflowWrap,
+      scrollWidth: element.scrollWidth,
+      clientWidth: element.clientWidth,
+    }))).toMatchObject({ overflowWrap: 'anywhere' });
+  });
+});
