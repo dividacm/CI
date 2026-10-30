@@ -126,7 +126,7 @@ test.describe('Acessibilidade do editor', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.reload();
 
-    const motion = await page.locator('.tools-menu > summary').evaluate((element) => {
+    const motion = await page.locator('.tools-panel').evaluate((element) => {
       const style = getComputedStyle(element);
       return {
         transitionDuration: Number.parseFloat(style.transitionDuration) || 0,
