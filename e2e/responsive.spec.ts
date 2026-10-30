@@ -1,3 +1,4 @@
+import { appendFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 const responsiveViewports = [
