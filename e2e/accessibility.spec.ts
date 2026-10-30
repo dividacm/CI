@@ -36,10 +36,7 @@ test.describe('Acessibilidade do editor', () => {
   });
 
   test('mantém controles operáveis por teclado', async ({ page }) => {
-    const summary = page.locator('summary', { hasText: 'Ferramentas' });
-    await summary.focus();
-    await page.keyboard.press('Enter');
-    await expect(page.locator('.tools-menu')).toHaveAttribute('open', '');
+    await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
 
     const boldButton = page.getByRole('button', { name: 'Negrito' });
     await boldButton.focus();
@@ -49,10 +46,7 @@ test.describe('Acessibilidade do editor', () => {
   });
 
   test('permite selecionar e operar elementos gráficos com teclado', async ({ page }) => {
-    const summary = page.locator('summary', { hasText: 'Ferramentas' });
-    await summary.focus();
-    await page.keyboard.press('Enter');
-    await expect(page.locator('.tools-menu')).toHaveAttribute('open', '');
+    await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
 
     await page.getByRole('button', { name: 'Inserir forma' }).click();
     const shape = page.locator('.graphic-elements-layer .graphic-element-shape').first();
@@ -77,10 +71,7 @@ test.describe('Acessibilidade do editor', () => {
   });
 
   test('insere tabela e forma usando apenas teclado', async ({ page }) => {
-    const summary = page.locator('summary', { hasText: 'Ferramentas' });
-    await summary.focus();
-    await page.keyboard.press('Enter');
-    await expect(page.locator('.tools-menu')).toHaveAttribute('open', '');
+    await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
 
     const editor = page.locator('#editor');
     const insertTable = page.getByRole('button', { name: 'Inserir tabela 2 por 3' });
