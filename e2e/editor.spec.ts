@@ -229,6 +229,12 @@ test.describe('Comunicação Interna editor', () => {
       const shapes = page.locator('.graphic-elements-layer .graphic-element-shape');
       await expect(shapes).toHaveCount(1);
 
+      // Inserir uma forma já a seleciona; limpe a seleção antes de testar a ativação por teclado.
+      await expect(shapes.first()).toHaveAttribute('aria-pressed', 'true');
+      await shapes.first().focus();
+      await page.keyboard.press('Escape');
+      await expect(shapes.first()).toHaveAttribute('aria-pressed', 'false');
+
       await shapes.first().focus();
       await page.keyboard.press('Enter');
       await expect(shapes.first()).toHaveAttribute('aria-pressed', 'true');
