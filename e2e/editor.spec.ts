@@ -208,6 +208,45 @@ test.describe('Comunicação Interna editor', () => {
   });
 
 
+  for (const viewport of [
+    { name: 'desktop', width: 1280, height: 800 },
+    { name: 'mobile', width: 375, height: 812 },
+  ] as const) {
+    test(`supports keyboard activation of table and graphic commands on ${viewport.name}`, async ({ page }) => {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+
+      const insertTable = page.getByRole('button', { name: 'Inserir tabela 2 por 3' });
+      await insertTable.focus();
+      await expect(insertTable).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(page.locator('#editor table')).toHaveCount(1);
+
+      const insertShape = page.getByRole('button', { name: 'Inserir forma' });
+      await insertShape.focus();
+      await expect(insertShape).toBeFocused();
+      await page.keyboard.press('Enter');
+
+      const shapes = page.locator('.graphic-elements-layer .graphic-element-shape');
+      await expect(shapes).toHaveCount(1);
+
+      // Inserir uma forma já a seleciona; limpe a seleção antes de testar a ativação por teclado.
+      await expect(shapes.first()).toHaveAttribute('aria-pressed', 'true');
+      await shapes.first().focus();
+      await page.keyboard.press('Escape');
+      await expect(shapes.first()).toHaveAttribute('aria-pressed', 'false');
+
+      await shapes.first().focus();
+      await page.keyboard.press('Enter');
+      await expect(shapes.first()).toHaveAttribute('aria-pressed', 'true');
+      const duplicate = page.getByRole('button', { name: 'Duplicar elemento' });
+      await expect(duplicate).toBeVisible();
+      await duplicate.focus();
+      await expect(duplicate).toBeFocused();
+      await page.keyboard.press('Enter');
+      await expect(shapes).toHaveCount(2);
+    });
+  }
+
   test('edits a table cell and persists its content after reload', async ({ page }) => {
     await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
     const editor = page.locator('#editor');
