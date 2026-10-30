@@ -117,3 +117,65 @@ input:focus-visible,
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* Word-style ribbon: primary tools remain visible instead of living in a disclosure popup. */
+.toolbar {
+  align-items: flex-start;
+  gap: 8px;
+  background: var(--ds-paper);
+}
+.tools-menu {
+  display: block;
+  flex: 1 1 100%;
+  min-width: 0;
+  order: 3;
+}
+.tools-panel {
+  position: static;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  margin: 0;
+  padding: 10px 0 2px;
+  border: 0;
+  border-top: 1px solid var(--ds-line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.tools-menu > summary {
+  display: none;
+}
+.toolbar-groups {
+  align-items: center;
+  gap: 6px;
+}
+.toolbar-group {
+  min-height: 34px;
+  gap: 4px;
+  padding: 0 8px 0 0;
+  margin-right: 2px;
+  border-right: 1px solid var(--ds-line);
+}
+.toolbar button[aria-pressed="true"],
+.toolbar button[data-active="true"] {
+  border-color: var(--ds-green);
+  background: var(--ds-green-soft);
+  color: var(--ds-green);
+  box-shadow: inset 0 0 0 1px rgb(30 90 71 / 12%);
+}
+@media (max-width: 760px) {
+  .tools-panel {
+    padding-top: 8px;
+  }
+  .toolbar-groups {
+    align-items: stretch;
+  }
+  .toolbar-group {
+    flex-wrap: wrap;
+  }
+}

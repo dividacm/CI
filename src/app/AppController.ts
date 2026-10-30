@@ -238,6 +238,37 @@ export class AppController {
     queueMicrotask(() => { syncGraphicTools(); syncConnectorTools(); syncSmartArtTools(); });
   }, true);
   document.addEventListener('selectionchange', syncTableTools);
+  const syncToolbarState = (): void => {
+    const selection = window.getSelection();
+    const activeNode = selection?.anchorNode;
+    const activeElement = activeNode instanceof Element ? activeNode : activeNode?.parentElement;
+    const editorRoot = activeElement?.closest('#editor');
+    const activeButtons: Record<string, boolean> = {
+      bold: Boolean(editorRoot && activeElement?.closest('strong, b')),
+      italic: Boolean(editorRoot && activeElement?.closest('em, i')),
+      underline: Boolean(editorRoot && activeElement?.closest('u')),
+    };
+    const block = activeElement?.closest('p, div, li, h1, h2, h3, h4, h5, h6, blockquote') as HTMLElement | null;
+    const alignment = block ? window.getComputedStyle(block).textAlign : '';
+    activeButtons['align-left'] = alignment === 'left' || alignment === 'start';
+    activeButtons['align-center'] = alignment === 'center';
+    activeButtons['align-right'] = alignment === 'right' || alignment === 'end';
+    activeButtons['align-justify'] = alignment === 'justify';
+
+    for (const [action, active] of Object.entries(activeButtons)) {
+      const button = this.root.querySelector<HTMLButtonElement>(`[data-action="${action}"]`);
+      if (!button) continue;
+      button.setAttribute('aria-pressed', String(active));
+      button.dataset.active = String(active);
+    }
+  };
+  elements.editor.addEventListener('keyup', syncToolbarState);
+  elements.editor.addEventListener('mouseup', syncToolbarState);
+  elements.editor.addEventListener('focus', syncToolbarState);
+  document.addEventListener('selectionchange', syncToolbarState);
+  this.root.querySelector('.toolbar-groups')?.addEventListener('click', () => {
+    queueMicrotask(syncToolbarState);
+  });
 
   this.root.querySelector<HTMLSelectElement>('#template-selector')?.addEventListener('change', () => {
     const selectedTemplateId = this.root.querySelector<HTMLSelectElement>('#template-selector')?.value;
@@ -406,7 +437,11 @@ export class AppController {
       }
       if (action === 'pdf') {
         if (!this.organization.features.pdfExport) return;
-        sync(); elements.pdfButton.disabled = true;
+        // Flush the pending autosave before export so its delayed status callback
+        // cannot overwrite the PDF result message.
+        sync();
+        autosave.saveNow();
+        elements.pdfButton.disabled = true;
         const previous = elements.pdfButton.textContent;
         elements.pdfButton.textContent = 'Gerando PDF…';
         try {

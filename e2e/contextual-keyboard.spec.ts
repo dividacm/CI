@@ -4,7 +4,7 @@ test.describe('Teclado nos comandos contextuais de tabela e gráficos', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('#editor')).toBeVisible();
-    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
   });
 
   test('insere uma tabela usando apenas teclado e preserva sua estrutura', async ({ page }) => {
