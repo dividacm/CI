@@ -144,7 +144,7 @@ test.describe('Comunicação Interna editor', () => {
 
   test('reports a storage failure during import without replacing the current document', async ({ page }) => {
     const originalSubject = await page.locator('[data-field="subject"]').inputValue();
-    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
     const backup = await page.evaluate(() => {
       const key = Object.keys(localStorage).find((item) => item.startsWith('ci:document:'));
       if (!key) throw new Error('Documento persistido não encontrado.');
@@ -182,7 +182,7 @@ test.describe('Comunicação Interna editor', () => {
   });
 
   test('inserts the first table when no table cell is active and persists it after reload', async ({ page }) => {
-    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
 
     const insertTable = page.getByRole('button', { name: 'Inserir tabela 2 por 3' });
     const selectionTools = page.locator('.table-selection-tools');
@@ -209,7 +209,7 @@ test.describe('Comunicação Interna editor', () => {
 
 
   test('edits a table cell and persists its content after reload', async ({ page }) => {
-    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
     const editor = page.locator('#editor');
     await editor.click();
     await page.getByRole('button', { name: 'Inserir tabela 2 por 3' }).click();
@@ -225,7 +225,7 @@ test.describe('Comunicação Interna editor', () => {
   });
 
   test('inserts SmartArt and persists it after reload', async ({ page }) => {
-    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
     await page.getByRole('button', { name: 'Inserir SmartArt' }).click();
 
     await expect(page.locator('.editor-page-content .graphic-element-smartart')).toHaveCount(1);
@@ -292,7 +292,7 @@ test.describe('Comunicação Interna editor', () => {
   });
 
   test('inserts a graphic element and persists it after reload', async ({ page }) => {
-    await page.locator('summary', { hasText: 'Ferramentas' }).click();
+    await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
     await page.getByRole('button', { name: 'Inserir forma' }).click();
 
     await expect(page.locator('#paper .paper-graphic-element')).toHaveCount(1);
@@ -311,7 +311,7 @@ test.describe('Comunicação Interna editor', () => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/');
       await expect(page.locator('#editor')).toBeVisible();
-      await page.locator('summary', { hasText: 'Ferramentas' }).click();
+      await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
 
       const graphicTools = page.locator('.graphic-tools');
       const smartArtTools = page.locator('.smartart-tools');
@@ -372,7 +372,7 @@ test.describe('Comunicação Interna editor', () => {
         if (message.type() === 'error') errors.push(message.text());
       });
 
-      await page.locator('summary', { hasText: 'Ferramentas' }).click();
+      await expect(page.getByRole('button', { name: 'Negrito' })).toBeVisible();
       const graphicTools = page.locator('.graphic-tools');
       const connectorTools = page.locator('.connector-tools');
       const smartArtTools = page.locator('.smartart-tools');
