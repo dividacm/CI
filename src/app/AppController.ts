@@ -399,7 +399,11 @@ export class AppController {
         toggle.textContent = showingPreview ? 'Voltar à edição' : 'Pré-visualizar';
         toggle.setAttribute('aria-pressed', String(showingPreview));
         if (showingPreview) {
-          elements.paper.querySelector<HTMLElement>('.paper-page[data-active="true"]')?.scrollIntoView({ block: 'nearest' });
+          window.requestAnimationFrame(() => {
+            renderPreview(elements.paper, this.organization, template, state.document);
+            setPreviewZoom(elements.root, previewZoom);
+            elements.paper.querySelector<HTMLElement>('.paper-page[data-active="true"]')?.scrollIntoView({ block: 'nearest' });
+          });
         } else {
           elements.editor.focus({ preventScroll: true });
         }
@@ -463,6 +467,13 @@ export class AppController {
         const previousViewMode = workspace?.dataset.viewMode ?? 'edit';
         if (workspace && previousViewMode !== 'preview') workspace.dataset.viewMode = 'preview';
         try {
+          if (workspace && previousViewMode !== 'preview') {
+            await new Promise<void>((resolve) => window.requestAnimationFrame(() => {
+              renderPreview(elements.paper, this.organization, template, state.document);
+              setPreviewZoom(elements.root, previewZoom);
+              resolve();
+            }));
+          }
           await pdfExporter.export(elements.paper, { filename: state.document.number > 0 ? `comunicacao_interna_${state.document.number}_${state.document.year}.pdf` : 'comunicacao_interna.pdf' });
           elements.status.textContent = 'PDF gerado com sucesso.';
           elements.status.dataset.status = 'saved';
