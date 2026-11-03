@@ -142,3 +142,14 @@ html,body,#app{min-height:100%;margin:0}body{min-height:100vh;background:var(--c
 @media(prefers-reduced-motion:reduce){
  .preview-column,.preview-wrap,.paper-page{scroll-behavior:auto;transition:none!important}
 }
+
+/* V2.10: edição e pré-visualização ocupam a mesma área de trabalho. */
+.workspace{grid-template-columns:minmax(0,1fr)}
+.workspace[data-view-mode="edit"] .preview-column{display:none}
+.workspace[data-view-mode="preview"] .editor-canvas{display:none}
+.editor-canvas .horizontal-ruler{margin:0 auto 12px}
+.toolbar-view-actions{display:flex;align-items:center;margin-left:auto}
+.toolbar-view-actions button{min-height:32px;padding:4px 10px;border:1px solid var(--color-primary);border-radius:var(--radius-sm);background:var(--color-surface);color:var(--color-primary);font-weight:700}
+.toolbar-view-actions button:hover{background:var(--color-secondary)}
+.toolbar-view-actions button:focus{outline:2px solid #111827;outline-offset:2px}
+.workspace[data-view-mode="preview"] .preview-column{display:block;min-height:680px}
