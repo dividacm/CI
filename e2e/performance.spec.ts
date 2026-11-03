@@ -21,6 +21,7 @@ function median(values: number[]): number {
 test.describe('Performance de documentos longos', () => {
   test('mede renderização do preview com conteúdo crescente', async ({ page }) => {
     await page.goto('/');
+    await page.locator('[data-action="toggle-preview"]').click();
     const editor = page.locator('#editor');
     const paper = page.locator('#paper');
 
