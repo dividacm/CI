@@ -34,6 +34,34 @@ test.describe('Comunicação Interna editor', () => {
     await expect(page.locator('#save-status')).toHaveText('Salvo localmente.');
   });
 
+  test('alterna entre edição e pré-visualização na mesma área sem duplicar o documento', async ({ page }) => {
+    const workspace = page.locator('.workspace');
+    const editorCanvas = page.locator('.editor-canvas');
+    const preview = page.locator('.preview-column');
+    const toggle = page.getByRole('button', { name: 'Pré-visualizar' });
+
+    await expect(workspace).toHaveAttribute('data-view-mode', 'edit');
+    await expect(editorCanvas).toBeVisible();
+    await expect(preview).toBeHidden();
+    await expect(page.locator('#horizontal-ruler')).toBeVisible();
+
+    await page.locator('#editor').fill('Conteúdo preservado entre os modos.');
+    await toggle.click();
+
+    await expect(workspace).toHaveAttribute('data-view-mode', 'preview');
+    await expect(toggle).toHaveText('Voltar à edição');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(editorCanvas).toBeHidden();
+    await expect(preview).toBeVisible();
+    await expect(page.locator('#paper')).toContainText('Conteúdo preservado entre os modos.');
+
+    await toggle.click();
+    await expect(workspace).toHaveAttribute('data-view-mode', 'edit');
+    await expect(editorCanvas).toBeVisible();
+    await expect(preview).toBeHidden();
+    await expect(page.locator('#editor')).toContainText('Conteúdo preservado entre os modos.');
+  });
+
   test('edits fields and content, formats text, and persists after reload', async ({ page }) => {
     const subject = page.locator('[data-field="subject"]');
     const editor = page.locator('#editor');
