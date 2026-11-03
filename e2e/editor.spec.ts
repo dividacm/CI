@@ -337,9 +337,9 @@ test.describe('Comunicação Interna editor', () => {
   });
 
   test('navigates between pages after editing content that spans multiple pages', async ({ page }) => {
-    await page.locator('[data-action="toggle-preview"]').click();
     const editor = page.locator('#editor');
     await editor.fill('Conteúdo sintético para validar paginação. '.repeat(900));
+    await page.locator('[data-action="toggle-preview"]').click();
 
     await expect.poll(() => page.locator('#paper .paper-page').count(), {
       timeout: 10_000,
@@ -491,9 +491,9 @@ test.describe('Régua e zoom da pré-visualização responsiva', () => {
     test(`mantém régua e controles de zoom funcionais em ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/');
+      await expect(page.locator('#horizontal-ruler')).toBeVisible();
       await page.locator('[data-action="toggle-preview"]').click();
       await expect(page.locator('#paper')).toBeVisible();
-      await expect(page.locator('#horizontal-ruler')).toBeVisible();
       await expect(page.locator('[data-action="zoom-in"]')).toBeVisible();
       await expect(page.locator('[data-action="zoom-out"]')).toBeVisible();
 
@@ -546,6 +546,8 @@ test.describe('Preservação do documento e exportação PDF', () => {
     const editor = page.locator('#editor');
     await editor.fill('Conteúdo sintético para validar a exportação multipágina. '.repeat(900));
 
+    await page.locator('[data-action="toggle-preview"]').click();
+    await expect(page.locator('#paper .paper-page')).toHaveCount(1, { timeout: 10_000 });
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Baixar PDF' }).click();
     const download = await downloadPromise;
