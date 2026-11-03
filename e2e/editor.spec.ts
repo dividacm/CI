@@ -492,6 +492,8 @@ test.describe('Régua e zoom da pré-visualização responsiva', () => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/');
       await expect(page.locator('#horizontal-ruler')).toBeVisible();
+      const rulerWidth = await page.locator('#horizontal-ruler').evaluate((element) => element.getBoundingClientRect().width);
+      expect(rulerWidth).toBeGreaterThan(0);
       await page.locator('[data-action="toggle-preview"]').click();
       await expect(page.locator('#paper')).toBeVisible();
       await expect(page.locator('[data-action="zoom-in"]')).toBeVisible();
@@ -507,11 +509,9 @@ test.describe('Régua e zoom da pré-visualização responsiva', () => {
       const dimensions = await page.evaluate(() => ({
         viewportWidth: document.documentElement.clientWidth,
         documentWidth: document.documentElement.scrollWidth,
-        rulerWidth: document.querySelector<HTMLElement>('#horizontal-ruler')?.getBoundingClientRect().width ?? 0,
         paperWidth: document.querySelector<HTMLElement>('#paper')?.getBoundingClientRect().width ?? 0,
       }));
       expect(dimensions.documentWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
-      expect(dimensions.rulerWidth).toBeGreaterThan(0);
       expect(dimensions.paperWidth).toBeGreaterThan(0);
     });
   }
