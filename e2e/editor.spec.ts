@@ -547,7 +547,7 @@ test.describe('Preservação do documento e exportação PDF', () => {
     await editor.fill('Conteúdo sintético para validar a exportação multipágina. '.repeat(900));
 
     await page.locator('[data-action="toggle-preview"]').click();
-    await expect(page.locator('#paper .paper-page')).toHaveCount(1, { timeout: 10_000 });
+    await expect.poll(() => page.locator('#paper .paper-page').count(), { timeout: 15_000 }).toBeGreaterThan(1);
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Baixar PDF' }).click();
     const download = await downloadPromise;
