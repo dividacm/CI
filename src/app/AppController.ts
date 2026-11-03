@@ -390,6 +390,25 @@ export class AppController {
         syncRuler();
         return;
       }
+      if (action === 'toggle-preview') {
+        const workspace = this.root.querySelector<HTMLElement>('.workspace');
+        const toggle = this.root.querySelector<HTMLButtonElement>('[data-action="toggle-preview"]');
+        if (!workspace || !toggle) return;
+        const showingPreview = workspace.dataset.viewMode !== 'preview';
+        workspace.dataset.viewMode = showingPreview ? 'preview' : 'edit';
+        toggle.textContent = showingPreview ? 'Voltar à edição' : 'Pré-visualizar';
+        toggle.setAttribute('aria-pressed', String(showingPreview));
+        if (showingPreview) {
+          window.requestAnimationFrame(() => {
+            renderPreview(elements.paper, this.organization, template, state.document);
+            setPreviewZoom(elements.root, previewZoom);
+            elements.paper.querySelector<HTMLElement>('.paper-page[data-active="true"]')?.scrollIntoView({ block: 'nearest' });
+          });
+        } else {
+          elements.editor.focus({ preventScroll: true });
+        }
+        return;
+      }
       if (action === 'page-prev') { navigatePreviewPage(elements.paper, -1); return; }
       if (action === 'page-next') { navigatePreviewPage(elements.paper, 1); return; }
       if (action === 'zoom-out') { updatePreviewZoom(previewZoom - 10); return; }
@@ -444,7 +463,17 @@ export class AppController {
         elements.pdfButton.disabled = true;
         const previous = elements.pdfButton.textContent;
         elements.pdfButton.textContent = 'Gerando PDF…';
+        const workspace = this.root.querySelector<HTMLElement>('.workspace');
+        const previousViewMode = workspace?.dataset.viewMode ?? 'edit';
+        if (workspace && previousViewMode !== 'preview') workspace.dataset.viewMode = 'preview';
         try {
+          if (workspace && previousViewMode !== 'preview') {
+            await new Promise<void>((resolve) => window.requestAnimationFrame(() => {
+              renderPreview(elements.paper, this.organization, template, state.document);
+              setPreviewZoom(elements.root, previewZoom);
+              resolve();
+            }));
+          }
           await pdfExporter.export(elements.paper, { filename: state.document.number > 0 ? `comunicacao_interna_${state.document.number}_${state.document.year}.pdf` : 'comunicacao_interna.pdf' });
           elements.status.textContent = 'PDF gerado com sucesso.';
           elements.status.dataset.status = 'saved';
@@ -460,7 +489,11 @@ export class AppController {
           elements.status.textContent = 'Falha ao gerar PDF. Tente novamente.';
           elements.status.dataset.status = 'error';
           elements.status.focus({ preventScroll: true });
-        } finally { elements.pdfButton.disabled = false; elements.pdfButton.textContent = previous; }
+        } finally {
+          if (workspace && previousViewMode !== 'preview') workspace.dataset.viewMode = previousViewMode;
+          elements.pdfButton.disabled = false;
+          elements.pdfButton.textContent = previous;
+        }
         return;
       }
       const commands = new CommandRegistry();

@@ -30,8 +30,36 @@ test.describe('Comunicação Interna editor', () => {
     );
     await expect(page.locator('[data-field="to"]')).toHaveValue('Destinatário fictício');
     await expect(page.locator('#editor')).toBeVisible();
-    await expect(page.locator('#paper')).toBeVisible();
+    await expect(page.locator('#paper')).toBeHidden();
     await expect(page.locator('#save-status')).toHaveText('Salvo localmente.');
+  });
+
+  test('alterna entre edição e pré-visualização na mesma área sem duplicar o documento', async ({ page }) => {
+    const workspace = page.locator('.workspace');
+    const editorCanvas = page.locator('.editor-canvas');
+    const preview = page.locator('.preview-column');
+    const toggle = page.locator('[data-action="toggle-preview"]');
+
+    await expect(workspace).toHaveAttribute('data-view-mode', 'edit');
+    await expect(editorCanvas).toBeVisible();
+    await expect(preview).toBeHidden();
+    await expect(page.locator('#horizontal-ruler')).toBeVisible();
+
+    await page.locator('#editor').fill('Conteúdo preservado entre os modos.');
+    await toggle.click();
+
+    await expect(workspace).toHaveAttribute('data-view-mode', 'preview');
+    await expect(toggle).toHaveText('Voltar à edição');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(editorCanvas).toBeHidden();
+    await expect(preview).toBeVisible();
+    await expect(page.locator('#paper')).toContainText('Conteúdo preservado entre os modos.');
+
+    await toggle.click();
+    await expect(workspace).toHaveAttribute('data-view-mode', 'edit');
+    await expect(editorCanvas).toBeVisible();
+    await expect(preview).toBeHidden();
+    await expect(page.locator('#editor')).toContainText('Conteúdo preservado entre os modos.');
   });
 
   test('edits fields and content, formats text, and persists after reload', async ({ page }) => {
@@ -277,6 +305,7 @@ test.describe('Comunicação Interna editor', () => {
   });
 
   test('keeps preview zoom within supported bounds and resets to 100%', async ({ page }) => {
+    await page.locator('[data-action="toggle-preview"]').click();
     const zoom = page.locator('#preview-zoom');
     const zoomIn = page.getByRole('button', { name: 'Aumentar zoom' });
     const zoomOut = page.getByRole('button', { name: 'Reduzir zoom' });
@@ -310,6 +339,7 @@ test.describe('Comunicação Interna editor', () => {
   test('navigates between pages after editing content that spans multiple pages', async ({ page }) => {
     const editor = page.locator('#editor');
     await editor.fill('Conteúdo sintético para validar paginação. '.repeat(900));
+    await page.locator('[data-action="toggle-preview"]').click();
 
     await expect.poll(() => page.locator('#paper .paper-page').count(), {
       timeout: 10_000,
@@ -461,8 +491,11 @@ test.describe('Régua e zoom da pré-visualização responsiva', () => {
     test(`mantém régua e controles de zoom funcionais em ${viewport.name}`, async ({ page }) => {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
       await page.goto('/');
-      await expect(page.locator('#paper')).toBeVisible();
       await expect(page.locator('#horizontal-ruler')).toBeVisible();
+      const rulerWidth = await page.locator('#horizontal-ruler').evaluate((element) => element.getBoundingClientRect().width);
+      expect(rulerWidth).toBeGreaterThan(0);
+      await page.locator('[data-action="toggle-preview"]').click();
+      await expect(page.locator('#paper')).toBeVisible();
       await expect(page.locator('[data-action="zoom-in"]')).toBeVisible();
       await expect(page.locator('[data-action="zoom-out"]')).toBeVisible();
 
@@ -476,11 +509,9 @@ test.describe('Régua e zoom da pré-visualização responsiva', () => {
       const dimensions = await page.evaluate(() => ({
         viewportWidth: document.documentElement.clientWidth,
         documentWidth: document.documentElement.scrollWidth,
-        rulerWidth: document.querySelector<HTMLElement>('#horizontal-ruler')?.getBoundingClientRect().width ?? 0,
         paperWidth: document.querySelector<HTMLElement>('#paper')?.getBoundingClientRect().width ?? 0,
       }));
       expect(dimensions.documentWidth).toBeLessThanOrEqual(dimensions.viewportWidth);
-      expect(dimensions.rulerWidth).toBeGreaterThan(0);
       expect(dimensions.paperWidth).toBeGreaterThan(0);
     });
   }
@@ -508,13 +539,15 @@ test.describe('Preservação do documento e exportação PDF', () => {
     await expect(page.locator('[data-field="to"]')).toHaveValue('Destinatário de teste');
     await expect(page.locator('[data-field="subject"]')).toHaveValue('Preservação do documento V2.10');
     await expect(page.locator('#editor')).toContainText('Conteúdo que deve permanecer no documento após salvar.');
-    await expect(page.locator('#paper')).toBeVisible();
+    await expect(page.locator('#paper')).toBeHidden();
   });
 
   test('gera um PDF multipágina quando o documento tem conteúdo extenso', async ({ page }) => {
     const editor = page.locator('#editor');
     await editor.fill('Conteúdo sintético para validar a exportação multipágina. '.repeat(900));
 
+    await page.locator('[data-action="toggle-preview"]').click();
+    await expect.poll(() => page.locator('#paper .paper-page').count(), { timeout: 15_000 }).toBeGreaterThan(1);
     const downloadPromise = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Baixar PDF' }).click();
     const download = await downloadPromise;
@@ -551,6 +584,7 @@ test.describe('Quebra automática de linhas no corpo do documento', () => {
       clientWidth: element.clientWidth,
     }))).toMatchObject({ overflowWrap: 'anywhere' });
 
+    await page.locator('[data-action="toggle-preview"]').click();
     const previewContent = page.locator('#paper .paper-page-content').first();
     await expect(previewContent).toContainText(unbrokenText);
     await expect.poll(() => previewContent.evaluate((element) => ({
