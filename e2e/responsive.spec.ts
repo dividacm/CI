@@ -128,6 +128,7 @@ for (const viewport of responsiveViewports) {
       await editor.click();
       await editor.pressSequentially(`Conteúdo sintético em ${viewport.name}`);
       await expect(editor).toContainText(`Conteúdo sintético em ${viewport.name}`);
+      await page.locator('[data-action="toggle-preview"]').click();
       await expect(page.locator('#paper .paper-page').first()).toBeVisible();
     });
   });
