@@ -390,6 +390,21 @@ export class AppController {
         syncRuler();
         return;
       }
+      if (action === 'toggle-preview') {
+        const workspace = this.root.querySelector<HTMLElement>('.workspace');
+        const toggle = this.root.querySelector<HTMLButtonElement>('[data-action="toggle-preview"]');
+        if (!workspace || !toggle) return;
+        const showingPreview = workspace.dataset.viewMode !== 'preview';
+        workspace.dataset.viewMode = showingPreview ? 'preview' : 'edit';
+        toggle.textContent = showingPreview ? 'Voltar à edição' : 'Pré-visualizar';
+        toggle.setAttribute('aria-pressed', String(showingPreview));
+        if (showingPreview) {
+          elements.paper.querySelector<HTMLElement>('.paper-page[data-active="true"]')?.scrollIntoView({ block: 'nearest' });
+        } else {
+          elements.editor.focus({ preventScroll: true });
+        }
+        return;
+      }
       if (action === 'page-prev') { navigatePreviewPage(elements.paper, -1); return; }
       if (action === 'page-next') { navigatePreviewPage(elements.paper, 1); return; }
       if (action === 'zoom-out') { updatePreviewZoom(previewZoom - 10); return; }
