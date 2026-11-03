@@ -562,3 +562,43 @@ describe('AppController interface density preference', () => {
     expect(nextRoot.querySelector<HTMLElement>('.app-shell')?.dataset.density).toBe('comfortable');
   });
 });
+
+
+describe('AppController document view mode', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+    localStorage.clear();
+    vi.restoreAllMocks();
+  });
+
+  it('switches between editing and preview while retaining the document', () => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    new AppController(root, structuredClone(defaultOrganization)).render();
+
+    const workspace = root.querySelector<HTMLElement>('.workspace');
+    const editor = root.querySelector<HTMLElement>('#editor');
+    const paper = root.querySelector<HTMLElement>('#paper');
+    const toggle = root.querySelector<HTMLButtonElement>('[data-action="toggle-preview"]');
+
+    expect(workspace?.dataset.viewMode).toBe('edit');
+    expect(root.querySelector('.preview-column')?.getAttribute('style')).toBeNull();
+    expect(toggle?.getAttribute('aria-pressed')).toBe('false');
+
+    toggle?.click();
+    expect(workspace?.dataset.viewMode).toBe('preview');
+    expect(toggle?.textContent).toBe('Voltar à edição');
+    expect(toggle?.getAttribute('aria-pressed')).toBe('true');
+
+    toggle?.click();
+    expect(workspace?.dataset.viewMode).toBe('edit');
+    expect(toggle?.textContent).toBe('Pré-visualizar');
+    expect(toggle?.getAttribute('aria-pressed')).toBe('false');
+    expect(editor).not.toBeNull();
+    expect(paper).not.toBeNull();
+  });
+});
